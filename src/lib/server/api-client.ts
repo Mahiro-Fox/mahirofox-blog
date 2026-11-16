@@ -75,7 +75,6 @@ function parseGoErrorField(body: string): string | undefined {
 /**
  * 把身份上下文转成 `Authorization: Bearer <token>` 请求头。
  * 无 token 时返回空对象（未登录/公开端点场景）。
- * 供 goUploadMultipart 这类只接受 headers 的调用点使用。
  */
 export function goAuthHeaders(ctx?: ActionContext): Record<string, string> {
   return ctx?.authToken ? { Authorization: `Bearer ${ctx.authToken}` } : {};
@@ -139,38 +138,6 @@ export async function goFetch<T = unknown>(
   }
 
   return res.json() as Promise<T>;
-}
-
-/**
- * 调用 Go 后端 multipart 上传接口（转发二进制数据）
- * 不显式设置 Content-Type，让 fetch 自动生成带 boundary 的 multipart 头。
- * @param path 路径，如 '/api/uploads/asset'
- * @param formData 已构造的 FormData（含文件字段与 width/height/dir 等元数据）
- * @param options.headers 额外请求头（如透传身份的 Authorization）
- * @returns Go 返回的 JSON 响应（如 { url, width, height }）
- */
-export async function goUploadMultipart<T = unknown>(
-  path: string,
-  formData: FormData,
-  options: { headers?: HeadersInit } = {}
-): Promise<T> {
-  const baseUrl = getBaseUrl();
-  const internalSecret = getInternalSecret();
-  const res = await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    headers: {
-      'X-Internal-Secret': internalSecret,
-      ...(options.headers ?? {}),
-    },
-    body: formData,
-    cache: 'no-store',
-  });
-
-  const body = await res.text().catch(() => '');
-  if (!res.ok) {
-    throw new GoApiError(path, res.status, body);
-  }
-  return JSON.parse(body || '{}') as T;
 }
 
 /**

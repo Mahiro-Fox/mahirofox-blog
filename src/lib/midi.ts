@@ -1,7 +1,10 @@
-import fs from 'fs';
 import path from 'path';
 import { MIDI_DIR } from '@/constant/dir';
-import { ensureDirectory } from '@/utils/file-utils';
+import {
+  listUploadFiles,
+  readUploadFile,
+  resolveUploadKey,
+} from '@/lib/server/uploads';
 
 /**
  * 解析 MIDI 文件总时长（秒）
@@ -228,22 +231,17 @@ export function parseMidiDuration(buffer: Buffer): number {
 }
 
 export async function getMidis(): Promise<string[]> {
-  await ensureDirectory(MIDI_DIR);
-  const entries = await fs.promises.readdir(MIDI_DIR, {
-    withFileTypes: true,
-  });
-  return entries
-    .filter(
-      (entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.mid')
-    )
-    .map((entry) => entry.name);
+  const files = await listUploadFiles(MIDI_DIR, ['.mid']);
+  return files.map((file) => file.name);
 }
 
-export async function readMidiFile(filePath: string): Promise<MidiFile> {
-  const fileName = path.basename(filePath);
+export async function readMidiFile(fileNameOrPath: string): Promise<MidiFile> {
+  const fileName = path.basename(fileNameOrPath);
 
-  // Read file and parse duration
-  const buffer = await fs.promises.readFile(filePath);
+  // 从 R2（未配置时退回本地 uploads）读取二进制并解析时长
+  const buffer = await readUploadFile(
+    resolveUploadKey(`/uploads/midisongs/${fileName}`)
+  );
   const duration = parseMidiDuration(buffer);
 
   return {

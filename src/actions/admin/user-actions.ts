@@ -1,13 +1,11 @@
 'use server';
 
-import fs from 'fs/promises';
 import path from 'path';
 import { userStore } from '@/store/user-store';
-import { AVATAR_DIR } from '@/constant/dir';
 import { verifyAuth } from '@/lib/admin-auth';
 import { requirePermission } from '@/lib/permissions';
-import { goAuthHeaders, goUploadMultipart } from '@/lib/server/api-client';
-import { appendGoAssetFile } from '@/lib/upload';
+import { uploadAssetFile } from '@/lib/server/asset-upload';
+import { deleteUploadFile, resolveUploadKey } from '@/lib/server/uploads';
 import {
   consumeRateLimit,
   getAdminActionContext,
@@ -84,31 +82,26 @@ export async function adminUploadAvatar(
       return { success: false, error: '用户不存在' };
     }
 
-    // 4. 使用 Go 统一资源上传（/api/uploads/asset）：
-    //    图片经 sharp 转 WebP + 保留源文件，落盘由 Go 完成
-    //    （复用 createGoUploadAction 同源的 appendGoAssetFile 流程）
+    // 4. 直接上传到存储层（R2 / 本地 uploads）：
+    //    图片经 sharp 转 WebP + 保留源文件
     const file = formData.get('avatar') as File | null;
     if (!file) {
       return { success: false, error: '未提供图片文件' };
     }
-    const goFormData = new FormData();
-    await appendGoAssetFile(goFormData, file, {
+    const uploadData = await uploadAssetFile(file, {
       dir: 'images/avatar',
+      target: 'image',
       quality: 80,
     });
-    const uploadData = await goUploadMultipart<{
-      url: string;
-      width: number;
-      height: number;
-    }>('/api/uploads/asset', goFormData, { headers: goAuthHeaders(ctx) });
     const avatarUrl = uploadData.url;
 
     // 5. 删除旧头像（如果不是默认头像）
     if (user.avatar && !user.avatar.includes('default')) {
       try {
         const oldFileName = path.basename(user.avatar);
-        const oldFilePath = path.join(AVATAR_DIR, oldFileName);
-        await fs.unlink(oldFilePath);
+        await deleteUploadFile(
+          resolveUploadKey(`/uploads/images/avatar/${oldFileName}`)
+        );
       } catch {
         // 忽略删除失败（文件可能不存在）
       }

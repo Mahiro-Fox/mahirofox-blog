@@ -39,15 +39,11 @@ services:
       DB_NAME: ${DB_NAME}
       GO_API_SHARED_SECRET: ${GO_API_SHARED_SECRET}
       JWT_SECRET: ${JWT_SECRET}
-      # uploads 目录：Go 后端需要读写用户上传的文件
-      # 注意：路径和 nginx alias 指向的宿主机路径一致，保证写入后 nginx 立即可读
-      UPLOADS_DIR: /app/uploads
     # 绑定到 127.0.0.1，仅宿主机 nginx 可访问，不对外暴露
     ports:
       - '127.0.0.1:8080:8080'
     volumes:
       - ./data:/app/data:ro
-      - ./uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,6 +62,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NEXT_PUBLIC_UPLOADS_ORIGIN: ${NEXT_PUBLIC_UPLOADS_ORIGIN}
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM}
       ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
@@ -73,16 +70,18 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       GO_API_INTERNAL_URL: ${GO_API_INTERNAL_URL}
       GO_API_SHARED_SECRET: ${GO_API_SHARED_SECRET}
+      # uploads 静态资源已迁移到 Cloudflare R2
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_BUCKET: ${R2_BUCKET}
       # Mastra 记忆存储连接串：指向 compose 内的 postgres 服务
       MASTRA_PG_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}
     # 绑定到 127.0.0.1，仅宿主机 nginx 可访问，不对外暴露
     ports:
       - '127.0.0.1:3000:3000'
-    # 挂载 uploads 和 data 目录
-    # uploads: getPublicMidis 读取 MIDI 文件解析时长；其他 CRUD 已迁到 Go
-    # data: 大部分 JSON 已迁到 Go，只读即可；conversations 需动态写入单独挂载
+    # data 目录：大部分 JSON 已迁到 Go，只读即可；conversations 需动态写入单独挂载
     volumes:
-      - ./uploads:/app/uploads
       - ./data:/app/data:ro
     depends_on:
       - backend-go

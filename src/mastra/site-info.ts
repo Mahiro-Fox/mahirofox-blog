@@ -19,7 +19,7 @@ interface SiteInfo {
 // 对外功能清单（排除纯后台管理路由，如 音乐管理/用户管理/上传文件/访问日志等）
 const siteInfo: SiteInfo = {
   name: 'Mahirooyama Blog',
-  url: 'https://mahirooyama.cn',
+  url: 'https://mahirofox.com',
   position:
     'mahirooyama（Mahiro）的个人网站。主要内容是分享照片，尤其是和朋友在 VRChat 里拍的照片；' +
     '次要内容是编程笔记与技术分享；此外还集成了一批即开即用的小工具。' +

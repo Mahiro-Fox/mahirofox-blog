@@ -2,8 +2,16 @@
 
 import { DEFAULT_GALLERY_LIST_LIMIT } from '@/config/limit';
 import { paginateItems, PaginationResult } from '@/lib/pagination';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { createGoUploadAction } from '@/lib/upload';
+import {
+  createGalleryFile,
+  deleteGalleryFile,
+  listGalleryFiles,
+  parseGalleryJson,
+  readGalleryDetail,
+  renameGalleryFile,
+  updateGalleryFile,
+} from '@/lib/server/content-files';
+import { createUploadAction } from '@/lib/upload';
 import {
   withActionPermission,
   type ActionResponse,
@@ -29,10 +37,7 @@ export async function getPublicGalleries(
   try {
     const { page, pageSize = DEFAULT_GALLERY_LIST_LIMIT, tagSlug } = options;
 
-    const result = await goFetch<{ items: AdminGallery[] }>(
-      '/api/gallery-files'
-    );
-    const all = result.items;
+    const all = await listGalleryFiles();
 
     // 转换为 Gallery 类型
     const galleries: Gallery[] = all.map((item) => ({
@@ -74,10 +79,19 @@ export async function getPublicGallery(
   slug: string
 ): Promise<ActionResponse<Gallery>> {
   try {
-    const result = await goFetch<{ data: Gallery }>(
-      `/api/gallery-files/${slug}`
-    );
-    return { success: true, data: { ...result.data, slug } };
+    const detail = await readGalleryDetail(slug);
+    return {
+      success: true,
+      data: {
+        slug,
+        title: detail.title,
+        description: detail.description,
+        thumbnail: detail.thumbnail,
+        isPortrait: detail.isPortrait,
+        lastUpdated: detail.lastUpdated,
+        tags: detail.tags,
+      },
+    };
   } catch (error) {
     logger.error('获取图库详情失败', error, { slug });
     return { success: false, error: '获取图库详情失败' };
@@ -87,20 +101,9 @@ export async function getPublicGallery(
 export async function adminGetGalleries(): Promise<
   ActionResponse<AdminGallery[]>
 > {
-  return withActionPermission('gallery:read', async (_user, ctx) => {
+  return withActionPermission('gallery:read', async () => {
     try {
-      const result = await goFetch<{ items: AdminGallery[] }>(
-        '/api/gallery-files',
-        withGoAuth(ctx)
-      );
-      const images = result.items;
-
-      images.sort(
-        (a, b) =>
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-      );
-
-      return { success: true, data: images };
+      return { success: true, data: await listGalleryFiles() };
     } catch (error) {
       logger.error('获取图库文件列表失败', error);
       return { success: false, error: '获取文件列表失败' };
@@ -111,16 +114,9 @@ export async function adminGetGalleries(): Promise<
 export async function adminGetGallery(
   slug: string
 ): Promise<ActionResponse<AdminGallery>> {
-  return withActionPermission('gallery:read', async (_user, ctx) => {
+  return withActionPermission('gallery:read', async () => {
     try {
-      const result = await goFetch<{ data: AdminGallery }>(
-        `/api/gallery-files/${slug}`,
-        withGoAuth(ctx)
-      );
-      return {
-        success: true,
-        data: { ...result.data, slug } as AdminGallery,
-      };
+      return { success: true, data: await readGalleryDetail(slug) };
     } catch (error) {
       logger.error('获取图库文件失败', error, { slug });
       return { success: false, error: '文件不存在或读取失败' };
@@ -134,7 +130,7 @@ export async function adminCreateGallery(input: {
 }): Promise<ActionResponse<void>> {
   return withActionPermission(
     'gallery:create',
-    async (user, ctx) => {
+    async (user) => {
       try {
         const { slug, content } = input;
         if (!slug || !content) {
@@ -147,10 +143,15 @@ export async function adminCreateGallery(input: {
           return { success: false, error: nameCheck.error };
         }
 
-        await goFetch('/api/gallery-files', withGoAuth(ctx, {
-          method: 'POST',
-          body: JSON.stringify({ slug: cleanSlug, content }),
-        }));
+        const data = parseGalleryJson(content);
+        if (!data.title || !data.thumbnail) {
+          return {
+            success: false,
+            error: 'JSON 内容缺少必需的字段 (title, thumbnail)',
+          };
+        }
+
+        await createGalleryFile(cleanSlug, content);
 
         logger.info('创建图库文件成功', { slug: cleanSlug, userId: user.id });
         return { success: true, data: undefined };
@@ -170,12 +171,17 @@ export async function adminUpdateGallery(
 ): Promise<ActionResponse<void>> {
   return withActionPermission(
     'gallery:update',
-    async (user, ctx) => {
+    async (user) => {
       try {
-        await goFetch(`/api/gallery-files/${slug}`, withGoAuth(ctx, {
-          method: 'PUT',
-          body: JSON.stringify({ content }),
-        }));
+        const data = parseGalleryJson(content);
+        if (!data.title || !data.thumbnail) {
+          return {
+            success: false,
+            error: 'JSON 内容缺少必需的字段 (title, thumbnail)',
+          };
+        }
+
+        await updateGalleryFile(slug, content);
 
         logger.info('更新图库文件成功', { slug, userId: user.id });
         return { success: true, data: undefined };
@@ -195,7 +201,7 @@ export async function adminRenameGalleryFile(
 ): Promise<ActionResponse<void>> {
   return withActionPermission(
     'gallery:update',
-    async (user, ctx) => {
+    async (user) => {
       try {
         const cleanNewSlug = newSlug.trim().toLowerCase();
         const nameCheck = validateSlug(cleanNewSlug);
@@ -203,10 +209,7 @@ export async function adminRenameGalleryFile(
           return { success: false, error: nameCheck.error };
         }
 
-        await goFetch(`/api/gallery-files/${slug}`, withGoAuth(ctx, {
-          method: 'PATCH',
-          body: JSON.stringify({ newSlug: cleanNewSlug }),
-        }));
+        await renameGalleryFile(slug, cleanNewSlug);
 
         logger.info('重命名图库文件成功', {
           slug,
@@ -229,16 +232,14 @@ export async function adminDeleteGalleryFile(
 ): Promise<ActionResponse<void>> {
   return withActionPermission(
     'gallery:delete',
-    async (user, ctx) => {
+    async (user) => {
       try {
         const nameCheck = validateSlug(slug);
         if (nameCheck) {
           return { success: false, error: nameCheck.error };
         }
 
-        await goFetch(`/api/gallery-files/${slug}`, withGoAuth(ctx, {
-          method: 'DELETE',
-        }));
+        await deleteGalleryFile(slug);
 
         logger.info('删除图库文件成功', { slug, userId: user.id });
         return { success: true, data: undefined };
@@ -253,8 +254,8 @@ export async function adminDeleteGalleryFile(
 }
 
 // 上传图库 JSON 文件（multipart）- 由 gallery-client.tsx 的上传按钮调用
-// 经统一上传接口 /api/uploads/asset 转发，dir=content/gallery（Go 负责落盘）
-export const adminUploadGalleryFile = createGoUploadAction({
+// 直接写入 R2，dir=content/gallery
+export const adminUploadGalleryFile = createUploadAction({
   name: '图库JSON文件',
   permission: 'gallery:create',
   rateLimitKey: 'gallery:{userId}',
@@ -265,7 +266,7 @@ export const adminUploadGalleryFile = createGoUploadAction({
   result: { kind: 'raw-url', message: 'JSON文件上传成功' },
 });
 
-export const adminUploadGalleryThumbnail = createGoUploadAction({
+export const adminUploadGalleryThumbnail = createUploadAction({
   name: '图库缩略图',
   permission: 'gallery:create',
   rateLimitKey: 'gallery:{userId}',

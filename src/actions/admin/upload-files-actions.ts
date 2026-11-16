@@ -1,13 +1,19 @@
 'use server';
 
-import { pathCacheStore } from '@/store/path-cache-store';
+import path from 'path';
+import { UPLOADS_DIR } from '@/constant/dir';
+import { uploadAssetFile } from '@/lib/server/asset-upload';
 import {
-  goFetch,
-  goUploadMultipart,
-  goAuthHeaders,
-  withGoAuth,
-} from '@/lib/server/api-client';
-import { appendGoAssetFile } from '@/lib/upload';
+  createUploadDirectory,
+  deleteUploadDirectory,
+  deleteUploadFile,
+  isUploadDirectory,
+  listUploadEntries,
+  renameUploadEntry,
+  resolveUploadKey,
+  uploadFileExists,
+} from '@/lib/server/uploads';
+import { pathCacheStore } from '@/store/path-cache-store';
 import {
   withActionPermission,
   type ActionResponse,
@@ -32,23 +38,43 @@ export interface FileListResponse {
   breadcrumb: string[];
 }
 
-// 从 goUploadMultipart 抛出的错误信息中抽取 Go 返回的 error 字段
-// 消息形如：`Go API /api/uploads/asset 返回 409: {"error":"已存在"}`
-function extractGoError(message: string): string {
-  const match = message.match(/返回 \d+: (.+)$/s);
-  if (!match) return message;
-  try {
-    const body = JSON.parse(match[1]);
-    if (typeof body?.error === 'string') return body.error;
-  } catch {
-    // 忽略解析失败，回退到原始消息
+/** 去掉首尾斜杠并阻止路径穿越 */
+function normalizeRelativePath(input?: string): string {
+  const trimmed = (input ?? '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (!trimmed) return '';
+  const segments = trimmed.split('/').filter(Boolean);
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    throw new Error('非法的路径');
   }
-  return message;
+  return segments.join('/');
+}
+
+function assertValidName(name: string, label: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error(`${label}不能为空`);
+  if (
+    trimmed.includes('/') ||
+    trimmed.includes('\\') ||
+    trimmed === '.' ||
+    trimmed === '..'
+  ) {
+    throw new Error(`${label}包含非法字符`);
+  }
+  return trimmed;
+}
+
+/** 相对路径 → 本地绝对目录（uploads 存储层用绝对目录映射 R2 前缀） */
+function toAbsoluteDir(relativePath: string): string {
+  return relativePath
+    ? path.join(UPLOADS_DIR, ...relativePath.split('/'))
+    : UPLOADS_DIR;
+}
+
+function toLogicalPath(relativePath: string, name: string): string {
+  return `/uploads/${relativePath ? `${relativePath}/` : ''}${name}`;
 }
 
 // POST - 上传文件
-// 原 Go /api/upload-files 批量上传已移除，改由前端逐文件调用统一上传接口
-// /api/uploads/asset 落盘，并聚合出逐文件 results 返回，行为与旧接口一致。
 export async function adminUploadFiles(formData: FormData): Promise<
   ActionResponse<{
     message: string;
@@ -61,12 +87,10 @@ export async function adminUploadFiles(formData: FormData): Promise<
     }[];
   }>
 > {
-  return withActionPermission('files:upload', async (user, ctx) => {
+  return withActionPermission('files:upload', async (user) => {
     try {
       const pathValue = formData.get('path') as string | null;
-      const relativePath = pathValue ?? '';
-      // 去掉首尾斜杠，作为 /uploads/asset 的 dir
-      const dir = relativePath.replace(/^\/+|\/+$/g, '');
+      const relativePath = normalizeRelativePath(pathValue ?? '');
 
       const files = formData.getAll('files') as File[];
       if (files.length === 0) {
@@ -83,30 +107,25 @@ export async function adminUploadFiles(formData: FormData): Promise<
 
       for (const file of files) {
         try {
-          const goFormData = new FormData();
-          // 图片转 WebP 并保留源文件；非图片原样转发（由 appendGoAssetFile 统一处理）
-          await appendGoAssetFile(goFormData, file, { dir });
-
-          const data = await goUploadMultipart<{ url: string }>(
-            '/api/uploads/asset',
-            goFormData,
-            { headers: goAuthHeaders(ctx) }
-          );
+          const isImage =
+            file.type.startsWith('image/') ||
+            /\.(webp|png|jpe?g|gif)$/i.test(file.name);
+          const data = await uploadAssetFile(file, {
+            dir: relativePath,
+            target: isImage ? 'image' : 'raw',
+          });
           results.push({
             name: file.name,
             path: data.url,
             success: true,
-            converted: false,
+            converted: data.converted,
           });
         } catch (error) {
           results.push({
             name: file.name,
             path: '',
             success: false,
-            error:
-              error instanceof Error
-                ? extractGoError(error.message)
-                : '上传失败',
+            error: error instanceof Error ? error.message : '上传失败',
           });
         }
       }
@@ -127,17 +146,17 @@ export async function adminUploadFiles(formData: FormData): Promise<
         },
       };
     } catch (error) {
-      logger.error('转发上传请求失败', error);
+      logger.error('上传文件失败', error);
       return { success: false, error: '上传失败' };
     }
   });
 }
 
-// GET - 获取文件列表（转发到 Go GET /api/upload-files）
+// GET - 获取文件列表
 export async function adminGetUploadFiles(
   relativePath?: string
 ): Promise<ActionResponse<FileListResponse>> {
-  return withActionPermission('files:read', async (user, ctx) => {
+  return withActionPermission('files:read', async (user) => {
     let finalRelativePath = relativePath;
 
     if (finalRelativePath === undefined && user.id) {
@@ -148,14 +167,31 @@ export async function adminGetUploadFiles(
     }
 
     try {
-      const query = finalRelativePath
-        ? `?path=${encodeURIComponent(finalRelativePath)}`
-        : '';
-      const data = await goFetch<FileListResponse>(
-        `/api/upload-files${query}`,
-        withGoAuth(ctx)
-      );
-      return { success: true, data };
+      const normalizedPath = normalizeRelativePath(finalRelativePath);
+      const entries = await listUploadEntries(toAbsoluteDir(normalizedPath));
+
+      const items: FileItem[] = entries
+        .map((entry) => ({
+          name: entry.name,
+          path: toLogicalPath(normalizedPath, entry.name),
+          type: entry.type,
+          size: entry.size,
+          lastUpdated: entry.lastModified.toISOString(),
+          extension: entry.type === 'file' ? entry.extension : undefined,
+        }))
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+
+      return {
+        success: true,
+        data: {
+          items,
+          currentPath: normalizedPath,
+          breadcrumb: normalizedPath ? normalizedPath.split('/') : [],
+        },
+      };
     } catch (error) {
       logger.error('获取文件列表失败', error, { relativePath });
       return { success: false, error: '获取文件列表失败' };
@@ -163,87 +199,107 @@ export async function adminGetUploadFiles(
   });
 }
 
-// 创建文件夹（转发到 Go POST /api/upload-files/folder）
+// 创建文件夹
 export async function createFolder(
   relativePath: string,
   folderName: string
 ): Promise<ActionResponse<{ folderName: string; message: string }>> {
-  return withActionPermission('files:manageFolder', async (user, ctx) => {
-    if (!folderName || folderName.trim() === '') {
-      return { success: false, error: '文件夹名称不能为空' };
-    }
-
+  return withActionPermission('files:manageFolder', async (user) => {
     try {
-      const data = await goFetch<{ message: string; folderName: string }>(
-        '/api/upload-files/folder',
-        withGoAuth(ctx, {
-          method: 'POST',
-          body: JSON.stringify({ relativePath, folderName: folderName.trim() }),
-        })
+      const dir = normalizeRelativePath(relativePath);
+      const name = assertValidName(folderName, '文件夹名称');
+      const key = resolveUploadKey(
+        `uploads/${dir ? `${dir}/` : ''}${name}`
       );
-      logger.info('创建文件夹成功', {
-        relativePath,
-        folderName,
-        userId: user.id,
-      });
-      return { success: true, data };
+
+      if (
+        (await uploadFileExists(key)) ||
+        (await isUploadDirectory(key))
+      ) {
+        return { success: false, error: `文件夹 ${name} 已存在` };
+      }
+
+      await createUploadDirectory(key);
+      logger.info('创建文件夹成功', { relativePath: dir, folderName: name, userId: user.id });
+      return {
+        success: true,
+        data: { folderName: name, message: '创建成功' },
+      };
     } catch (error) {
       logger.error('创建文件夹失败', error, { relativePath, folderName });
-      return { success: false, error: '创建文件夹失败' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '创建文件夹失败',
+      };
     }
   });
 }
 
-// 删除文件（转发到 Go DELETE /api/upload-files?path=）
+// 删除文件 / 文件夹
 export async function deleteFile(
   filePath: string
 ): Promise<ActionResponse<{ message: string }>> {
-  return withActionPermission('files:delete', async (user, ctx) => {
+  return withActionPermission('files:delete', async (user) => {
     try {
-      const query = `?path=${encodeURIComponent(filePath)}`;
-      await goFetch(
-        `/api/upload-files${query}`,
-        withGoAuth(ctx, { method: 'DELETE' })
-      );
+      const key = resolveUploadKey(filePath);
+      if (await isUploadDirectory(key)) {
+        await deleteUploadDirectory(key);
+      } else if (await uploadFileExists(key)) {
+        await deleteUploadFile(key);
+      } else {
+        return { success: false, error: '文件不存在' };
+      }
+
       logger.info('删除文件成功', { filePath, userId: user.id });
       return { success: true, data: { message: '删除成功' } };
     } catch (error) {
       logger.error('删除失败', error, { filePath });
-      const msg = error instanceof Error ? error.message : '删除失败';
-      return { success: false, error: msg };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '删除失败',
+      };
     }
   });
 }
 
-// 重命名文件（转发到 Go PUT /api/upload-files）
+// 重命名文件 / 文件夹
 export async function renameFile(
   oldPath: string,
   newName: string
 ): Promise<ActionResponse<{ message: string; newName: string }>> {
-  return withActionPermission('files:update', async (user, ctx) => {
-    if (!newName || newName.trim() === '') {
-      return { success: false, error: '新名称不能为空' };
-    }
-
+  return withActionPermission('files:update', async (user) => {
     try {
-      const data = await goFetch<{ message: string; newName: string }>(
-        '/api/upload-files',
-        withGoAuth(ctx, {
-          method: 'PUT',
-          body: JSON.stringify({ oldPath, newName: newName.trim() }),
-        })
-      );
-      logger.info('重命名文件成功', { oldPath, newName, userId: user.id });
-      return { success: true, data };
+      const name = assertValidName(newName, '新名称');
+      const key = resolveUploadKey(oldPath);
+
+      const isDirectory = await isUploadDirectory(key);
+      if (!isDirectory && !(await uploadFileExists(key))) {
+        return { success: false, error: '文件不存在' };
+      }
+
+      const parent = key.slice(0, key.lastIndexOf('/'));
+      const targetKey = `${parent}/${name}`;
+      if (
+        (await uploadFileExists(targetKey)) ||
+        (await isUploadDirectory(targetKey))
+      ) {
+        return { success: false, error: `文件 ${name} 已存在` };
+      }
+
+      await renameUploadEntry(key, name);
+      logger.info('重命名文件成功', { oldPath, newName: name, userId: user.id });
+      return { success: true, data: { message: '重命名成功', newName: name } };
     } catch (error) {
       logger.error('重命名失败', error, { oldPath, newName });
-      const msg = error instanceof Error ? error.message : '重命名失败';
-      return { success: false, error: msg };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '重命名失败',
+      };
     }
   });
 }
 
-// 批量转换图片为 WebP（Go 端暂未实现，返回提示）
+// 批量转换图片为 WebP
 export async function convertImages(): Promise<
   ActionResponse<{
     message: string;
@@ -252,7 +308,6 @@ export async function convertImages(): Promise<
   }>
 > {
   return withActionPermission('system:convertImages', async () => {
-    // 运行命令转换图片为 WebP
     const result = await convertImagesWebp();
     if (result.success) {
       return {
@@ -268,23 +323,23 @@ export async function convertImages(): Promise<
 
     return {
       success: false,
-      error: '批量转换功能已迁移到 Go 后端，暂未实现',
+      error: '批量转换失败',
     };
   });
 }
 
-// 缓存用户当前路径（Next.js 内存缓存，不涉及文件操作，保留原逻辑）
+// 缓存用户当前路径（Next.js 内存缓存，不涉及文件操作）
 export async function cacheUploadPath(
-  path: string
+  pathValue: string
 ): Promise<ActionResponse<void>> {
   return withActionPermission('files:read', async (user) => {
     try {
       if (user.id) {
-        pathCacheStore.update(user.id, path);
+        pathCacheStore.update(user.id, pathValue);
       }
       return { success: true, data: undefined };
     } catch (error) {
-      logger.error('缓存路径失败', error, { path });
+      logger.error('缓存路径失败', error, { path: pathValue });
       return { success: false, error: '缓存路径失败' };
     }
   });

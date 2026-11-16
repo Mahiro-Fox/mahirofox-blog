@@ -9,6 +9,7 @@ import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
 import { getAllPhotos } from '@/actions/app/photos';
 import { BlurFade } from '@/components/magicui/blur-fade';
+import { siteConfig } from '@/config/common';
 import { PartialViewCarousel } from '@/components/shared/partial-view-carousel';
 import { VermilionThread } from '@/components/shared/vermilion-thread';
 
@@ -78,9 +79,9 @@ export default async function IndexPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Blog',
-            '@id': 'https://mahirooyama.cn',
+            '@id': siteConfig.url,
             name: 'mahirooyama-blog',
-            url: 'https://mahirooyama.cn',
+            url: siteConfig.url,
           }),
         }}
       />

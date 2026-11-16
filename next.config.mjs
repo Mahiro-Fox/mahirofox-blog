@@ -16,7 +16,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'mahirooyama.cn',
+        hostname: 'mahirofox.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.mahirofox.com',
       },
       {
         protocol: 'http',

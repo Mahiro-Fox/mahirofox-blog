@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -78,57 +77,6 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		write.POST("", middleware.RequirePermission(store, "movies:create"), handler.CreateMovieHandler(store))
 		write.PUT("/:id", middleware.RequirePermission(store, "movies:update"), handler.UpdateMovieHandler(store))
 		write.DELETE("/:id", middleware.RequirePermission(store, "movies:delete"), handler.DeleteMovieHandler(store))
-	}
-
-	// midi 路由
-	midiDir := filepath.Join(cfg.UploadsDir, "midisongs")
-	midi := api.Group("/midi")
-	{
-		midi.GET("", middleware.AllowAnonymous(), handler.ListMidiFilesHandler(midiDir))
-		midiWrite := midi.Group("", adminOnly()...)
-		midiWrite.PUT("/:slug", middleware.RequirePermission(store, "midi:update"), handler.RenameMidiFileHandler(midiDir))
-		midiWrite.DELETE("/:slug", middleware.RequirePermission(store, "midi:delete"), handler.DeleteMidiFileHandler(midiDir))
-	}
-
-	// upload-files 路由（服务器文件管理）
-	uploadFiles := api.Group("/upload-files", adminOnly()...)
-	{
-		uploadFiles.GET("", middleware.RequirePermission(store, "files:read"), handler.ListUploadFilesHandler(cfg.UploadsDir))
-		uploadFiles.PUT("", middleware.RequirePermission(store, "files:update"), handler.RenameFileHandler(cfg.UploadsDir))
-		uploadFiles.DELETE("", middleware.RequirePermission(store, "files:delete"), handler.DeleteFileHandler(cfg.UploadsDir))
-		uploadFiles.POST("/folder", middleware.RequirePermission(store, "files:manageFolder"), handler.CreateFolderHandler(cfg.UploadsDir))
-	}
-
-	// 统一资源上传路由（各业务上传 action 复用）
-	uploads := api.Group("/uploads", adminOnly()...)
-	{
-		uploads.POST("/asset", middleware.RequirePermission(store, "files:upload"), handler.UploadAssetHandler(cfg.UploadsDir))
-	}
-
-	// blog-files 路由
-	// GET 为前台博客页公开读（仅内部密钥确认来源）；写操作走完整守卫链
-	blogDir := filepath.Join(cfg.UploadsDir, "content", "blog")
-	blogFiles := api.Group("/blog-files", middleware.RequireInternalSecret(internalSecret))
-	{
-		blogFiles.GET("", middleware.AllowAnonymous(), handler.ListBlogFilesHandler(blogDir))
-		blogFiles.GET("/:slug", middleware.AllowAnonymous(), handler.GetBlogFileHandler(blogDir))
-		blogFiles.POST("", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "blog:create"), handler.CreateBlogFileHandler(blogDir))
-		blogFiles.PUT("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "blog:update"), handler.UpdateBlogFileHandler(blogDir))
-		blogFiles.PATCH("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "blog:update"), handler.RenameBlogFileHandler(blogDir))
-		blogFiles.DELETE("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "blog:delete"), handler.DeleteBlogFileHandler(blogDir))
-	}
-
-	// gallery-files 路由
-	// GET 为前台图库页公开读（仅内部密钥确认来源）；写操作走完整守卫链
-	galleryDir := filepath.Join(cfg.UploadsDir, "content", "gallery")
-	galleryFiles := api.Group("/gallery-files", middleware.RequireInternalSecret(internalSecret))
-	{
-		galleryFiles.GET("", middleware.AllowAnonymous(), handler.ListGalleryFilesHandler(galleryDir))
-		galleryFiles.GET("/:slug", middleware.AllowAnonymous(), handler.GetGalleryFileHandler(galleryDir))
-		galleryFiles.POST("", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "gallery:create"), handler.CreateGalleryFileHandler(galleryDir))
-		galleryFiles.PUT("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "gallery:update"), handler.UpdateGalleryFileHandler(galleryDir))
-		galleryFiles.PATCH("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "gallery:update"), handler.RenameGalleryFileHandler(galleryDir))
-		galleryFiles.DELETE("/:slug", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "gallery:delete"), handler.DeleteGalleryFileHandler(galleryDir))
 	}
 
 	// music 路由

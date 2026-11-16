@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { createGoUploadAction } from '@/lib/upload';
+import { createUploadAction } from '@/lib/upload';
 import {
   withActionPermission,
   type ActionResponse,
@@ -151,7 +151,7 @@ export async function adminDeleteMusic(
   );
 }
 
-export const adminUploadMusicFile = createGoUploadAction({
+export const adminUploadMusicFile = createUploadAction({
   name: '音频文件',
   permission: 'music:create',
   rateLimitKey: 'music:{userId}',

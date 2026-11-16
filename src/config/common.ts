@@ -23,11 +23,16 @@ import {
   Video,
 } from 'lucide-react';
 
+// 站点域名与静态资源域名均可通过环境变量覆盖
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mahirofox.com';
+const uploadsOrigin =
+  process.env.NEXT_PUBLIC_UPLOADS_ORIGIN || 'https://static.mahirofox.com';
+
 export const siteConfig = {
   name: 'Mahirooyama Blog',
   description: "this is mahirooyama's blog, welcome to visit!",
-  url: 'https://mahirooyama.cn/',
-  ogImage: 'https://mahirooyama.cn/uploads/images/avatar/mahirooyama.webp',
+  url: siteUrl,
+  ogImage: `${uploadsOrigin}/uploads/images/avatar/mahirooyama.webp`,
   links: {
     twitter: 'https://x.com/MahiroFox',
     github: 'https://github.com/Mahiro-Fox/mahirooyama-blog',

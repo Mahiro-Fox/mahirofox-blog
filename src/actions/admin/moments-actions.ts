@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { createGoUploadAction } from '@/lib/upload';
+import { createUploadAction } from '@/lib/upload';
 import {
   withActionPermission,
   type ActionResponse,
@@ -24,7 +24,7 @@ export async function adminGetMoments(): Promise<ActionResponse<Moment[]>> {
   });
 }
 
-export const adminUploadMomentImage = createGoUploadAction({
+export const adminUploadMomentImage = createUploadAction({
   name: '碎碎念图片',
   permission: 'moments:create',
   rateLimitKey: 'moments:{userId}',

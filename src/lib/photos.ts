@@ -1,8 +1,14 @@
-import fs from 'fs';
 import path from 'path';
-import { PHOTO_DIR, UPLOADS_DIR } from '@/constant';
-import sharp from 'sharp';
-import { ensureDirectory } from '@/utils/file-utils';
+import { PHOTO_DIR } from '@/constant';
+import { imageSize } from 'image-size';
+import {
+  listUploadFiles,
+  listUploadSubdirectories,
+  readUploadFile,
+  readUploadFileHead,
+  toUploadUrl,
+  type UploadEntry,
+} from '@/lib/server/uploads';
 
 export interface PhotoItem {
   id: string;
@@ -15,6 +21,85 @@ export interface PhotoItem {
   lastUpdatedAt: string;
 }
 
+/** 图片尺寸缓存：R2 列表接口拿不到宽高，首次解析后缓存，避免重复请求 */
+const sizeCache = new Map<string, { width: number; height: number }>();
+const SIZE_CACHE_LIMIT = 500;
+/** 只拉取文件头部（WebP/PNG/GIF/JPEG 的宽高都记录在头部） */
+const IMAGE_HEADER_BYTES = 64 * 1024;
+/** 并发请求数，避免一次图库请求打满 R2 */
+const DOWNLOAD_CONCURRENCY = 8;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+
+  const runners = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (cursor < items.length) {
+        const index = cursor;
+        cursor += 1;
+        results[index] = await worker(items[index]);
+      }
+    }
+  );
+
+  await Promise.all(runners);
+  return results;
+}
+
+function parseImageSize(buffer: Buffer): { width: number; height: number } {
+  const { width, height } = imageSize(buffer);
+  if (!width || !height) {
+    throw new Error('无法解析图片宽高');
+  }
+  return { width, height };
+}
+
+async function readImageSize(
+  entry: UploadEntry
+): Promise<{ width: number; height: number }> {
+  const cacheKey = `${entry.key}@${entry.lastModified.getTime()}`;
+  const cached = sizeCache.get(cacheKey);
+  if (cached) return cached;
+
+  let size: { width: number; height: number };
+  try {
+    const head = await readUploadFileHead(entry.key, IMAGE_HEADER_BYTES);
+    size = parseImageSize(head);
+  } catch {
+    // 极少数图片的尺寸信息在头部范围之外，兜底完整读取
+    size = parseImageSize(await readUploadFile(entry.key));
+  }
+
+  if (sizeCache.size >= SIZE_CACHE_LIMIT) sizeCache.clear();
+  sizeCache.set(cacheKey, size);
+  return size;
+}
+
+function toPhotoItem(
+  entry: UploadEntry,
+  size: { width: number; height: number }
+) {
+  const id = path.basename(entry.name, path.extname(entry.name));
+  const { width, height } = size;
+
+  return {
+    id,
+    src: toUploadUrl(entry.key),
+    filename: entry.name,
+    width,
+    height,
+    ratio: width > 0 && height > 0 ? width / height : 1,
+    alt: id,
+    lastUpdatedAt: entry.lastModified.toISOString(),
+  };
+}
+
 /**
  * 获取指定目录下的所有图片
  * 解析图片尺寸并计算宽高比，自动返回可直接访问的 URL
@@ -23,48 +108,20 @@ export async function getPhotos(
   dir: string = PHOTO_DIR,
   extensions: string[] = ['.webp']
 ): Promise<PhotoItem[]> {
-  await ensureDirectory(dir);
-  const files = await fs.promises.readdir(dir);
-  const imageFiles = files.filter((file) => {
-    const ext = path.extname(file).toLowerCase();
-    // 排除压缩目录和隐藏文件
-    if (file.startsWith('.') || file.startsWith('_')) return false;
-    return extensions.includes(ext);
-  });
+  const files = await listUploadFiles(dir, extensions);
 
-  const images = await Promise.all(
-    imageFiles.map(async (filename) => {
-      const filePath = path.join(dir, filename);
-      const id = path.basename(filename, path.extname(filename));
-
+  const images = await mapWithConcurrency(
+    files,
+    DOWNLOAD_CONCURRENCY,
+    async (entry): Promise<PhotoItem | null> => {
       try {
-        const [stats, metadata] = await Promise.all([
-          fs.promises.stat(filePath),
-          sharp(filePath).metadata(),
-        ]);
-        const width = metadata.width || 0;
-        const height = metadata.height || 0;
-        const ratio = width > 0 && height > 0 ? width / height : 1;
-
-        // 由目录推导静态资源 URL，保证任意子目录都能正确访问
-        const relative = path.relative(UPLOADS_DIR, filePath);
-        const src = `/uploads/${relative.split(path.sep).join('/')}`;
-
-        return {
-          id,
-          src,
-          filename,
-          width,
-          height,
-          ratio,
-          alt: id,
-          lastUpdatedAt: stats.mtime.toISOString(),
-        };
+        const size = await readImageSize(entry);
+        return toPhotoItem(entry, size);
       } catch (error) {
-        console.error(`获取图片元数据失败 ${filename}`, error);
+        console.error(`获取图片元数据失败 ${entry.name}`, error);
         return null;
       }
-    })
+    }
   );
 
   return images.filter((img): img is PhotoItem => img !== null);
@@ -96,71 +153,46 @@ export async function getPhotoCollections(
   dir: string,
   extensions: string[] = ['.webp']
 ): Promise<PhotoCollection[]> {
-  await ensureDirectory(dir);
-  const entries = await fs.promises.readdir(dir, { withFileTypes: true });
-
-  const candidates = entries.filter(
-    (entry) =>
-      entry.isDirectory() &&
-      !entry.name.startsWith('.') &&
-      !entry.name.startsWith('_')
-  );
+  const directories = await listUploadSubdirectories(dir);
 
   const collections = await Promise.all(
-    candidates.map(async (entry): Promise<PhotoCollection | null> => {
-      const collectionDir = path.join(dir, entry.name);
-
-      try {
-        const files = await fs.promises.readdir(collectionDir);
-        const imageFiles = files.filter(
-          (file) =>
-            !file.startsWith('.') &&
-            !file.startsWith('_') &&
-            extensions.includes(path.extname(file).toLowerCase())
-        );
-
-        if (imageFiles.length === 0) return null;
-
-        // 取最新修改的图片作为封面
-        const withStats = await Promise.all(
-          imageFiles.map(async (filename) => {
-            const stats = await fs.promises.stat(
-              path.join(collectionDir, filename)
-            );
-            return { filename, mtime: stats.mtime };
-          })
-        );
-        withStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-        const newest = withStats[0];
-        const coverPath = path.join(collectionDir, newest.filename);
-
-        let width = 0;
-        let height = 0;
+    directories
+      .filter(
+        (entry) => !entry.name.startsWith('.') && !entry.name.startsWith('_')
+      )
+      .map(async (entry): Promise<PhotoCollection | null> => {
         try {
-          const metadata = await sharp(coverPath).metadata();
-          width = metadata.width ?? 0;
-          height = metadata.height ?? 0;
+          const files = await listUploadFiles(entry.dir, extensions);
+          if (files.length === 0) return null;
+
+          // 取最新修改的图片作为封面
+          const newest = files.reduce((latest, file) =>
+            file.lastModified > latest.lastModified ? file : latest
+          );
+
+          let size = { width: 0, height: 0 };
+          try {
+            size = await readImageSize(newest);
+          } catch (error) {
+            console.error(`获取封面元数据失败 ${entry.name}`, error);
+          }
+
+          return {
+            id: entry.name,
+            name: entry.name,
+            count: files.length,
+            cover: toUploadUrl(newest.key),
+            width: size.width,
+            height: size.height,
+            ratio:
+              size.width > 0 && size.height > 0 ? size.width / size.height : 1,
+            lastUpdatedAt: newest.lastModified.toISOString(),
+          };
         } catch (error) {
-          console.error(`获取封面元数据失败 ${entry.name}`, error);
+          console.error(`读取作者目录失败 ${entry.name}`, error);
+          return null;
         }
-
-        const relative = path.relative(UPLOADS_DIR, coverPath);
-
-        return {
-          id: entry.name,
-          name: entry.name,
-          count: imageFiles.length,
-          cover: `/uploads/${relative.split(path.sep).join('/')}`,
-          width,
-          height,
-          ratio: width > 0 && height > 0 ? width / height : 1,
-          lastUpdatedAt: newest.mtime.toISOString(),
-        };
-      } catch (error) {
-        console.error(`读取作者目录失败 ${entry.name}`, error);
-        return null;
-      }
-    })
+      })
   );
 
   return collections
