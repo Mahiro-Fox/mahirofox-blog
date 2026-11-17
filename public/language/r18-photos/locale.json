@@ -2,7 +2,7 @@
   "en": {
     "r18-photos.title": "R-18 Gallery",
     "r18-photos.description": "A private pixiv collection, only visible after signing in.",
-    "r18-photos.keywords": "r18, pixiv, gallery, illustration",
+    "r18-photos.keywords": "mahiro, mahirofox, r18, pixiv, gallery, illustration",
     "r18-photos.authors": "Artists",
     "r18-photos.author_total": "{{count}} artists",
     "r18-photos.author_count": "{{count}} works",
@@ -13,7 +13,7 @@
   "cn": {
     "r18-photos.title": "R-18 图库",
     "r18-photos.description": "私密的 pixiv 收藏，登录后可见。",
-    "r18-photos.keywords": "r18, pixiv, 图库, 插画",
+    "r18-photos.keywords": "mahiro, mahirofox, r18, pixiv, 图库, 插画",
     "r18-photos.authors": "作者",
     "r18-photos.author_total": "{{count}} 位作者",
     "r18-photos.author_count": "{{count}} 张",

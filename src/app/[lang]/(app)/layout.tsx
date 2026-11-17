@@ -22,6 +22,7 @@ export const generateMetadata = async ({
 }) => {
   const { lang } = await params;
   const homeDictionary = await getDictionary(lang, 'home');
+  const title = homeDictionary['home.title'];
   const description =
     `${homeDictionary['home.description_1']}${homeDictionary['home.description_2']}${homeDictionary['home.description_3']}`
       .replace(/<a>/g, '')
@@ -38,7 +39,7 @@ export const generateMetadata = async ({
   }
   const metaData = {
     title: {
-      default: siteConfig.name,
+      default: title,
       template: `%s | ${siteConfig.name}`,
     },
     metadataBase,
