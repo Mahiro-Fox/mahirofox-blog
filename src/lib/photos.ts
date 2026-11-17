@@ -65,7 +65,12 @@ async function readImageSize(
 ): Promise<{ width: number; height: number }> {
   const cacheKey = `${entry.key}@${entry.lastModified.getTime()}`;
   const cached = sizeCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // 命中后移到队尾，近似 LRU，避免热点条目被淘汰
+    sizeCache.delete(cacheKey);
+    sizeCache.set(cacheKey, cached);
+    return cached;
+  }
 
   let size: { width: number; height: number };
   try {
@@ -76,8 +81,12 @@ async function readImageSize(
     size = parseImageSize(await readUploadFile(entry.key));
   }
 
-  if (sizeCache.size >= SIZE_CACHE_LIMIT) sizeCache.clear();
+  // 逐条淘汰最久未使用的记录，避免整表清空导致反复回源
   sizeCache.set(cacheKey, size);
+  if (sizeCache.size > SIZE_CACHE_LIMIT) {
+    const oldestKey = sizeCache.keys().next().value;
+    if (oldestKey !== undefined) sizeCache.delete(oldestKey);
+  }
   return size;
 }
 
@@ -103,12 +112,17 @@ function toPhotoItem(
 /**
  * 获取指定目录下的所有图片
  * 解析图片尺寸并计算宽高比，自动返回可直接访问的 URL
+ *
+ * limit 用于轮播等只需要少量图片的场景：只对最新的 N 张解析宽高，
+ * 避免为整目录每张图都发一次 Range 请求。
  */
 export async function getPhotos(
   dir: string = PHOTO_DIR,
-  extensions: string[] = ['.webp']
+  extensions: string[] = ['.webp'],
+  limit?: number
 ): Promise<PhotoItem[]> {
-  const files = await listUploadFiles(dir, extensions);
+  const all = await listUploadFiles(dir, extensions);
+  const files = limit && limit > 0 ? sortByLatest(all).slice(0, limit) : all;
 
   const images = await mapWithConcurrency(
     files,

@@ -2,7 +2,7 @@
 
 import path from 'path';
 import { cache } from 'react';
-import { OBUSCATOR_PHOTO_DIR, R18_PHOTO_DIR } from '@/constant/dir';
+import { OBUSCATOR_PHOTO_DIR, PHOTO_DIR, R18_PHOTO_DIR } from '@/constant/dir';
 import {
   getPhotoCollections,
   getPhotos,
@@ -123,10 +123,13 @@ export async function getR18CollectionPhotosAction(
 export const getAllPhotos = cache(
   async ({
     ratio = 'landscape',
+    limit = 80,
   }: {
     ratio?: 'landscape' | 'portrait';
+    /** 只解析最新的 N 张，避免每次渲染全量扫描图库 */
+    limit?: number;
   }): Promise<PhotoItem[] | null> => {
-    const photos = await getPhotos();
+    const photos = await getPhotos(PHOTO_DIR, ['.webp'], limit);
 
     if (!photos.length) {
       return null;

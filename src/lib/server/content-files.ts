@@ -48,12 +48,44 @@ function sortByLastUpdatedDesc<T extends { lastUpdated: string }>(
   );
 }
 
+/**
+ * 列表结果短缓存：首页等页面每次渲染都会列出全部内容文件，
+ * 不缓存的话每次渲染都要 ListObjects + 逐个读取 R2 对象。
+ */
+const LIST_CACHE_TTL_MS = 60_000;
+type ListBucket = 'blog' | 'gallery';
+const listCache = new Map<
+  ListBucket,
+  { value: unknown; expiresAt: number }
+>();
+
+function invalidateListCache(bucket: ListBucket): void {
+  listCache.delete(bucket);
+}
+
+async function withListCache<T>(
+  bucket: ListBucket,
+  loader: () => Promise<T>
+): Promise<T> {
+  const hit = listCache.get(bucket);
+  if (hit && hit.expiresAt > Date.now()) return hit.value as T;
+
+  const value = await loader();
+  listCache.set(bucket, { value, expiresAt: Date.now() + LIST_CACHE_TTL_MS });
+  return value;
+}
+
 // ------------------------------------------------------------
 // Blog（MDX）
 // ------------------------------------------------------------
 
-/** 列出所有博客文件并解析 frontmatter */
+/** 列出所有博客文件并解析 frontmatter（结果缓存 60s，写操作时失效） */
 export async function listBlogFiles(): Promise<AdminBlog[]> {
+  const cached = await withListCache('blog', loadBlogFiles);
+  return [...cached];
+}
+
+async function loadBlogFiles(): Promise<AdminBlog[]> {
   const files = await listUploadFiles(BLOG_DIR, [BLOG_EXT]);
   const items = await Promise.all(
     files.map(async (file): Promise<AdminBlog | null> => {
@@ -101,6 +133,7 @@ export async function createBlogFile(
     throw new Error(`文件 ${slug}${BLOG_EXT} 已存在`);
   }
   await putUploadFile(blogKey(slug), content, BLOG_CONTENT_TYPE);
+  invalidateListCache('blog');
 }
 
 /** 更新 MDX 文件 */
@@ -112,6 +145,7 @@ export async function updateBlogFile(
     throw new Error('文件不存在');
   }
   await putUploadFile(blogKey(slug), content, BLOG_CONTENT_TYPE);
+  invalidateListCache('blog');
 }
 
 /** 重命名 MDX 文件 */
@@ -126,6 +160,7 @@ export async function renameBlogFile(
     throw new Error(`文件 ${newSlug}${BLOG_EXT} 已存在`);
   }
   await renameUploadEntry(blogKey(slug), `${newSlug}${BLOG_EXT}`);
+  invalidateListCache('blog');
 }
 
 /** 删除 MDX 文件 */
@@ -134,6 +169,7 @@ export async function deleteBlogFile(slug: string): Promise<void> {
     throw new Error('文件不存在');
   }
   await deleteUploadFile(blogKey(slug));
+  invalidateListCache('blog');
 }
 
 // ------------------------------------------------------------
@@ -159,8 +195,13 @@ export function formatGalleryJson(content: string): string {
   return JSON.stringify(parseGalleryJson(content), null, 2);
 }
 
-/** 列出所有图库文件并解析 JSON */
+/** 列出所有图库文件并解析 JSON（结果缓存 60s，写操作时失效） */
 export async function listGalleryFiles(): Promise<AdminGallery[]> {
+  const cached = await withListCache('gallery', loadGalleryFiles);
+  return [...cached];
+}
+
+async function loadGalleryFiles(): Promise<AdminGallery[]> {
   const files = await listUploadFiles(GALLERY_DIR, [GALLERY_EXT]);
   const items = await Promise.all(
     files.map(async (file): Promise<AdminGallery | null> => {
@@ -225,6 +266,7 @@ export async function createGalleryFile(
     throw new Error(`文件 ${slug}${GALLERY_EXT} 已存在`);
   }
   await putUploadFile(galleryKey(slug), formatted, GALLERY_CONTENT_TYPE);
+  invalidateListCache('gallery');
 }
 
 /** 更新图库 JSON 文件 */
@@ -237,6 +279,7 @@ export async function updateGalleryFile(
     throw new Error('文件不存在');
   }
   await putUploadFile(galleryKey(slug), formatted, GALLERY_CONTENT_TYPE);
+  invalidateListCache('gallery');
 }
 
 /** 重命名图库 JSON 文件 */
@@ -251,6 +294,7 @@ export async function renameGalleryFile(
     throw new Error(`文件 ${newSlug}${GALLERY_EXT} 已存在`);
   }
   await renameUploadEntry(galleryKey(slug), `${newSlug}${GALLERY_EXT}`);
+  invalidateListCache('gallery');
 }
 
 /** 删除图库 JSON 文件 */
@@ -259,4 +303,5 @@ export async function deleteGalleryFile(slug: string): Promise<void> {
     throw new Error('文件不存在');
   }
   await deleteUploadFile(galleryKey(slug));
+  invalidateListCache('gallery');
 }
