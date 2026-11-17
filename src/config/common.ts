@@ -29,17 +29,17 @@ const uploadsOrigin =
   process.env.NEXT_PUBLIC_UPLOADS_ORIGIN || 'https://static.mahirofox.com';
 
 export const siteConfig = {
-  name: 'Mahirooyama Blog',
-  description: "this is mahirooyama's blog, welcome to visit!",
+  name: 'MahiroFox Blog',
+  description: "this is mahirofox's blog, welcome to visit!",
   url: siteUrl,
-  ogImage: `${uploadsOrigin}/uploads/images/avatar/mahirooyama.webp`,
+  ogImage: `${uploadsOrigin}/uploads/images/avatar/mahirofox.webp`,
   links: {
     twitter: 'https://x.com/MahiroFox',
-    github: 'https://github.com/Mahiro-Fox/mahirooyama-blog',
+    github: 'https://github.com/Mahiro-Fox/mahirofox-blog',
     vrchat:
       'https://vrchat.com/home/user/usr_f938bc37-4d62-48d8-98eb-955f10f464e0',
   },
-  copyRight: 'mahirooyama',
+  copyRight: 'mahirofox',
   email: 'why510902@163.com',
 };
 

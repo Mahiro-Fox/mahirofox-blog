@@ -51,8 +51,8 @@ func LoadFromEnv() (*Config, error) {
 		AdminCookieName:   getenv("ADMIN_COOKIE_NAME", "admin-session"),
 		UserCookieName:    getenv("USER_COOKIE_NAME", "user-session"),
 		SessionTTLSeconds: ttl,
-		AdminIssuer:       getenv("ADMIN_ISSUER", "admin:mahirooyama"),
-		UserIssuer:        getenv("USER_ISSUER", "user:mahirooyama"),
+		AdminIssuer:       getenv("ADMIN_ISSUER", "admin:mahirofox"),
+		UserIssuer:        getenv("USER_ISSUER", "user:mahirofox"),
 		SessionAutoRecover: autoRecover,
 	}, nil
 }

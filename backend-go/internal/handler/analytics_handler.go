@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mahirooyama-blog/backend-go/internal/repository"
-	"mahirooyama-blog/backend-go/internal/service"
+	"mahirofox-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/service"
 )
 
 // maxAnalyticsBody 埋点请求体上限（64KB，防御超大 payload）

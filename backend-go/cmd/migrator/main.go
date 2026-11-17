@@ -12,9 +12,9 @@ import (
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/config"
-	"mahirooyama-blog/backend-go/internal/db"
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/db"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 // MIGRATE_TYPE 指定迁移类型，MIGRATE_SOURCE 指定 JSON 路径

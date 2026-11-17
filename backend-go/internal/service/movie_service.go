@@ -8,8 +8,8 @@ import (
 
 	"github.com/lib/pq"
 
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // ListMovies 列出公开电影

@@ -123,7 +123,7 @@ export const aboutConfig: AboutConfig = {
       size: 'md:col-span-3',
       content: {
         greeting: 'about.profile.greeting',
-        name: 'MahiroOyama',
+        name: 'MahiroFox',
         title: 'about.profile.title',
       },
     },

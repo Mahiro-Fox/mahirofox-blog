@@ -1,6 +1,6 @@
 export const author = {
-  slug: 'mahirooyama',
-  name: 'mahirooyama',
-  image: '/uploads/images/avatar/mahirooyama.webp',
+  slug: 'mahirofox',
+  name: 'mahirofox',
+  image: '/uploads/images/avatar/mahirofox.webp',
   twitter: 'MahiroFox',
 };

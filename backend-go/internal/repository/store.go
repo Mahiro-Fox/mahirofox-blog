@@ -10,7 +10,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 // Store 全部持久化操作的门面接口。

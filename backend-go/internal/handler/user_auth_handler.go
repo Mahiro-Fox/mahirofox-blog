@@ -10,10 +10,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mahirooyama-blog/backend-go/internal/config"
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
-	"mahirooyama-blog/backend-go/internal/service"
+	"mahirofox-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/service"
 )
 
 // UserLoginHandler 前台登录：返回 {token, account, expiresIn, sessionId, loggedInAt}

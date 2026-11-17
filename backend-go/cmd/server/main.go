@@ -13,12 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/config"
-	"mahirooyama-blog/backend-go/internal/db"
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
-	"mahirooyama-blog/backend-go/internal/router"
-	"mahirooyama-blog/backend-go/internal/service"
+	"mahirofox-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/db"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/router"
+	"mahirofox-blog/backend-go/internal/service"
 )
 
 func main() {

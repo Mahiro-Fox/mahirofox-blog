@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // ListTags 列出标签，可按 type 过滤

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mahirooyama-blog/backend-go/internal/auth"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/auth"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // 鉴权上下文键。下游 handler 可通过 c.Get(CtxKeyUserID) 等取用。

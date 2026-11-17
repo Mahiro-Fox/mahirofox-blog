@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // toMomentImageData 将 MomentImage 包装为强类型 MomentImageData（nil 保持空）

@@ -10,7 +10,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 // ErrUserSessionNotFound 前台会话不存在

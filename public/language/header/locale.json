@@ -1,7 +1,7 @@
 {
   "en": {
-    "site_name": "Mahirooyama Blog",
-    "site_description": "this is mahirooyama's blog, welcome to visit!",
+    "site_name": "MahiroFox Blog",
+    "site_description": "this is mahirofox's blog, welcome to visit!",
     "github_repository": "GitHub Repository",
     "content": "Content",
     "tools": "Tools",
@@ -118,7 +118,7 @@
     "global-music-player.loop": "Loop"
   },
   "cn": {
-    "site_name": "Mahirooyama 博客",
+    "site_name": "Mahiro 博客",
     "site_description": "这是 Mahiirooyama 博客，欢迎访问！",
     "github_repository": "GitHub 仓库",
     "content": "内容",

@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 // ErrGuestbookNotFound 留言不存在

@@ -1,4 +1,4 @@
-module mahirooyama-blog/backend-go
+module mahirofox-blog/backend-go
 
 go 1.25.0
 

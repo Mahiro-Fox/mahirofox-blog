@@ -9,9 +9,9 @@ import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
 import { getAllPhotos } from '@/actions/app/photos';
 import { BlurFade } from '@/components/magicui/blur-fade';
-import { siteConfig } from '@/config/common';
 import { PartialViewCarousel } from '@/components/shared/partial-view-carousel';
 import { VermilionThread } from '@/components/shared/vermilion-thread';
+import { siteConfig } from '@/config/common';
 
 export default async function IndexPage() {
   const [blogResult, galleryResult, bannerData, tags] = await Promise.all([
@@ -80,7 +80,7 @@ export default async function IndexPage() {
             '@context': 'https://schema.org',
             '@type': 'Blog',
             '@id': siteConfig.url,
-            name: 'mahirooyama-blog',
+            name: 'mahirofox-blog',
             url: siteConfig.url,
           }),
         }}

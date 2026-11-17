@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // ListGuestbook 列出留言。approvedOnly=true 时只返回已审核通过的（访客用）

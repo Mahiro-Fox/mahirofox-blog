@@ -7,8 +7,8 @@ import (
 
 	"github.com/lib/pq"
 
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // ListRolePermissions 列出全部角色权限

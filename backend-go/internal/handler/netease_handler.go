@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"mahirooyama-blog/backend-go/internal/service"
+	"mahirofox-blog/backend-go/internal/service"
 )
 
 func cloudClient() *http.Client {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 // analyticsListLimit 后台 GET 单次返回的最大条数（避免一次性拉全表）

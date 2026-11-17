@@ -25,7 +25,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 rel="noreferrer"
                 className={buttonVariants({ variant: 'outline', size: 'icon' })}
                 aria-label="VRChat"
-                title="VRChat (mahirooyama)"
+                title="VRChat (mahirofox)"
               >
                 <BrandIcons.vrchat className="size-4" />
               </Link>
@@ -39,7 +39,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Email"
-                title="Email (mahirooyama)"
+                title="Email (mahirofox)"
               >
                 <MailIcon className="size-4" />
               </Link>
@@ -53,7 +53,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="GitHub"
-                title="GitHub (mahirooyama-blog github repository)"
+                title="GitHub (mahirofox-blog github repository)"
               >
                 <BrandIcons.gitHub className="size-4" />
               </Link>
@@ -78,7 +78,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
               href="/rss.xml"
               className={buttonVariants({ variant: 'outline', size: 'icon' })}
               aria-label="RSS"
-              title="RSS Feed (mahirooyama-blog)"
+              title="RSS Feed (mahirofox-blog)"
             >
               <RssIcon className="size-4" />
             </NextLink>

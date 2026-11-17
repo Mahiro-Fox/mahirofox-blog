@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"mahirooyama-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/config"
 )
 
 // NewGormDB 创建并返回 GORM DB 连接（含连接池配置）

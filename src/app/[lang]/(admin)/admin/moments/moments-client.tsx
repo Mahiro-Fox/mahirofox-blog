@@ -398,7 +398,7 @@ export default function MomentsClient({
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=zh-CN`,
         {
           headers: {
-            'User-Agent': 'mahirooyama-blog',
+            'User-Agent': 'mahirofox-blog',
           },
         }
       );

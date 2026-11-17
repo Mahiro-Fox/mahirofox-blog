@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"mahirooyama-blog/backend-go/internal/auth"
-	"mahirooyama-blog/backend-go/internal/config"
-	"mahirooyama-blog/backend-go/internal/model"
-	"mahirooyama-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/auth"
+	"mahirofox-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/repository"
 )
 
 // AdminLoginResult 登录返回（不含密码）

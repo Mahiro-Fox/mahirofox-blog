@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 const (

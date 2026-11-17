@@ -1,9 +1,9 @@
 {
-  "name": "mahirooyama-blog",
+  "name": "mahirofox-blog",
   "version": "1.0.0",
   "private": true,
   "author": {
-    "name": "mahirooyama",
+    "name": "mahirofox",
     "url": "https://mahirofox.com"
   },
   "scripts": {

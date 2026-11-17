@@ -48,7 +48,7 @@ type UserClaims struct {
 }
 
 // SignAdmin 签发后台登录 JWT（HS256）
-// - issuer: 预期为 config.AdminIssuer（"admin:mahirooyama"）
+// - issuer: 预期为 config.AdminIssuer（"admin:mahirofox"）
 // - ttlSeconds: 过期秒数（一般 86400）
 // - subject: AdminUser ID
 func SignAdmin(
@@ -81,7 +81,7 @@ func SignAdmin(
 }
 
 // SignUser 签发前台登录 JWT（HS256）
-// - issuer: 预期为 config.UserIssuer（"user:mahirooyama"）
+// - issuer: 预期为 config.UserIssuer（"user:mahirofox"）
 // - accountId/email: 允许 email 为空
 func SignUser(
 	secret []byte,

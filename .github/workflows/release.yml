@@ -21,6 +21,6 @@ jobs:
           user: ${{ secrets.SERVER_USER }}
           # Bash commands ran on target machine
           command: |
-            cd /home/ubuntu/mahirooyama-blog/
+            cd /home/ubuntu/mahirofox-blog/
             git pull --rebase
             docker compose up -d --build next-frontend backend-go

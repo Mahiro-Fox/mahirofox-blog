@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 var (

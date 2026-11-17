@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"mahirooyama-blog/backend-go/internal/model"
+	"mahirofox-blog/backend-go/internal/model"
 )
 
 const (

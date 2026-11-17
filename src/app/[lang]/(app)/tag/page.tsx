@@ -7,9 +7,9 @@ import { Link } from '@/components/shared/link';
 import { Tag as TagType } from '@/constant/tag';
 
 export const metadata: Metadata = {
-  title: '标签列表 - mahirooyama',
+  title: '标签列表 - mahirofox',
   description: '浏览所有 blog 和 gallery 的标签',
-  keywords: ['标签', 'tags', 'mahirooyama', 'mahiooyama', 'contact mahiro'],
+  keywords: ['标签', 'tags', 'mahirofox', 'contact mahiro'],
 };
 
 function TagCard({ tag, type }: { tag: TagType; type: 'blog' | 'gallery' }) {

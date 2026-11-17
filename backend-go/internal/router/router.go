@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"mahirooyama-blog/backend-go/internal/config"
-	"mahirooyama-blog/backend-go/internal/handler"
-	"mahirooyama-blog/backend-go/internal/middleware"
-	"mahirooyama-blog/backend-go/internal/repository"
-	"mahirooyama-blog/backend-go/internal/service"
+	"mahirofox-blog/backend-go/internal/config"
+	"mahirofox-blog/backend-go/internal/handler"
+	"mahirofox-blog/backend-go/internal/middleware"
+	"mahirofox-blog/backend-go/internal/repository"
+	"mahirofox-blog/backend-go/internal/service"
 )
 
 // RegisterRoutes 注册所有路由（接收 Config，让 auth 处理器能读 JWT 相关配置）
