@@ -138,6 +138,61 @@ export async function listR2Directories(prefix: string): Promise<string[]> {
     .filter((item) => item.length > 0);
 }
 
+export interface R2DirectoryContents {
+  /** 该层级的文件（不含目录占位符） */
+  files: R2ObjectInfo[];
+  /** 该层级的一级子目录，值为完整前缀（末尾带 /） */
+  directories: string[];
+}
+
+/**
+ * 只列出某个前缀下一层的文件与子目录。
+ *
+ * 单次 delimiter 请求即可拿到两者，避免像递归列表那样把整棵子树的
+ * 对象都拉一遍（uploads/ 上万对象时差距是几十倍）。
+ */
+export async function listR2DirectoryContents(
+  prefix: string
+): Promise<R2DirectoryContents> {
+  const config = requireConfig();
+  const client = getClient(config);
+  const base = prefix.endsWith('/') ? prefix : `${prefix}/`;
+  const files: R2ObjectInfo[] = [];
+  const directories: string[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const result = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: base,
+        Delimiter: '/',
+        ContinuationToken: continuationToken,
+      })
+    );
+
+    for (const item of result.Contents ?? []) {
+      // 以 / 结尾的是目录占位对象，已在 CommonPrefixes 中体现
+      if (!item.Key || item.Key.endsWith('/')) continue;
+      files.push({
+        key: item.Key,
+        size: item.Size ?? 0,
+        lastModified: item.LastModified ?? new Date(0),
+      });
+    }
+
+    for (const item of result.CommonPrefixes ?? []) {
+      if (item.Prefix) directories.push(item.Prefix);
+    }
+
+    continuationToken = result.IsTruncated
+      ? result.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
+
+  return { files, directories };
+}
+
 /** 读取对象内容 */
 export async function getR2ObjectBuffer(key: string): Promise<Buffer> {
   const config = requireConfig();

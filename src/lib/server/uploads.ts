@@ -8,6 +8,7 @@ import {
   getR2ObjectRange,
   isR2Configured,
   listR2Directories,
+  listR2DirectoryContents,
   listR2Objects,
   putR2Object,
   r2ObjectExists,
@@ -235,53 +236,37 @@ export async function listUploadEntries(
   }
 
   const prefix = dirToR2Prefix(dir);
-  const [objects, directoryNames] = await Promise.all([
-    listR2Objects(prefix),
-    listR2Directories(prefix),
-  ]);
-  const entries = new Map<string, UploadDirEntry>();
+  const { files, directories } = await listR2DirectoryContents(prefix);
+  const entries: UploadDirEntry[] = [];
 
-  for (const object of objects) {
-    const relative = object.key.slice(prefix.length);
-    const slashIndex = relative.indexOf('/');
-    if (slashIndex >= 0) {
-      const name = relative.slice(0, slashIndex);
-      const exists = entries.get(name);
-      if (!exists || object.lastModified > exists.lastModified) {
-        entries.set(name, {
-          name,
-          key: `${prefix}${name}`,
-          size: 0,
-          lastModified: object.lastModified,
-          type: 'directory',
-          extension: '',
-        });
-      }
-      continue;
-    }
-    entries.set(relative, {
-      name: relative,
-      key: object.key,
-      size: object.size,
-      lastModified: object.lastModified,
+  for (const file of files) {
+    const name = file.key.slice(prefix.length);
+    if (!name) continue;
+    entries.push({
+      name,
+      key: file.key,
+      size: file.size,
+      lastModified: file.lastModified,
       type: 'file',
-      extension: path.extname(relative).replace(/^\./, '').toLowerCase(),
+      extension: path.extname(name).replace(/^\./, '').toLowerCase(),
     });
   }
 
-  for (const name of directoryNames) {
-    if (entries.has(name)) continue;
-    entries.set(name, {
+  for (const directoryPrefix of directories) {
+    const name = directoryPrefix.slice(prefix.length).replace(/\/$/, '');
+    if (!name) continue;
+    entries.push({
       name,
       key: `${prefix}${name}`,
       size: 0,
+      // delimiter 列表不返回子目录时间，页面里对目录不展示更新时间
       lastModified: new Date(0),
       type: 'directory',
       extension: '',
     });
   }
 
-  return [...entries.values()];
+  return entries;
 }
 
 /** 文件是否存在 */

@@ -339,7 +339,11 @@ function FileTable({
               <TableCell className="text-muted-foreground">
                 {item.type === 'directory' ? '-' : formatSize(item.size)}
               </TableCell>
-              <TableCell>{formatDate(item.lastUpdated)}</TableCell>
+              <TableCell>
+                {item.type === 'directory'
+                  ? '-'
+                  : formatDate(item.lastUpdated)}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   {item.type === 'file' && isImage(item) && (
