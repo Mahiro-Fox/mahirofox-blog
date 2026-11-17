@@ -127,6 +127,55 @@ export async function getPhotos(
   return images.filter((img): img is PhotoItem => img !== null);
 }
 
+export interface PhotoPage {
+  images: PhotoItem[];
+  /** 当前目录下符合条件的图片总数 */
+  total: number;
+}
+
+/** 按最后修改时间倒序，最新的在前 */
+function sortByLatest(entries: UploadEntry[]): UploadEntry[] {
+  return [...entries].sort(
+    (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
+  );
+}
+
+/**
+ * 分页读取指定目录的图片。
+ *
+ * 只列出文件（ListObjectsV2 很便宜），排序切片后**仅为当前页**解析宽高，
+ * 避免为整目录每张图都发一次 Range 请求——目录越大收益越明显。
+ */
+export async function getPhotosPage(
+  dir: string = PHOTO_DIR,
+  extensions: string[] = ['.webp'],
+  page = 1,
+  limit = 12
+): Promise<PhotoPage> {
+  const files = sortByLatest(await listUploadFiles(dir, extensions));
+  const start = Math.max(0, (page - 1) * limit);
+  const pageFiles = files.slice(start, start + limit);
+
+  const images = await mapWithConcurrency(
+    pageFiles,
+    DOWNLOAD_CONCURRENCY,
+    async (entry): Promise<PhotoItem | null> => {
+      try {
+        const size = await readImageSize(entry);
+        return toPhotoItem(entry, size);
+      } catch (error) {
+        console.error(`获取图片元数据失败 ${entry.name}`, error);
+        return null;
+      }
+    }
+  );
+
+  return {
+    images: images.filter((img): img is PhotoItem => img !== null),
+    total: files.length,
+  };
+}
+
 /**
  * 图库作者（一级子目录）摘要：用于先展示作者，再按作者加载作品。
  */

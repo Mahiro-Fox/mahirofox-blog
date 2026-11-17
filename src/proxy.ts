@@ -9,7 +9,7 @@ import { i18nConfig } from '@/i18n/i18n.config';
  * 数据库与代码里继续使用 `/uploads/xxx` 逻辑路径，在入口统一 301 到 R2，
  * 避免逐页面、逐字段改路径，也保证富文本/动态数据不遗漏。
  *
- * 生产环境前置 Nginx 时，/uploads/ 请求通常不会到达 Next，需要在 Nginx 中配置同样的 301。
+ * 生产环境前置 Nginx 时，/uploads/ 请求会被转发到达 Next。
  */
 const UPLOADS_ORIGIN =
   process.env.NEXT_PUBLIC_UPLOADS_ORIGIN ||

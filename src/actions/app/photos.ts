@@ -6,6 +6,7 @@ import { OBUSCATOR_PHOTO_DIR, R18_PHOTO_DIR } from '@/constant/dir';
 import {
   getPhotoCollections,
   getPhotos,
+  getPhotosPage,
   PhotoCollection,
   PhotoItem,
 } from '@/lib/photos';
@@ -32,24 +33,18 @@ export async function getPhotosAction(
     throw new Error('Invalid pagination parameters');
   }
 
-  // 按时间排序
-  const allImages = await getPhotos(dir, extensions);
-  const sortedImages = allImages.sort((a, b) =>
-    b.lastUpdatedAt.localeCompare(a.lastUpdatedAt)
-  );
-
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedImages = sortedImages.slice(startIndex, endIndex);
+  // 列表全量、只为当前页解析宽高，避免随目录大小线性变慢
+  const { images, total } = await getPhotosPage(dir, extensions, page, limit);
+  const endIndex = page * limit;
 
   return {
-    images: paginatedImages,
+    images,
     pagination: {
       page,
       limit,
-      total: allImages.length,
-      totalPages: Math.ceil(allImages.length / limit),
-      hasMore: endIndex < allImages.length,
+      total,
+      totalPages: Math.ceil(total / limit),
+      hasMore: endIndex < total,
     },
   };
 }

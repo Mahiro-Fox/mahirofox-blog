@@ -25,8 +25,7 @@ import {
 
 // 站点域名与静态资源域名均可通过环境变量覆盖
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mahirofox.com';
-const uploadsOrigin =
-  process.env.NEXT_PUBLIC_UPLOADS_ORIGIN || 'https://static.mahirofox.com';
+const uploadsOrigin = process.env.NEXT_PUBLIC_UPLOADS_ORIGIN;
 
 export const siteConfig = {
   name: 'MahiroFox Blog',
