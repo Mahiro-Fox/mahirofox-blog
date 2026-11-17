@@ -8,13 +8,17 @@ import {
   GOOGLE_STATE_COOKIE,
   GOOGLE_VERIFIER_COOKIE,
   randomToken,
+  redirectToPath,
   sanitizeRedirectPath,
   signinPathFor,
   temporaryCookieOptions,
 } from '@/lib/google-oauth';
+import { createLogger } from '@/utils/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const logger = createLogger('GoogleOAuthStart');
 
 /**
  * GET /next-api/auth/google/start?redirect=/xxx
@@ -26,10 +30,11 @@ export async function GET(req: NextRequest) {
   );
   const config = getGoogleOAuthConfig();
   if (!config) {
-    return NextResponse.redirect(
-      new URL(signinPathFor(redirectPath, 'GOOGLE_NOT_CONFIGURED'), req.url)
-    );
+    logger.warn('Google OAuth 未配置，已拒绝发起登录');
+    return redirectToPath(signinPathFor(redirectPath, 'GOOGLE_NOT_CONFIGURED'));
   }
+
+  logger.info('发起 Google OAuth', { redirectUri: config.redirectUri });
 
   const state = randomToken(32);
   const verifier = randomToken(48);

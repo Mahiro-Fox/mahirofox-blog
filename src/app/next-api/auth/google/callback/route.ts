@@ -8,6 +8,7 @@ import {
   GOOGLE_REDIRECT_COOKIE,
   GOOGLE_STATE_COOKIE,
   GOOGLE_VERIFIER_COOKIE,
+  redirectToPath,
   sanitizeRedirectPath,
   signinPathFor,
 } from '@/lib/google-oauth';
@@ -46,9 +47,12 @@ export async function GET(req: NextRequest) {
   );
 
   const fail = (errorCode: string) => {
-    const res = NextResponse.redirect(
-      new URL(signinPathFor(redirectPath, errorCode), req.url)
-    );
+    logger.warn('Google 登录失败，回跳登录页', {
+      errorCode,
+      redirectPath,
+      redirectUri: getGoogleOAuthConfig()?.redirectUri,
+    });
+    const res = redirectToPath(signinPathFor(redirectPath, errorCode));
     clearTemporaryCookies(res);
     return res;
   };
@@ -80,7 +84,11 @@ export async function GET(req: NextRequest) {
 
     const login = await userLoginGoogleViaGo(identity);
 
-    const res = NextResponse.redirect(new URL(redirectPath, req.url));
+    logger.info('Google 登录成功', {
+      accountId: login.account.id,
+      provider: login.account.provider,
+    });
+    const res = redirectToPath(redirectPath);
     res.cookies.set(
       USER_SESSION_COOKIE,
       login.token,

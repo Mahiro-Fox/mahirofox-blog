@@ -6,6 +6,7 @@
  * → userinfo 取已验证身份 → 交给 Go 后端签发 user-session。
  */
 
+import { NextResponse } from 'next/server';
 import { i18nConfig } from '@/i18n/i18n.config';
 
 export const GOOGLE_AUTH_ENDPOINT =
@@ -91,6 +92,18 @@ export function signinPathFor(target: string, errorCode?: string): string {
   const base = `${prefix}/signin`;
   if (!errorCode) return base;
   return `${base}?${new URLSearchParams({ error: errorCode, redirect: target }).toString()}`;
+}
+
+/**
+ * 302 跳转到站内相对路径。
+ * 必须用相对 Location：反向代理（Docker/Tunnel）会把上游 Host 改写成容器主机名，
+ * 若用 req.url 拼绝对地址，浏览器会被跳到内网域名，且 Cookie 因跨站全部丢失。
+ */
+export function redirectToPath(path: string): NextResponse {
+  return new NextResponse(null, {
+    status: 302,
+    headers: { Location: path },
+  });
 }
 
 /** OAuth 临时 Cookie（回调来自 Google 的顶层跳转，必须 SameSite=Lax 才会携带） */
