@@ -1,6 +1,7 @@
 'use client';
 
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminGetUploadFiles,
@@ -8,11 +9,14 @@ import {
   convertImages,
   createFolder,
   deleteFile,
+  deleteFiles,
   renameFile,
 } from '@/actions/admin/upload-files-actions';
 import { AdminPageLayout } from '@/components/admin/admin-page-layout';
+import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
 import { BreadcrumbNav } from './_components/breadcrumb-nav';
+import { BulkDeleteDialog } from './_components/bulk-delete-dialog';
 import { FileTable } from './_components/file-table';
 import {
   DeleteFileDialog,
@@ -40,6 +44,9 @@ export default function UploadFilesClient({
   const [newName, setNewName] = useState('');
   const [isRenaming, setIsRenaming] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // 获取文件列表
   const fetchFiles = useCallback(async (path: string = '') => {
@@ -93,6 +100,7 @@ export default function UploadFilesClient({
       const newPath = currentPath
         ? `${currentPath}/${folder.name}`
         : folder.name;
+      setSelectedPaths([]);
       setCurrentPath(newPath);
     }
   };
@@ -102,6 +110,7 @@ export default function UploadFilesClient({
     if (!currentPath) return;
     const parts = currentPath.split('/');
     parts.pop();
+    setSelectedPaths([]);
     setCurrentPath(parts.join('/'));
   };
 
@@ -109,6 +118,7 @@ export default function UploadFilesClient({
   const navigateToBreadcrumb = (index: number) => {
     if (!data) return;
     const parts = data.breadcrumb.slice(0, index + 1);
+    setSelectedPaths([]);
     setCurrentPath(parts.join('/'));
   };
 
@@ -230,7 +240,66 @@ export default function UploadFilesClient({
     }
   };
 
+  // 多选
+  const toggleSelect = (path: string) => {
+    setSelectedPaths((prev) =>
+      prev.includes(path) ? prev.filter((item) => item !== path) : [...prev, path]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedPaths((prev) =>
+      prev.length === items.length ? [] : items.map((item) => item.path)
+    );
+  };
+
+  // 批量删除
+  const handleBulkDelete = async () => {
+    if (selectedPaths.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const result = await deleteFiles(selectedPaths);
+
+      if (result.success && result.data) {
+        const { deleted, failed } = result.data;
+        if (failed.length === 0) {
+          toast.success(`已删除 ${deleted.length} 项`);
+        } else {
+          toast.warning(`${deleted.length} 项删除成功, ${failed.length} 项失败`);
+          failed.forEach((item) => toast.error(`${item.path}: ${item.error}`));
+        }
+        setIsBulkDeleteOpen(false);
+        setSelectedPaths([]);
+        fetchFiles(currentPath);
+      } else if (!result.success) {
+        toast.error(result.error || '删除失败');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除失败');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const items = data?.items || [];
+  const selectedItems = items.filter((item) =>
+    selectedPaths.includes(item.path)
+  );
+  const selectedFolderCount = selectedItems.filter(
+    (item) => item.type === 'directory'
+  ).length;
+  const selectedFileCount = selectedItems.length - selectedFolderCount;
+  const bulkDeleteLabel = [
+    selectedFolderCount > 0
+      ? `${selectedFolderCount} ${selectedFolderCount === 1 ? 'folder' : 'folders'}`
+      : '',
+    selectedFileCount > 0
+      ? `${selectedFileCount} ${selectedFileCount === 1 ? 'file' : 'files'}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' and ');
 
   const actions = buildPageActions({
     isConverting,
@@ -256,8 +325,27 @@ export default function UploadFilesClient({
         actions={actions}
         loading={loading}
       >
+        {selectedItems.length > 0 && (
+          <div className="border-destructive/30 bg-destructive/5 mb-3 flex items-center justify-between rounded-lg border px-3 py-2">
+            <span className="text-muted-foreground text-sm">
+              已选择 {selectedItems.length} 项
+            </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsBulkDeleteOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete {bulkDeleteLabel}
+            </Button>
+          </div>
+        )}
+
         <FileTable
           items={items}
+          selectedPaths={selectedPaths}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
           onEnterFolder={enterFolder}
           onRename={openRenameDialog}
           onDelete={(item) => {
@@ -300,6 +388,15 @@ export default function UploadFilesClient({
         onOpenChange={setIsDeleteDialogOpen}
         selectedItem={selectedItem}
         onConfirm={handleDelete}
+      />
+
+      <BulkDeleteDialog
+        open={isBulkDeleteOpen}
+        onOpenChange={setIsBulkDeleteOpen}
+        folderCount={selectedFolderCount}
+        fileCount={selectedFileCount}
+        isDeleting={isBulkDeleting}
+        onConfirm={handleBulkDelete}
       />
     </>
   );

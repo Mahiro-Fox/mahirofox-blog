@@ -18,6 +18,9 @@ import type { FileItem } from './types';
 
 interface FileTableProps {
   items: FileItem[];
+  selectedPaths: string[];
+  onToggleSelect: (path: string) => void;
+  onToggleSelectAll: () => void;
   onEnterFolder: (item: FileItem) => void;
   onRename: (item: FileItem) => void;
   onDelete: (item: FileItem) => void;
@@ -26,16 +29,33 @@ interface FileTableProps {
 /** 文件列表表格 */
 export function FileTable({
   items,
+  selectedPaths,
+  onToggleSelect,
+  onToggleSelectAll,
   onEnterFolder,
   onRename,
   onDelete,
 }: FileTableProps) {
   const { open } = useImagePreview();
+  const allSelected = items.length > 0 && selectedPaths.length === items.length;
+  const partiallySelected = selectedPaths.length > 0 && !allSelected;
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-10">
+            <input
+              type="checkbox"
+              aria-label="全选"
+              className="accent-primary h-4 w-4 cursor-pointer"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = partiallySelected;
+              }}
+              onChange={onToggleSelectAll}
+            />
+          </TableHead>
           <TableHead>预览</TableHead>
           <TableHead>名称</TableHead>
           <TableHead>路径</TableHead>
@@ -48,7 +68,7 @@ export function FileTable({
         {items.length === 0 ? (
           <TableRow>
             <TableCell
-              colSpan={6}
+              colSpan={7}
               className="text-muted-foreground py-8 text-center"
             >
               暂无文件
@@ -58,6 +78,9 @@ export function FileTable({
           items.map((item) => (
             <TableRow
               key={item.name}
+              data-state={
+                selectedPaths.includes(item.path) ? 'selected' : undefined
+              }
               className={
                 item.type === 'directory'
                   ? 'hover:bg-muted/50 cursor-pointer'
@@ -65,6 +88,15 @@ export function FileTable({
               }
               onClick={() => item.type === 'directory' && onEnterFolder(item)}
             >
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  aria-label={`选择 ${item.name}`}
+                  className="accent-primary h-4 w-4 cursor-pointer"
+                  checked={selectedPaths.includes(item.path)}
+                  onChange={() => onToggleSelect(item.path)}
+                />
+              </TableCell>
               <TableCell>
                 <Thumbnail item={item} />
               </TableCell>

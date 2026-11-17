@@ -262,6 +262,47 @@ export async function deleteFile(
   });
 }
 
+// 批量删除文件 / 文件夹（单条失败不影响其余项）
+export async function deleteFiles(filePaths: string[]): Promise<
+  ActionResponse<{
+    deleted: string[];
+    failed: { path: string; error: string }[];
+  }>
+> {
+  return withActionPermission('files:delete', async (user) => {
+    const deleted: string[] = [];
+    const failed: { path: string; error: string }[] = [];
+
+    for (const filePath of filePaths) {
+      try {
+        const key = resolveUploadKey(filePath);
+        if (await isUploadDirectory(key)) {
+          await deleteUploadDirectory(key);
+        } else if (await uploadFileExists(key)) {
+          await deleteUploadFile(key);
+        } else {
+          throw new Error('文件不存在');
+        }
+        deleted.push(filePath);
+      } catch (error) {
+        failed.push({
+          path: filePath,
+          error: error instanceof Error ? error.message : '删除失败',
+        });
+      }
+    }
+
+    logger.info('批量删除完成', {
+      total: filePaths.length,
+      deleted: deleted.length,
+      failed: failed.length,
+      userId: user.id,
+    });
+
+    return { success: true, data: { deleted, failed } };
+  });
+}
+
 // 重命名文件 / 文件夹
 export async function renameFile(
   oldPath: string,
