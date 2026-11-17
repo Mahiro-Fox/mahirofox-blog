@@ -1,0 +1,138 @@
+'use client';
+
+import { Copy, ImageIcon, Trash2 } from 'lucide-react';
+import { Button } from '@/components/shadcn-ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/shadcn-ui/table';
+import { useImagePreview } from '@/context/image-preview-provider';
+import { formatDate, formatSize } from '@/utils/utils';
+import { Thumbnail } from './thumbnail';
+import { copyPath, isImage } from './upload-utils';
+import type { FileItem } from './types';
+
+interface FileTableProps {
+  items: FileItem[];
+  onEnterFolder: (item: FileItem) => void;
+  onRename: (item: FileItem) => void;
+  onDelete: (item: FileItem) => void;
+}
+
+/** 文件列表表格 */
+export function FileTable({
+  items,
+  onEnterFolder,
+  onRename,
+  onDelete,
+}: FileTableProps) {
+  const { open } = useImagePreview();
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>预览</TableHead>
+          <TableHead>名称</TableHead>
+          <TableHead>路径</TableHead>
+          <TableHead>大小</TableHead>
+          <TableHead>更新时间</TableHead>
+          <TableHead className="text-right">操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.length === 0 ? (
+          <TableRow>
+            <TableCell
+              colSpan={6}
+              className="text-muted-foreground py-8 text-center"
+            >
+              暂无文件
+            </TableCell>
+          </TableRow>
+        ) : (
+          items.map((item) => (
+            <TableRow
+              key={item.name}
+              className={
+                item.type === 'directory'
+                  ? 'hover:bg-muted/50 cursor-pointer'
+                  : ''
+              }
+              onClick={() => item.type === 'directory' && onEnterFolder(item)}
+            >
+              <TableCell>
+                <Thumbnail item={item} />
+              </TableCell>
+              <TableCell className="max-w-20 overflow-hidden font-medium text-ellipsis">
+                {item.name}
+              </TableCell>
+              <TableCell>
+                <button
+                  type="button"
+                  className="bg-muted cursor-pointer rounded px-2 py-1 font-mono text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyPath(item.path);
+                  }}
+                  title="点击复制"
+                >
+                  {item.path}
+                </button>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {item.type === 'directory' ? '-' : formatSize(item.size)}
+              </TableCell>
+              <TableCell>
+                {item.type === 'directory'
+                  ? '-'
+                  : formatDate(item.lastUpdated)}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  {item.type === 'file' && isImage(item) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        open([{ src: item.path, alt: item.name }]);
+                      }}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRename(item);
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  );
+}

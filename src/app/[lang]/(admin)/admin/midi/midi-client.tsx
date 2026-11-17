@@ -276,7 +276,7 @@ export default function MidiClient({ initialData }: MidiClientProps) {
       />
 
       {/* 分页控制 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-muted-foreground text-sm">
           共 {pagination.total} 个文件，第 {pagination.page} /{' '}
           {Math.max(1, pagination.totalPages)} 页

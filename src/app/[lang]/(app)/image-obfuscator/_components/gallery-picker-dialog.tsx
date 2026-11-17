@@ -149,7 +149,7 @@ function CreatorView({
                 key={collection.id}
                 type="button"
                 onClick={() => onSelect(collection)}
-                className="group border-border bg-muted relative aspect-[4/3] w-full overflow-hidden rounded-xl border text-left transition-all hover:border-[var(--primary)]/60 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none"
+                className="group border-border bg-muted focus-visible:ring-primary relative aspect-4/3 w-full overflow-hidden rounded-xl border text-left transition-all hover:border-(--primary)/60 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none"
               >
                 {collection.cover ? (
                   <OptimizedImage
@@ -163,7 +163,7 @@ function CreatorView({
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : null}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-3">
                   <span
                     className="truncate text-sm font-semibold text-white"
@@ -285,9 +285,9 @@ function CollectionView({
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => toggle(data.src)}
-                      className={`group relative block w-full overflow-hidden rounded-lg border transition-all hover:border-[var(--primary)]/60 hover:shadow-md focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none ${
+                      className={`group focus-visible:ring-primary relative block w-full overflow-hidden rounded-lg border transition-all hover:border-(--primary)/60 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none ${
                         isSelected
-                          ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]'
+                          ? 'border-primary ring-primary ring-2'
                           : 'border-border bg-muted'
                       }`}
                     >
@@ -304,13 +304,13 @@ function CollectionView({
                       <span
                         className={`absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full ${
                           isSelected
-                            ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                            ? 'bg-primary text-primary-foreground'
                             : 'bg-black/40 text-white opacity-0 group-hover:opacity-100'
                         }`}
                       >
                         <Check className="h-3 w-3" />
                       </span>
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
                       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-3">
                         <span
                           className="text-muted-foreground truncate text-sm"

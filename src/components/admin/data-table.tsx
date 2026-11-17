@@ -116,9 +116,7 @@ export function DataTable<T>({
                     {col.header}
                   </TableHead>
                 ))}
-                {showActions && (
-                  <TableHead className="w-[100px]">操作</TableHead>
-                )}
+                {showActions && <TableHead className="w-25">操作</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,7 +211,7 @@ export function DataTable<T>({
               {col.header}
             </TableHead>
           ))}
-          {showActions && <TableHead className="w-[100px]">操作</TableHead>}
+          {showActions && <TableHead className="w-25">操作</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>

@@ -172,8 +172,20 @@ function PreviewOverlay({
   const viewRef = useRef<ViewState>(DEFAULT_VIEW);
 
   const [animate, setAnimate] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  /** 记录已加载完成的图片 src，避免切图后旧的 onLoad 影响到新图 */
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  /** 上一张图片，作为淡出层保留到新图加载完成 */
+  const [prevSrc, setPrevSrc] = useState<string | null>(null);
+  /** 只有超过 200ms 仍未加载完成才显示 spinner，避免缓存命中时闪一下 */
+  const [showSpinner, setShowSpinner] = useState(false);
   const [dragging, setDragging] = useState(false);
+
+  const prevSrcRef = useRef<string | null>(null);
+  const fadeTimerRef = useRef<number | null>(null);
+
+  const current = images[index];
+  const currentSrc = current?.src?.toString() ?? null;
+  const isLoaded = currentSrc !== null && loadedSrc === currentSrc;
 
   const pointersRef = useRef<Map<number, Point>>(new Map());
   const gestureRef = useRef<Gesture | null>(null);
@@ -229,9 +241,49 @@ function PreviewOverlay({
   useEffect(() => {
     viewRef.current = DEFAULT_VIEW;
     setView(DEFAULT_VIEW);
-    setLoaded(false);
+    setLoadedSrc(null);
     setAnimate(false);
-  }, [index]);
+    setShowSpinner(false);
+
+    // 把上一张留给淡出层，新图加载完成后再释放
+    setPrevSrc(prevSrcRef.current);
+    prevSrcRef.current = images[index]?.src?.toString() ?? null;
+  }, [index, images]);
+
+  // 预加载前后相邻图片，切换时直接命中已解码的缓存
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const neighbors = [index + 1, index - 1]
+      .map((i) => images[(i + images.length) % images.length])
+      .filter((image) => Boolean(image?.src));
+
+    neighbors.forEach((image) => {
+      const preloader = new window.Image();
+      preloader.src = image.src.toString();
+      const ready = preloader.decode?.();
+      void ready?.catch(() => undefined);
+    });
+  }, [index, images]);
+
+  // 延迟展示 spinner：缓存命中的图片不会再出现 loading 样式
+  useEffect(() => {
+    if (isLoaded) return;
+    const timer = window.setTimeout(() => setShowSpinner(true), 200);
+    return () => window.clearTimeout(timer);
+  }, [isLoaded, index]);
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) window.clearTimeout(fadeTimerRef.current);
+    };
+  }, []);
+
+  /** 当前图片就绪：标记已加载，并在淡入结束后释放上一层 */
+  const handleImageReady = useCallback((src: string) => {
+    setLoadedSrc(src);
+    if (fadeTimerRef.current) window.clearTimeout(fadeTimerRef.current);
+    fadeTimerRef.current = window.setTimeout(() => setPrevSrc(null), 260);
+  }, []);
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -488,14 +540,19 @@ function PreviewOverlay({
 
   /* --------------------------------- 渲染 --------------------------------- */
 
-  const current = images[index];
+  const imageTransform = `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale}) rotate(${view.rotate}deg) scaleX(${
+    view.flipX ? -1 : 1
+  }) scaleY(${view.flipY ? -1 : 1})`;
+  const imageTransition = `${
+    animate ? 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none'
+  }, opacity 200ms ease`;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="图片预览"
-      className="fixed inset-0 z-[9999] overflow-hidden bg-transparent backdrop-blur-sm select-none"
+      className="fixed inset-0 z-9999 overflow-hidden bg-transparent backdrop-blur-sm select-none"
     >
       {/*
         内容层：整体 pointer-events-none，空白区域的点击会落到外层背景节点上，
@@ -503,36 +560,53 @@ function PreviewOverlay({
         需要交互的元素各自声明 pointer-events-auto。
       */}
       <div ref={contentRef} className="pointer-events-none absolute inset-0">
-        {/* 图片 */}
-        <div className="absolute inset-0 flex items-center justify-center px-4 pt-16 pb-28">
+        {/* 图片：两层各自居中叠放，上一层淡出、当前层淡入，避免切换时出现空白帧 */}
+        <div className="pointer-events-none absolute inset-0">
+          {prevSrc && prevSrc !== currentSrc && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center px-4 pt-16 pb-28">
+              <Image
+                key="preview-prev"
+                src={prevSrc}
+                alt=""
+                aria-hidden
+                draggable={false}
+                unoptimized
+                className="max-h-full max-w-full object-contain"
+                style={{
+                  transform: imageTransform,
+                  transition: imageTransition,
+                  opacity: isLoaded ? 0 : 1,
+                  touchAction: 'none',
+                }}
+              />
+            </div>
+          )}
+
           {current && (
-            <Image
-              ref={setImageEl}
-              key={current.src.toString()}
-              src={current.src}
-              alt=""
-              draggable={false}
-              onLoad={() => setLoaded(true)}
-              onError={() => setLoaded(true)}
-              unoptimized
-              className="pointer-events-auto max-h-full max-w-full object-contain will-change-transform"
-              style={{
-                transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale}) rotate(${view.rotate}deg) scaleX(${
-                  view.flipX ? -1 : 1
-                }) scaleY(${view.flipY ? -1 : 1})`,
-                transition: animate
-                  ? 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)'
-                  : 'none',
-                opacity: loaded ? 1 : 0,
-                cursor: dragging ? 'grabbing' : 'grab',
-                touchAction: 'none',
-              }}
-            />
+            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 pt-16 pb-28">
+              <Image
+                key="preview-current"
+                ref={setImageEl}
+                src={current.src}
+                alt=""
+                draggable={false}
+                onLoad={() => currentSrc && handleImageReady(currentSrc)}
+                onError={() => currentSrc && handleImageReady(currentSrc)}
+                unoptimized
+                className="pointer-events-auto max-h-full max-w-full object-contain will-change-transform"
+                style={{
+                  transform: imageTransform,
+                  transition: imageTransition,
+                  cursor: dragging ? 'grabbing' : 'grab',
+                  touchAction: 'none',
+                }}
+              />
+            </div>
           )}
         </div>
 
-        {/* 加载中 */}
-        {!loaded && (
+        {/* 加载中：延迟 200ms 才出现，缓存命中的图片不会有 loading 样式 */}
+        {showSpinner && !isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-white/60" />
           </div>
@@ -574,7 +648,7 @@ function PreviewOverlay({
             onClick={resetView}
             title="重置视图"
             aria-label="重置视图"
-            className="min-w-[58px] rounded-full px-2 py-1.5 text-xs font-medium text-white/80 tabular-nums transition-colors hover:bg-white/15 hover:text-white"
+            className="min-w-14.5 rounded-full px-2 py-1.5 text-xs font-medium text-white/80 tabular-nums transition-colors hover:bg-white/15 hover:text-white"
           >
             {Math.round(view.scale * 100)}%
           </button>

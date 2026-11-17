@@ -35,10 +35,10 @@ export default async function IndexPage() {
           <HomeBanner images={bannerData} initialIndex={initialIndex} />
         )}
         {/* 底部渐变遮罩 — 从透明过渡到墨色背景 */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-[var(--background)] to-transparent" />
+        <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-linear-to-t to-transparent" />
         <ChevronDown
           strokeWidth={3}
-          className="animate-up-down absolute right-[50%] bottom-10 z-10 text-[var(--primary)]/70"
+          className="animate-up-down absolute right-[50%] bottom-10 z-10 text-(--primary)/70"
         />
       </section>
 

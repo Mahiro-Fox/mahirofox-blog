@@ -305,17 +305,17 @@ export function AuthModal({
         <DialogClose onClick={() => onOpenChange(false)} />
         {/* 二次元霓虹辉光 */}
         <div
-          className="pointer-events-none absolute -top-20 -right-12 h-44 w-44 rounded-full bg-[var(--auth-grad-from)] opacity-30 blur-3xl"
+          className="pointer-events-none absolute -top-20 -right-12 h-44 w-44 rounded-full bg-(--auth-grad-from) opacity-30 blur-3xl"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-[var(--auth-grad-to)] opacity-30 blur-3xl"
+          className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-(--auth-grad-to) opacity-30 blur-3xl"
           aria-hidden
         />
 
         {/* 左侧写真轮播（小屏隐藏，表单自动占满整宽） */}
         {hasPhotos && (
-          <div className="inset-y-0 left-0 hidden aspect-[9/16] w-[42%] overflow-hidden sm:block">
+          <div className="inset-y-0 left-0 hidden aspect-9/16 w-[42%] overflow-hidden sm:block">
             <FadeCarousel
               className="h-full w-full max-w-none rounded-none"
               random
@@ -335,7 +335,7 @@ export function AuthModal({
               )}
             />
             {/* 右侧渐隐，与表单区自然融合 */}
-            <div className="via-background/30 to-background/90 pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent" />
+            <div className="via-background/30 to-background/90 pointer-events-none absolute inset-0 bg-linear-to-r from-transparent" />
           </div>
         )}
 
@@ -349,7 +349,7 @@ export function AuthModal({
             </DialogDescription>
             {/* 渐变装饰线 */}
             <div
-              className="mx-auto mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-[var(--auth-grad-from)] to-[var(--auth-grad-to)]"
+              className="mx-auto mt-2 h-1 w-12 rounded-full bg-linear-to-r from-(--auth-grad-from) to-(--auth-grad-to)"
               aria-hidden
             />
           </DialogHeader>
