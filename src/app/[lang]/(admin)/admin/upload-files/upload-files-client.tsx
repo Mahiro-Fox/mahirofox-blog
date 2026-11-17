@@ -1,7 +1,6 @@
 'use client';
 
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminGetUploadFiles,
@@ -13,7 +12,6 @@ import {
   renameFile,
 } from '@/actions/admin/upload-files-actions';
 import { AdminPageLayout } from '@/components/admin/admin-page-layout';
-import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
 import { BreadcrumbNav } from './_components/breadcrumb-nav';
 import { BulkDeleteDialog } from './_components/bulk-delete-dialog';
@@ -290,23 +288,16 @@ export default function UploadFilesClient({
     (item) => item.type === 'directory'
   ).length;
   const selectedFileCount = selectedItems.length - selectedFolderCount;
-  const bulkDeleteLabel = [
-    selectedFolderCount > 0
-      ? `${selectedFolderCount} ${selectedFolderCount === 1 ? 'folder' : 'folders'}`
-      : '',
-    selectedFileCount > 0
-      ? `${selectedFileCount} ${selectedFileCount === 1 ? 'file' : 'files'}`
-      : '',
-  ]
-    .filter(Boolean)
-    .join(' and ');
 
   const actions = buildPageActions({
     isConverting,
     isUploading,
+    selectedFolderCount,
+    selectedFileCount,
     onNewFolder: () => setIsNewFolderDialogOpen(true),
     onConvert: handleConvert,
     onUpload: () => document.getElementById('file-upload')?.click(),
+    onBulkDelete: () => setIsBulkDeleteOpen(true),
   });
 
   return (
@@ -325,22 +316,6 @@ export default function UploadFilesClient({
         actions={actions}
         loading={loading}
       >
-        {selectedItems.length > 0 && (
-          <div className="border-destructive/30 bg-destructive/5 mb-3 flex items-center justify-between rounded-lg border px-3 py-2">
-            <span className="text-muted-foreground text-sm">
-              已选择 {selectedItems.length} 项
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setIsBulkDeleteOpen(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete {bulkDeleteLabel}
-            </Button>
-          </div>
-        )}
-
         <FileTable
           items={items}
           selectedPaths={selectedPaths}

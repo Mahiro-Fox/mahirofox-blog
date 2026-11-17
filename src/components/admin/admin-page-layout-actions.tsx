@@ -7,7 +7,7 @@ export interface PageAction {
   label: string;
   icon?: ReactNode;
   onClick: () => void;
-  variant?: 'default' | 'outline' | 'ghost';
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive';
   disabled?: boolean;
   loading?: boolean;
 }

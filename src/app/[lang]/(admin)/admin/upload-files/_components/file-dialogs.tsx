@@ -158,7 +158,7 @@ export function DeleteFileDialog({
             此操作无法撤销。
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="mt-4">
           <AlertDialogCancel onClick={() => onOpenChange(false)}>
             取消
           </AlertDialogCancel>

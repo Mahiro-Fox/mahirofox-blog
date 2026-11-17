@@ -1,6 +1,7 @@
 'use client';
 
-import { Copy, ImageIcon, Trash2 } from 'lucide-react';
+import { useImagePreview } from '@/context/image-preview-provider';
+import { Check, Copy, ImageIcon, Minus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/shadcn-ui/button';
 import {
   Table,
@@ -10,11 +11,51 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/shadcn-ui/table';
-import { useImagePreview } from '@/context/image-preview-provider';
 import { formatDate, formatSize } from '@/utils/utils';
 import { Thumbnail } from './thumbnail';
-import { copyPath, isImage } from './upload-utils';
 import type { FileItem } from './types';
+import { copyPath, isImage } from './upload-utils';
+
+interface SelectionCheckboxProps {
+  checked: boolean;
+  indeterminate?: boolean;
+  label: string;
+  onChange: () => void;
+}
+
+/** 统一样式的选择框（原生 input + 叠加图标，支持半选） */
+function SelectionCheckbox({
+  checked,
+  indeterminate = false,
+  label,
+  onChange,
+}: SelectionCheckboxProps) {
+  return (
+    <span className="relative inline-flex items-center justify-center">
+      <input
+        type="checkbox"
+        aria-label={label}
+        checked={checked}
+        ref={(el) => {
+          if (el) el.indeterminate = indeterminate;
+        }}
+        onChange={onChange}
+        className="peer border-input bg-background checked:border-primary checked:bg-primary focus-visible:ring-ring/50 h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-lg border shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      />
+      {indeterminate ? (
+        <Minus
+          className="text-primary-foreground pointer-events-none absolute h-3 w-3"
+          strokeWidth={3}
+        />
+      ) : (
+        <Check
+          className="text-primary-foreground pointer-events-none absolute h-3 w-3 opacity-0 transition-opacity peer-checked:opacity-100"
+          strokeWidth={3}
+        />
+      )}
+    </span>
+  );
+}
 
 interface FileTableProps {
   items: FileItem[];
@@ -45,14 +86,10 @@ export function FileTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-10">
-            <input
-              type="checkbox"
-              aria-label="全选"
-              className="accent-primary h-4 w-4 cursor-pointer"
+            <SelectionCheckbox
+              label="全选"
               checked={allSelected}
-              ref={(el) => {
-                if (el) el.indeterminate = partiallySelected;
-              }}
+              indeterminate={partiallySelected}
               onChange={onToggleSelectAll}
             />
           </TableHead>
@@ -89,10 +126,8 @@ export function FileTable({
               onClick={() => item.type === 'directory' && onEnterFolder(item)}
             >
               <TableCell onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  aria-label={`选择 ${item.name}`}
-                  className="accent-primary h-4 w-4 cursor-pointer"
+                <SelectionCheckbox
+                  label={`选择 ${item.name}`}
                   checked={selectedPaths.includes(item.path)}
                   onChange={() => onToggleSelect(item.path)}
                 />
@@ -120,9 +155,7 @@ export function FileTable({
                 {item.type === 'directory' ? '-' : formatSize(item.size)}
               </TableCell>
               <TableCell>
-                {item.type === 'directory'
-                  ? '-'
-                  : formatDate(item.lastUpdated)}
+                {item.type === 'directory' ? '-' : formatDate(item.lastUpdated)}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
