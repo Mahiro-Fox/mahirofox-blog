@@ -6,3 +6,13 @@ package service
 import "errors"
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
+
+// Google 登录相关哨兵错误（handler 映射为明确状态码，便于 Next 侧给出对应文案）。
+var (
+	// ErrGoogleIdentityInvalid Google 身份信息不完整
+	ErrGoogleIdentityInvalid = errors.New("google identity invalid")
+	// ErrGoogleEmailUnverified Google 邮箱未经验证
+	ErrGoogleEmailUnverified = errors.New("google email unverified")
+	// ErrGoogleEmailBound 该邮箱已绑定其他 Google 账号
+	ErrGoogleEmailBound = errors.New("google email bound to another google account")
+)

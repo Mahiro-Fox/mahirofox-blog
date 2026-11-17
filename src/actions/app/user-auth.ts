@@ -3,7 +3,7 @@
 import { headers } from 'next/headers';
 import { sendVerificationCode } from '@/lib/email-send/verification-code';
 import { loginRateLimiter, serverActionRateLimiter } from '@/lib/rate-limit';
-import { buildQuery, goFetch, GoApiError } from '@/lib/server/api-client';
+import { buildQuery, GoApiError, goFetch } from '@/lib/server/api-client';
 import {
   checkVerificationCode,
   clearVerification,
@@ -332,12 +332,4 @@ export async function checkUserLogin() {
     success: true,
     user: { id: user.id, username: user.username },
   };
-}
-
-/**
- * Google OAuth 登录：按与用户确认的 V2 方案，本轮直接停用（仅保留函数壳 + 明确报错）。
- * 避免老代码调用时出现奇怪错误。
- */
-export async function userLoginWithGoogle(_redirectTo: string = '/chat') {
-  return { success: false, error: 'Google login is disabled in this build.' };
 }

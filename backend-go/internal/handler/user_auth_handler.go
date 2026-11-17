@@ -54,6 +54,44 @@ func UserLoginHandler(store repository.Store, cfg *config.Config) gin.HandlerFun
 	}
 }
 
+// UserGoogleLoginHandler 前台 Google 登录：接收 Next 侧已校验的 Google 身份，签发 user-session 令牌。
+// 仅允许内部调用（RequireInternalSecret），因此不再重复校验 Google 凭据。
+func UserGoogleLoginHandler(store repository.Store, cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if cfg == nil || store == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "服务未初始化"})
+			return
+		}
+		var req model.GoogleLoginInput
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+			return
+		}
+		result, err := service.UserLoginWithGoogle(c.Request.Context(), store, cfg, req)
+		if err != nil {
+			switch {
+			case errors.Is(err, service.ErrGoogleIdentityInvalid):
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Google 身份信息不完整"})
+			case errors.Is(err, service.ErrGoogleEmailUnverified):
+				c.JSON(http.StatusForbidden, gin.H{"error": "Google 邮箱未经验证"})
+			case errors.Is(err, service.ErrGoogleEmailBound):
+				c.JSON(http.StatusConflict, gin.H{"error": "该邮箱已绑定其他 Google 账号"})
+			default:
+				log.Printf("user google login internal error: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "登录失败，请稍后重试"})
+			}
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"token":      result.Token,
+			"account":    result.Account,
+			"expiresIn":  result.ExpiresIn,
+			"sessionId":  result.SessionID,
+			"loggedInAt": result.LoggedInAt,
+		})
+	}
+}
+
 // UserVerifyHandler 前台鉴权
 func UserVerifyHandler(store repository.Store, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {

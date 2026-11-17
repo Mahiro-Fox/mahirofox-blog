@@ -1,8 +1,9 @@
 import { getAllPhotos } from '@/actions/app/photos';
+import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
 import { SignInModal } from './signin-modal';
 
 interface SignInPageProps {
-  searchParams: Promise<{ redirect?: string }>;
+  searchParams: Promise<{ redirect?: string; error?: string }>;
 }
 
 /**
@@ -10,7 +11,14 @@ interface SignInPageProps {
  * 实际交互交给客户端组件。
  */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { redirect } = await searchParams;
+  const { redirect, error } = await searchParams;
   const photos = await getAllPhotos({ ratio: 'portrait' });
-  return <SignInModal redirectTo={redirect || '/'} photos={photos} />;
+  return (
+    <SignInModal
+      redirectTo={redirect || '/'}
+      photos={photos}
+      googleEnabled={isGoogleOAuthEnabled()}
+      initialErrorCode={error}
+    />
+  );
 }

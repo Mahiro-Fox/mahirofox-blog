@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"mahirofox-blog/backend-go/internal/auth"
 	"mahirofox-blog/backend-go/internal/config"
 	"mahirofox-blog/backend-go/internal/model"
@@ -65,6 +67,12 @@ func UserLogin(ctx context.Context, store repository.Store, cfg *config.Config, 
 	if !verifyPassword(ctx, password, a.PasswordHash) {
 		return nil, fmt.Errorf("%w", ErrInvalidCredentials)
 	}
+	return issueUserSession(ctx, store, cfg, a)
+}
+
+// issueUserSession 清理该账户旧会话 → 签发 JWT → 写入 user_sessions。
+// 密码登录与 Google 登录共用，保证两种入口的会话行为一致。
+func issueUserSession(ctx context.Context, store repository.Store, cfg *config.Config, a *model.Account) (*UserLoginResult, error) {
 	now := time.Now()
 	sessionID := auth.NewSessionID()
 	secret := []byte(cfg.JWTSecret)
@@ -175,6 +183,124 @@ func UserLogout(ctx context.Context, store repository.Store, token string) error
 		return nil
 	}
 	return err
+}
+
+// UserLoginWithGoogle Google 登录：按 sub 查账户 → 按邮箱绑定/复用 → 新用户创建 → 签发会话。
+// 前提：身份已由 Next 侧用 OAuth code 向 Google 换取并经 userinfo 校验（邮箱已验证）。
+func UserLoginWithGoogle(ctx context.Context, store repository.Store, cfg *config.Config, input model.GoogleLoginInput) (*UserLoginResult, error) {
+	if cfg.JWTSecret == "" {
+		return nil, errors.New("服务端 JWT_SECRET 未配置")
+	}
+	sub := strings.TrimSpace(input.Sub)
+	email := strings.ToLower(strings.TrimSpace(input.Email))
+	if sub == "" || email == "" {
+		return nil, ErrGoogleIdentityInvalid
+	}
+	if !input.EmailVerified {
+		return nil, ErrGoogleEmailUnverified
+	}
+
+	// 1) 已绑定的 Google 账户：直接登录
+	a, err := store.GetAccountByGoogleSub(ctx, sub)
+	if err == nil {
+		return issueUserSession(ctx, store, cfg, a)
+	}
+	if !errors.Is(err, repository.ErrAccountNotFound) {
+		return nil, fmt.Errorf("查 Google 账户失败: %w", err)
+	}
+
+	// 2) 同邮箱已有账户：绑定后登录（Google 已验证邮箱，视为同一人）
+	a, err = store.GetAccountByEmail(ctx, email)
+	if err == nil {
+		if a.GoogleSub != nil && *a.GoogleSub != sub {
+			return nil, ErrGoogleEmailBound
+		}
+		if a.GoogleSub == nil {
+			now := time.Now()
+			subCopy := sub
+			if e := store.UpdateAccount(ctx, a.ID, &model.AccountPatch{
+				GoogleSub:   &subCopy,
+				LastUpdated: &now,
+			}); e != nil {
+				return nil, fmt.Errorf("绑定 Google 账户失败: %w", e)
+			}
+		}
+		return issueUserSession(ctx, store, cfg, a)
+	}
+	if !errors.Is(err, repository.ErrAccountNotFound) {
+		return nil, fmt.Errorf("查邮箱账户失败: %w", err)
+	}
+
+	// 3) 新用户：生成唯一用户名并创建 Google 账户
+	username, err := uniqueUsername(ctx, store, googleUsernameBase(email, input.Name, sub))
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	created := &model.Account{
+		ID:           uuid.NewString(),
+		Username:     username,
+		Email:        email,
+		Provider:     model.AccountProviderGoogle,
+		PasswordHash: "",
+		GoogleSub:    &sub,
+		CreatedAt:    now,
+		LastUpdated:  now,
+	}
+	if e := store.CreateAccount(ctx, created); e != nil {
+		return nil, e
+	}
+	return issueUserSession(ctx, store, cfg, created)
+}
+
+// googleUsernameBase 由 Google 资料推导用户名基底：仅保留小写字母/数字/_/-，最长 20 位。
+// 中文等字符会被过滤，此时退回 email 本地部分或 "google-<sub 前缀>"。
+func googleUsernameBase(email, name, sub string) string {
+	base := strings.ToLower(strings.TrimSpace(name))
+	if base == "" {
+		if idx := strings.Index(email, "@"); idx > 0 {
+			base = email[:idx]
+		}
+	}
+	var b strings.Builder
+	for _, r := range strings.ToLower(base) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
+			b.WriteRune(r)
+		}
+		if b.Len() >= 20 {
+			break
+		}
+	}
+	if b.Len() > 0 {
+		return b.String()
+	}
+	suffix := sub
+	if len(suffix) > 6 {
+		suffix = suffix[:6]
+	}
+	return "google-" + suffix
+}
+
+// uniqueUsername 在基底冲突时追加随机后缀（最多 5 次），保证 username 全局唯一。
+func uniqueUsername(ctx context.Context, store repository.Store, base string) (string, error) {
+	for i := 0; i < 5; i++ {
+		candidate := base
+		if i > 0 {
+			stem := base
+			if len(stem) > 14 {
+				stem = stem[:14]
+			}
+			candidate = fmt.Sprintf("%s-%s", stem, uuid.NewString()[:4])
+		}
+		_, err := store.GetAccountByUsername(ctx, candidate)
+		if errors.Is(err, repository.ErrAccountNotFound) {
+			return candidate, nil
+		}
+		if err != nil {
+			return "", fmt.Errorf("校验用户名失败: %w", err)
+		}
+	}
+	return "", errors.New("生成用户名失败，请重试")
 }
 
 // CleanupExpiredUserSessions 定时清理过期 user_sessions

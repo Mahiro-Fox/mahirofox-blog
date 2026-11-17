@@ -19,8 +19,11 @@ type Account struct {
 	Email        string          `gorm:"type:text;not null;uniqueIndex" json:"email"`
 	Provider     AccountProvider `gorm:"type:text;not null;default:'credentials';index" json:"provider"`
 	PasswordHash string          `gorm:"type:text;not null" json:"-"`
-	CreatedAt    time.Time       `gorm:"not null;default:now();index" json:"createdAt"`
-	LastUpdated  time.Time       `gorm:"not null;default:now()" json:"lastUpdated"`
+	// GoogleSub Google 账号唯一标识（OIDC sub）。nullable unique：NULL 不参与唯一约束，
+	// 因此密码账户与未绑定的历史账户可共存。
+	GoogleSub   *string   `gorm:"type:text;uniqueIndex" json:"-"`
+	CreatedAt   time.Time `gorm:"not null;default:now();index" json:"createdAt"`
+	LastUpdated time.Time `gorm:"not null;default:now()" json:"lastUpdated"`
 }
 
 // PublicAccountDTO 对外（公开只读端点）暴露的账户信息（不含密码哈希）
@@ -56,5 +59,15 @@ type AccountPatch struct {
 	Username     *string    `json:"username"`
 	Email        *string    `json:"email"`
 	PasswordHash *string    `json:"-"`
+	GoogleSub    *string    `json:"-"`
 	LastUpdated  *time.Time `json:"-"`
+}
+
+// GoogleLoginInput Google 登录入参。
+// 身份由 Next 侧完成 OAuth 换取并经 Google userinfo 校验后透传，本接口仅内部可信调用。
+type GoogleLoginInput struct {
+	Sub           string `json:"sub" binding:"required"`
+	Email         string `json:"email" binding:"required"`
+	EmailVerified bool   `json:"emailVerified"`
+	Name          string `json:"name"`
 }

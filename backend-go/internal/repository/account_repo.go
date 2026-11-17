@@ -68,6 +68,21 @@ func (s *GormStore) GetAccountByEmail(ctx context.Context, email string) (*model
 	return &a, nil
 }
 
+// GetAccountByGoogleSub 按 Google sub 查询账户（空值不命中）
+func (s *GormStore) GetAccountByGoogleSub(ctx context.Context, googleSub string) (*model.Account, error) {
+	if strings.TrimSpace(googleSub) == "" {
+		return nil, ErrAccountNotFound
+	}
+	var a model.Account
+	if err := s.db.WithContext(ctx).Where("google_sub = ?", strings.TrimSpace(googleSub)).First(&a).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrAccountNotFound
+		}
+		return nil, fmt.Errorf("get account by google sub: %w", err)
+	}
+	return &a, nil
+}
+
 // CreateAccount 创建前台账户
 func (s *GormStore) CreateAccount(ctx context.Context, a *model.Account) error {
 	if err := s.db.WithContext(ctx).Create(a).Error; err != nil {

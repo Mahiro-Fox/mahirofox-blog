@@ -40,6 +40,10 @@ interface AuthModalProps {
   onSuccess?: () => void;
   /** 左侧写真轮播的竖构图图片；为空时隐藏左侧面板、表单占满整宽 */
   photos?: PhotoItem[] | null;
+  /** 是否展示「使用 Google 继续」（由服务端根据 Google OAuth 配置决定） */
+  googleEnabled?: boolean;
+  /** OAuth 回调失败时登录页透传的机器码 */
+  initialErrorCode?: string;
 }
 
 // 后端返回的稳定机器码 → i18n key
@@ -59,6 +63,12 @@ const ERROR_KEYS: Record<string, string> = {
   EMAIL_TAKEN: 'auth.err_email_taken',
   REGISTER_FAILED: 'auth.err_register_failed',
   VERIFY_FAILED: 'auth.err_verify_failed',
+  GOOGLE_NOT_CONFIGURED: 'auth.err_google_not_configured',
+  GOOGLE_STATE_INVALID: 'auth.err_google_state',
+  GOOGLE_CANCELLED: 'auth.err_google_cancelled',
+  GOOGLE_EMAIL_TAKEN: 'auth.err_google_email_taken',
+  GOOGLE_EMAIL_UNVERIFIED: 'auth.err_google_email_unverified',
+  GOOGLE_FAILED: 'auth.err_google_failed',
 };
 
 const RESEND_SECONDS = 60; // 与后端重发节流保持一致
@@ -73,6 +83,8 @@ export function AuthModal({
   redirectTo,
   onSuccess,
   photos,
+  googleEnabled,
+  initialErrorCode,
 }: AuthModalProps) {
   const t = useT();
   const router = useRouter();
@@ -81,6 +93,16 @@ export function AuthModal({
     id: photo.id,
     image: photo.src,
   }));
+
+  // 当前可见路径（含查询串），用于 Google 登录后回到原页面
+  const [currentPath, setCurrentPath] = useState('/');
+  useEffect(() => {
+    setCurrentPath(`${window.location.pathname}${window.location.search}`);
+  }, []);
+  const googleRedirect = redirectTo || currentPath;
+  const googleHref = `/next-api/auth/google/start?redirect=${encodeURIComponent(
+    googleRedirect
+  )}`;
 
   const [step, setStep] = useState<AuthStep>('email');
   const [email, setEmail] = useState('');
@@ -333,6 +355,27 @@ export function AuthModal({
           </DialogHeader>
 
           <div className="[&_input]:bg-foreground/5 relative mt-4 [&_input]:h-10 [&_input]:rounded-xl">
+            {googleEnabled && step === 'email' && (
+              <div className="mb-4 space-y-3">
+                <a
+                  href={googleHref}
+                  aria-disabled={loading}
+                  onClick={(e) => {
+                    if (loading) e.preventDefault();
+                  }}
+                  className="border-foreground/15 bg-foreground/5 hover:bg-foreground/10 flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-sm font-medium transition"
+                >
+                  <GoogleIcon />
+                  {t('auth.continue_with_google')}
+                </a>
+                <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                  <span className="bg-foreground/10 h-px flex-1" />
+                  {t('auth.or')}
+                  <span className="bg-foreground/10 h-px flex-1" />
+                </div>
+              </div>
+            )}
+
             {step === 'email' && (
               <form onSubmit={handleEmailSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -493,9 +536,10 @@ export function AuthModal({
               </form>
             )}
 
-            {error && (
+            {(error ||
+              (initialErrorCode ? errorText(initialErrorCode) : '')) && (
               <p className="text-destructive mt-3 text-center text-sm">
-                {error}
+                {error || errorText(initialErrorCode ?? '')}
               </p>
             )}
           </div>
@@ -522,5 +566,29 @@ function BackButton({
       <ArrowLeft className="h-3.5 w-3.5" />
       {label}
     </button>
+  );
+}
+
+/** Google 四色 G 图标 */
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.63v3h3.86c2.26-2.09 3.56-5.17 3.56-8.87Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.62H1.29a12 12 0 0 0 0 10.76l3.98-3.09Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
+      />
+    </svg>
   );
 }

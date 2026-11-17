@@ -66,6 +66,11 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		userAuth.POST("/verify", middleware.AllowAnonymous(), handler.UserVerifyHandler(store, cfg))
 		userAuth.POST("/logout", middleware.AllowAnonymous(), handler.UserLogoutHandler(store, cfg))
 	}
+	// Google 登录：身份由 Next 侧完成 OAuth 换取后透传，故必须要求内部密钥
+	userAuthInternal := api.Group("/user/auth", middleware.RequireInternalSecret(internalSecret))
+	{
+		userAuthInternal.POST("/google", middleware.AllowAnonymous(), handler.UserGoogleLoginHandler(store, cfg))
+	}
 
 	// movies 路由
 	movies := api.Group("/movies")

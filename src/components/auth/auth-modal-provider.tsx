@@ -7,8 +7,8 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { AuthModal } from './auth-modal';
 import type { PhotoItem } from '@/lib/photos';
+import { AuthModal } from './auth-modal';
 
 interface AuthModalOpenOptions {
   /** 登录/注册成功后的跳转地址；不传则仅刷新当前页数据 */
@@ -31,10 +31,13 @@ const AuthModalContext = createContext<AuthModalContextValue | null>(null);
 export function AuthModalProvider({
   children,
   photos,
+  googleEnabled,
 }: {
   children?: React.ReactNode;
   /** 左侧写真轮播的竖构图图片，透传给弹窗 */
   photos?: PhotoItem[] | null;
+  /** 是否展示「使用 Google 继续」 */
+  googleEnabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<AuthModalOpenOptions>({});
@@ -60,6 +63,7 @@ export function AuthModalProvider({
         redirectTo={options.redirectTo}
         onSuccess={options.onSuccess}
         photos={photos}
+        googleEnabled={googleEnabled}
       />
     </AuthModalContext.Provider>
   );

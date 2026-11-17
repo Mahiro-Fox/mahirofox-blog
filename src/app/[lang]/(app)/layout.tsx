@@ -12,6 +12,7 @@ import { PageTracker } from '@/components/shared/tracker';
 import { siteConfig } from '@/config/common';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
+import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
 import { getCurrentUser } from '@/lib/user-auth';
 
 export const generateMetadata = async ({
@@ -120,7 +121,10 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
       >
         <MusicProvider playlist={songs} initialIndex={randomIndex}>
           {/* 全局登录/注册弹窗：header、chat 等就地打开 */}
-          <AuthModalProvider photos={authPhotos}>
+          <AuthModalProvider
+            photos={authPhotos}
+            googleEnabled={isGoogleOAuthEnabled()}
+          >
             {/* ── 顶部滚动进度条 ── */}
             {/* <ScrollProgress /> */}
             <SiteHeader initialUserAuth={frontendUser} />

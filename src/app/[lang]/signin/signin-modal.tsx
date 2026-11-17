@@ -8,13 +8,20 @@ import type { PhotoItem } from '@/lib/photos';
 interface SignInModalProps {
   redirectTo: string;
   photos: PhotoItem[] | null;
+  googleEnabled?: boolean;
+  initialErrorCode?: string;
 }
 
 /**
  * 独立登录页：落地即打开登录/注册弹窗。
  * 关闭弹窗（未登录成功）→ 返回首页；登录成功 → 跳转 redirectTo。
  */
-export function SignInModal({ redirectTo, photos }: SignInModalProps) {
+export function SignInModal({
+  redirectTo,
+  photos,
+  googleEnabled,
+  initialErrorCode,
+}: SignInModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const succeeded = useRef(false);
@@ -24,6 +31,8 @@ export function SignInModal({ redirectTo, photos }: SignInModalProps) {
       open={open}
       redirectTo={redirectTo}
       photos={photos}
+      googleEnabled={googleEnabled}
+      initialErrorCode={initialErrorCode}
       onSuccess={() => {
         succeeded.current = true;
       }}

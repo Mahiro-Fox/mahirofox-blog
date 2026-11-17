@@ -56,6 +56,7 @@ type Store interface {
 	GetAccountByID(ctx context.Context, id string) (*model.Account, error)
 	GetAccountByUsername(ctx context.Context, username string) (*model.Account, error)
 	GetAccountByEmail(ctx context.Context, email string) (*model.Account, error)
+	GetAccountByGoogleSub(ctx context.Context, googleSub string) (*model.Account, error)
 	CreateAccount(ctx context.Context, a *model.Account) error
 	UpdateAccount(ctx context.Context, id string, patch *model.AccountPatch) error
 	DeleteAccount(ctx context.Context, id string) error

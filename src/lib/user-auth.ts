@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
+import type { GoogleIdentity } from '@/lib/google-oauth';
 import { goFetch } from '@/lib/server/api-client';
 
 type UserVerifyResponse = {
@@ -40,23 +41,34 @@ type CookieStoreLike = {
   delete: (name: string) => void;
 };
 
+/**
+ * 前台会话 Cookie 选项（Server Action 与 Route Handler 共用）。
+ * Google OAuth 回调来自跨站跳转，传入 'lax' 确保紧接着的回跳请求能带上 Cookie。
+ */
+export function userSessionCookieOptions(
+  maxAgeSec: number,
+  sameSite: 'strict' | 'lax' = 'strict'
+) {
+  const isSecure =
+    process.env.COOKIE_SECURE === 'true' ||
+    (process.env.COOKIE_SECURE !== 'false' &&
+      process.env.NODE_ENV === 'production');
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite,
+    maxAge: maxAgeSec,
+    path: '/',
+  };
+}
+
 function setCookie(
   cookieStore: CookieStoreLike,
   name: string,
   value: string,
   maxAgeSec: number
 ): void {
-  const isSecure =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.COOKIE_SECURE !== 'false' &&
-      process.env.NODE_ENV === 'production');
-  cookieStore.set(name, value, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: 'strict',
-    maxAge: maxAgeSec,
-    path: '/',
-  });
+  cookieStore.set(name, value, userSessionCookieOptions(maxAgeSec));
 }
 
 const verifyUserToken = cache(async (token: string) => {
@@ -141,4 +153,22 @@ export async function userLogoutViaGo(): Promise<{ success: boolean }> {
   }
   cookieStore.delete(USER_SESSION_COOKIE);
   return { success: true };
+}
+
+/**
+ * Google 登录：把 Google 已验证身份交给 Go 后端换取 user-session 令牌。
+ * 不在此处写 Cookie，由调用方（Route Handler）按需写入响应。
+ */
+export async function userLoginGoogleViaGo(
+  identity: GoogleIdentity
+): Promise<UserLoginResponse> {
+  return goFetch<UserLoginResponse>('/api/user/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({
+      sub: identity.sub,
+      email: identity.email,
+      emailVerified: identity.emailVerified,
+      name: identity.name,
+    }),
+  });
 }

@@ -50,7 +50,7 @@
     "guestbook_admin_title": "Guestbook Management",
     "guestbook_admin_description": "Review and manage visitor messages, supports reply and approval functions.",
 
-    "upload_files_admin_title": "Uploaded Files Management",
+    "upload_files_admin_title": "Uploaded Files Management (Cloudflare-R2)",
     "upload_files_admin_description": "Upload, delete and rename files under the uploads directory.",
 
     "front_user_management_admin_title": "Frontend User Management",
@@ -168,7 +168,7 @@
     "guestbook_admin_title": "留言墙管理",
     "guestbook_admin_description": "审核和管理访客留言，支持回复和审核功能。",
 
-    "upload_files_admin_title": "Upload 文件管理",
+    "upload_files_admin_title": "Upload 文件管理（Cloudflare-R2）",
     "upload_files_admin_description": "上传、删除、重命名 uploads 目录下的文件。",
 
     "front_user_management_admin_title": "前台用户管理",
