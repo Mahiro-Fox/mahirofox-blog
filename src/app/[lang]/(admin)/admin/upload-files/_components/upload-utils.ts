@@ -8,21 +8,14 @@ import {
 } from '@/constant/file-upload';
 import type { FileItem } from './types';
 
-const IMAGE_EXTENSIONS = [
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.gif',
-  '.webp',
-  '.svg',
-  '.avif',
-  '.ico',
-];
+// 图片扩展名（不含点，与 FileItem.extension 的格式保持一致）
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'ico'];
 
 // 是否是图片文件
 export const isImage = (item: FileItem) => {
   if (item.type !== 'file') return false;
-  return IMAGE_EXTENSIONS.includes(item.extension || '');
+  const extension = (item.extension || '').replace(/^\./, '').toLowerCase();
+  return IMAGE_EXTENSIONS.includes(extension);
 };
 
 // 复制路径到剪贴板
