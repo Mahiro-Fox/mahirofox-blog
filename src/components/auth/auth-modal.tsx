@@ -3,7 +3,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import {
   registerWithEmail,
   resetPasswordWithCode,
@@ -26,6 +26,10 @@ import { Label } from '@/components/shadcn-ui/label';
 import { FadeCarousel } from '@/components/shared/fade-carousel';
 import { imageSizes } from '@/components/shared/image-sizes';
 import { OptimizedImage } from '@/components/shared/optimized-image';
+import {
+  TURNSTILE_SITE_KEY,
+  TurnstileWidget,
+} from '@/components/turnstile/turnstile-widget';
 import { siteConfig } from '@/config/common';
 import { useT } from '@/i18n/dictionary-provider';
 import type { PhotoItem } from '@/lib/photos';
@@ -87,6 +91,18 @@ const ERROR_KEYS: Record<string, string> = {
   ACCOUNT_NOT_FOUND: 'auth.err_email_not_found',
   RESET_FAILED: 'auth.err_reset_failed',
   INVALID_CREDENTIALS: 'auth.err_wrong_password',
+  CAPTCHA_FAILED: 'auth.err_captcha',
+};
+
+// 各步骤对应的人机验证 action（服务端会逐个校验，防止 token 跨场景复用）
+const CAPTCHA_ACTION_BY_STEP: Record<AuthStep, string> = {
+  email: 'email_auth',
+  password: 'login',
+  code: 'email_auth',
+  setPassword: 'signup',
+  passwordNotSet: 'password_reset',
+  resetCode: 'password_reset',
+  resetPassword: 'reset_password',
 };
 
 const RESEND_SECONDS = 60; // 与后端重发节流保持一致
@@ -133,6 +149,23 @@ export function AuthModal({
   const [error, setError] = useState('');
   const [resendIn, setResendIn] = useState(0); // 验证码重发倒计时（秒）
   const [rateLimitIn, setRateLimitIn] = useState(0); // 登录限流倒计时（秒）
+  // 人机验证：token 单次有效，校验失败后通过 nonce 重建小部件取新 token
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+
+  const handleCaptchaToken = useCallback((token: string) => {
+    setCaptchaToken(token || null);
+  }, []);
+
+  const resetCaptcha = useCallback(() => {
+    setCaptchaToken(null);
+    setCaptchaNonce((prev) => prev + 1);
+  }, []);
+
+  // 切换步骤时旧 token 已不适用于新 action，清空等待新 token
+  useEffect(() => {
+    setCaptchaToken(null);
+  }, [step]);
 
   // 关闭后重置，下次打开回到第一步
   useEffect(() => {
@@ -148,6 +181,7 @@ export function AuthModal({
     setResendIn(0);
     setRateLimitIn(0);
     setLoading(false);
+    setCaptchaToken(null);
   }, [open]);
 
   // 重发倒计时
@@ -190,8 +224,10 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await startEmailAuth(email);
+      const res = await startEmailAuth(email, captchaToken ?? '');
       if (!res.success) {
+        // token 已被本次 siteverify 消耗，失败后需要重新获取
+        resetCaptcha();
         // 已有验证码在有效期内：直接进入验证码步骤，并展示重发倒计时
         if (res.error === 'RESEND_TOO_SOON') {
           setResendIn(res.retryAfter ?? RESEND_SECONDS);
@@ -220,8 +256,9 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await userLogin(email, password);
+      const res = await userLogin(email, password, captchaToken ?? '');
       if (!res.success) {
+        resetCaptcha();
         if (res.resetTime) {
           setRateLimitIn(Math.ceil((res.resetTime - Date.now()) / 1000));
           setError(t('auth.err_rate_limited'));
@@ -265,7 +302,7 @@ export function AuthModal({
     setLoading(true);
     try {
       if (step === 'resetCode') {
-        const reset = await startPasswordReset(email);
+        const reset = await startPasswordReset(email, captchaToken ?? '');
         if (!reset.success) {
           if (reset.error === 'RESEND_TOO_SOON') {
             setResendIn(reset.retryAfter ?? RESEND_SECONDS);
@@ -278,7 +315,7 @@ export function AuthModal({
         toast.success(t('auth.code_sent'));
         return;
       }
-      const res = await startEmailAuth(email);
+      const res = await startEmailAuth(email, captchaToken ?? '');
       if (!res.success) {
         if (res.error === 'RESEND_TOO_SOON') {
           setResendIn(res.retryAfter ?? RESEND_SECONDS);
@@ -291,6 +328,7 @@ export function AuthModal({
       toast.success(t('auth.code_sent'));
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -299,8 +337,9 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await startPasswordReset(email);
+      const res = await startPasswordReset(email, captchaToken ?? '');
       if (!res.success) {
+        resetCaptcha();
         if (res.error === 'RESEND_TOO_SOON') {
           // 已存在有效验证码：直接进入输入验证码步骤
           setResendIn(res.retryAfter ?? RESEND_SECONDS);
@@ -355,8 +394,10 @@ export function AuthModal({
         email,
         code,
         newPassword,
+        turnstileToken: captchaToken ?? '',
       });
       if (!res.success) {
+        resetCaptcha();
         setError(errorText(res.error));
         return;
       }
@@ -381,8 +422,10 @@ export function AuthModal({
         code,
         username,
         password: newPassword,
+        turnstileToken: captchaToken ?? '',
       });
       if (!res.success) {
+        resetCaptcha();
         setError(errorText(res.error));
         return;
       }
@@ -411,6 +454,17 @@ export function AuthModal({
     resetCode: t('auth.reset_code_desc').replace('{{email}}', email),
     resetPassword: t('auth.reset_password_desc'),
   };
+
+  // 人机验证挂载点：key 随步骤 / nonce 变化，确保拿到与新 action 匹配的 token
+  const captchaWidget = TURNSTILE_SITE_KEY ? (
+    <TurnstileWidget
+      key={`${step}-${captchaNonce}`}
+      action={CAPTCHA_ACTION_BY_STEP[step]}
+      onToken={handleCaptchaToken}
+      className="flex justify-center"
+    />
+  ) : null;
+  const captchaBlocked = Boolean(TURNSTILE_SITE_KEY) && !captchaToken;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -504,10 +558,11 @@ export function AuthModal({
                     autoComplete="email"
                   />
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
-                  disabled={loading || !email}
+                  disabled={loading || !email || captchaBlocked}
                 >
                   {loading ? t('auth.checking') : t('auth.continue')}
                 </Button>
@@ -529,10 +584,16 @@ export function AuthModal({
                     autoComplete="current-password"
                   />
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
-                  disabled={loading || !password || rateLimitIn > 0}
+                  disabled={
+                    loading ||
+                    !password ||
+                    rateLimitIn > 0 ||
+                    captchaBlocked
+                  }
                 >
                   {rateLimitIn > 0
                     ? `${t('auth.wait_in').replace('{{seconds}}', String(rateLimitIn))}`
@@ -564,6 +625,7 @@ export function AuthModal({
                     autoComplete="one-time-code"
                   />
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
@@ -582,7 +644,7 @@ export function AuthModal({
                   <button
                     type="button"
                     className="text-primary disabled:text-muted-foreground hover:underline disabled:no-underline"
-                    disabled={loading || resendIn > 0}
+                    disabled={loading || resendIn > 0 || captchaBlocked}
                     onClick={handleResend}
                   >
                     {resendIn > 0
@@ -639,10 +701,11 @@ export function AuthModal({
                     autoComplete="new-password"
                   />
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
-                  disabled={loading}
+                  disabled={loading || captchaBlocked}
                 >
                   {loading ? t('auth.registering') : t('auth.register')}
                 </Button>
@@ -661,11 +724,12 @@ export function AuthModal({
                     {t('auth.continue_with_google')}
                   </a>
                 )}
+                {captchaWidget}
                 <Button
                   type="button"
                   onClick={handleStartReset}
                   className={GRADIENT_BUTTON}
-                  disabled={loading}
+                  disabled={loading || captchaBlocked}
                 >
                   {loading ? t('auth.sending') : t('auth.set_password_via_email')}
                 </Button>
@@ -710,7 +774,7 @@ export function AuthModal({
                   <button
                     type="button"
                     onClick={handleResend}
-                    disabled={loading || resendIn > 0}
+                    disabled={loading || resendIn > 0 || captchaBlocked}
                     className="hover:text-foreground disabled:opacity-50"
                   >
                     {resendIn > 0
@@ -721,6 +785,7 @@ export function AuthModal({
                       : t('auth.resend')}
                   </button>
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
@@ -763,10 +828,11 @@ export function AuthModal({
                     autoComplete="new-password"
                   />
                 </div>
+                {captchaWidget}
                 <Button
                   type="submit"
                   className={GRADIENT_BUTTON}
-                  disabled={loading}
+                  disabled={loading || captchaBlocked}
                 >
                   {loading ? t('auth.saving') : t('auth.reset_submit')}
                 </Button>

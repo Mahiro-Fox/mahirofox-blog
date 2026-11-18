@@ -1,9 +1,11 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { siteConfig } from '@/config/common';
 import { notifyReply } from '@/lib/email-send/notify-reply';
 import { serverActionRateLimiter } from '@/lib/rate-limit';
 import { goFetch, withGoAuth } from '@/lib/server/api-client';
+import { verifyTurnstile } from '@/lib/server/turnstile';
 import {
   withActionPermission,
   type ActionResponse,
@@ -11,6 +13,16 @@ import {
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('GuestbookActions');
+
+// 从请求头解析客户端 IP（siteverify 的 remoteip 与 IP 限流共用）
+async function clientIp(): Promise<string> {
+  const h = await headers();
+  return (
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    h.get('x-real-ip') ||
+    'unknown'
+  );
+}
 
 // GET - 获取所有留言（管理员视图）
 export async function adminGetGuestbookEntries(): Promise<
@@ -37,6 +49,7 @@ export async function submitGuestbook(input: {
   contact?: string;
   content: string;
   isEmailNotificationEnabled?: boolean;
+  turnstileToken: string;
 }): Promise<ActionResponse<{ id: string }>> {
   try {
     const {
@@ -46,19 +59,8 @@ export async function submitGuestbook(input: {
       content,
       // 是否开启邮箱通知, 默认关闭
       isEmailNotificationEnabled = false,
+      turnstileToken,
     } = input;
-
-    // 速率限制检查（使用昵称作为标识符）
-    const rateLimit = await serverActionRateLimiter.check(
-      `guestbook:${nickname.trim()}`
-    );
-    if (!rateLimit.success) {
-      return {
-        success: false,
-        error: '留言提交过于频繁，请稍后再试',
-        resetTime: rateLimit.resetTime,
-      };
-    }
 
     if (!nickname || nickname.trim().length === 0) {
       return { success: false, error: '昵称不能为空' };
@@ -71,6 +73,24 @@ export async function submitGuestbook(input: {
     }
     if (content.length > 300) {
       return { success: false, error: '留言内容不能超过300字' };
+    }
+
+    const ip = await clientIp();
+    // 访客留言是匿名公开入口，先做人机验证
+    if (!(await verifyTurnstile(turnstileToken, 'guestbook', ip))) {
+      return { success: false, error: '人机验证未通过，请重试' };
+    }
+
+    // 速率限制检查（使用昵称作为标识符）
+    const rateLimit = await serverActionRateLimiter.check(
+      `guestbook:${nickname.trim()}`
+    );
+    if (!rateLimit.success) {
+      return {
+        success: false,
+        error: '留言提交过于频繁，请稍后再试',
+        resetTime: rateLimit.resetTime,
+      };
     }
 
     // 访客提交不需要 X-Internal-Secret，但 goFetch 默认带；Go 端 POST /api/guestbook 不校验

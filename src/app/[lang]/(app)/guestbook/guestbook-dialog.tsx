@@ -4,7 +4,7 @@ import { COLOR_OPTIONS } from '@/config';
 // 莫兰迪色系颜色选项
 import { CheckIcon, Send, Sticker, X, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { submitGuestbook } from '@/actions/admin/guestbook-actions';
 import { Button } from '@/components/shadcn-ui/button';
 import {
@@ -16,6 +16,10 @@ import {
 } from '@/components/shadcn-ui/dialog';
 import { Input } from '@/components/shadcn-ui/input';
 import { Toggle } from '@/components/shadcn-ui/toggle';
+import {
+  TURNSTILE_SITE_KEY,
+  TurnstileWidget,
+} from '@/components/turnstile/turnstile-widget';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
 import { isEmail } from '@/utils/utils';
@@ -32,11 +36,30 @@ export function GuestbookWallDialog() {
   const [content, setContent] = useState('');
   const [isEmailNotificationEnabled, setIsEmailNotificationEnabled] =
     useState(false);
+  // 人机验证：token 单次有效，提交后重建小部件
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+
+  const handleCaptchaToken = useCallback((token: string) => {
+    setCaptchaToken(token || null);
+  }, []);
+
+  const resetCaptcha = useCallback(() => {
+    setCaptchaToken(null);
+    setCaptchaNonce((prev) => prev + 1);
+  }, []);
+
+  const captchaBlocked = Boolean(TURNSTILE_SITE_KEY) && !captchaToken;
+
   // 提交留言
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim() || !content.trim()) {
       toast.error(t('guestbook.form.validate.required'));
+      return;
+    }
+    if (captchaBlocked) {
+      toast.error(t('guestbook.form.submit.error'));
       return;
     }
 
@@ -48,6 +71,7 @@ export function GuestbookWallDialog() {
         contact: contact.trim() || undefined,
         content: content.trim(),
         isEmailNotificationEnabled,
+        turnstileToken: captchaToken ?? '',
       });
 
       if (result.success) {
@@ -66,6 +90,7 @@ export function GuestbookWallDialog() {
       toast.error(t('guestbook.form.submit.error'));
     } finally {
       setIsSubmitting(false);
+      resetCaptcha();
     }
   };
   return (
@@ -192,7 +217,18 @@ export function GuestbookWallDialog() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <TurnstileWidget
+              key={captchaNonce}
+              action="guestbook"
+              onToken={handleCaptchaToken}
+              className="flex justify-center"
+            />
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || captchaBlocked}
+            >
               {isSubmitting
                 ? t('guestbook.form.submitting')
                 : t('guestbook.form.submit')}

@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { sendVerificationCode } from '@/lib/email-send/verification-code';
 import { loginRateLimiter, serverActionRateLimiter } from '@/lib/rate-limit';
 import { buildQuery, GoApiError, goFetch } from '@/lib/server/api-client';
+import { verifyTurnstile } from '@/lib/server/turnstile';
 import {
   checkVerificationCode,
   clearVerification,
@@ -46,7 +47,8 @@ async function clientIp(): Promise<string> {
 
 export async function userLogin(
   username: string,
-  password: string
+  password: string,
+  turnstileToken: string
 ): Promise<
   | {
       success: true;
@@ -59,10 +61,13 @@ export async function userLogin(
     if (!username || !password) {
       return { success: false, error: 'Username and password required' };
     }
+    const ip = await clientIp();
+    // 人机验证：密码登录是暴力破解的主要入口
+    if (!(await verifyTurnstile(turnstileToken, 'login', ip))) {
+      return { success: false, error: 'CAPTCHA_FAILED' };
+    }
     const rateLimit = await loginRateLimiter.check(`user-login:${username}`);
-    const ipLimit = await loginRateLimiter.check(
-      `user-login-ip:${await clientIp()}`
-    );
+    const ipLimit = await loginRateLimiter.check(`user-login-ip:${ip}`);
     if (!rateLimit.success || !ipLimit.success) {
       return {
         success: false,
@@ -114,7 +119,8 @@ export type StartEmailAuthResult =
  * 失败时 error 为稳定的机器码，由前端映射为对应语言的文案。
  */
 export async function startEmailAuth(
-  email: string
+  email: string,
+  turnstileToken: string
 ): Promise<StartEmailAuthResult> {
   const normalized = normalizeEmail(email);
   if (!EMAIL_PATTERN.test(normalized)) {
@@ -122,9 +128,14 @@ export async function startEmailAuth(
   }
 
   try {
+    const ip = await clientIp();
+    // 人机验证：该入口会探测邮箱是否注册并发送验证码
+    if (!(await verifyTurnstile(turnstileToken, 'email_auth', ip))) {
+      return { success: false, error: 'CAPTCHA_FAILED' };
+    }
     // IP 维度限流，防止批量探测邮箱是否已注册
     const ipLimit = await serverActionRateLimiter.check(
-      `email-auth-ip:${await clientIp()}`
+      `email-auth-ip:${ip}`
     );
     if (!ipLimit.success) {
       return {
@@ -240,6 +251,7 @@ export async function registerWithEmail(input: {
   code: string;
   username: string;
   password: string;
+  turnstileToken: string;
 }): Promise<RegisterWithEmailResult> {
   const email = normalizeEmail(input.email);
   const username = input.username.trim();
@@ -255,9 +267,14 @@ export async function registerWithEmail(input: {
   }
 
   try {
+    const ip = await clientIp();
+    // 人机验证：注册是批量灌号的主要目标
+    if (!(await verifyTurnstile(input.turnstileToken, 'signup', ip))) {
+      return { success: false, error: 'CAPTCHA_FAILED' };
+    }
     // 注册 IP 维度限流（与老注册流程共用计数键）
     const ipLimit = await serverActionRateLimiter.check(
-      `user-register-ip:${await clientIp()}`
+      `user-register-ip:${ip}`
     );
     if (!ipLimit.success) {
       return { success: false, error: 'RATE_LIMITED' };
@@ -343,15 +360,21 @@ export type StartPasswordResetResult =
  * 与注册共用验证码存储与 60s 重发节流。
  */
 export async function startPasswordReset(
-  email: string
+  email: string,
+  turnstileToken: string
 ): Promise<StartPasswordResetResult> {
   const normalized = normalizeEmail(email);
   if (!EMAIL_PATTERN.test(normalized)) {
     return { success: false, error: 'INVALID_EMAIL' };
   }
   try {
+    const ip = await clientIp();
+    // 人机验证：发送重置验证码前必须通过
+    if (!(await verifyTurnstile(turnstileToken, 'password_reset', ip))) {
+      return { success: false, error: 'CAPTCHA_FAILED' };
+    }
     const ipLimit = await serverActionRateLimiter.check(
-      `password-reset-ip:${await clientIp()}`
+      `password-reset-ip:${ip}`
     );
     if (!ipLimit.success) {
       return { success: false, error: 'RATE_LIMITED' };
@@ -400,6 +423,7 @@ export async function resetPasswordWithCode(input: {
   email: string;
   code: string;
   newPassword: string;
+  turnstileToken: string;
 }): Promise<AccountActionResult> {
   const email = normalizeEmail(input.email);
   if (!EMAIL_PATTERN.test(email)) {
@@ -409,8 +433,13 @@ export async function resetPasswordWithCode(input: {
     return { success: false, error: 'PASSWORD_TOO_SHORT' };
   }
   try {
+    const ip = await clientIp();
+    // 人机验证：防止批量重置 / 撞库
+    if (!(await verifyTurnstile(input.turnstileToken, 'reset_password', ip))) {
+      return { success: false, error: 'CAPTCHA_FAILED' };
+    }
     const ipLimit = await serverActionRateLimiter.check(
-      `password-reset-ip:${await clientIp()}`
+      `password-reset-ip:${ip}`
     );
     if (!ipLimit.success) {
       return { success: false, error: 'RATE_LIMITED' };
