@@ -15,7 +15,12 @@ import { UPLOADS_DIR } from '@/constant/dir';
  */
 export async function isPortraitImage(imagePath: string): Promise<boolean> {
   try {
-    const fullPath = path.join(process.cwd(), imagePath);
+    // turbopackIgnore：避免构建期把整个项目当作动态依赖追踪进 standalone 产物
+    const fullPath = path.join(
+      /*turbopackIgnore: true*/
+      process.cwd(),
+      imagePath
+    );
     if (!fs.existsSync(fullPath)) {
       console.error(`图片不存在: ${fullPath}`);
       return false;

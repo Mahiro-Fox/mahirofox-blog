@@ -14,6 +14,7 @@ import (
 // 鉴权上下文键。下游 handler 可通过 c.Get(CtxKeyUserID) 等取用。
 const (
 	CtxKeyUserID    = "userId"
+	CtxKeyUsername  = "username"
 	CtxKeyRole      = "role"
 	CtxKeySessionID = "sessionId"
 )
@@ -65,6 +66,7 @@ func RequireSession(secret, adminIssuer string) gin.HandlerFunc {
 			return
 		}
 		c.Set(CtxKeyUserID, claims.UserID)
+		c.Set(CtxKeyUsername, claims.Username)
 		c.Set(CtxKeyRole, claims.Role)
 		c.Set(CtxKeySessionID, claims.SessionID)
 		c.Next()

@@ -50,10 +50,15 @@ function isLocalAbsolutePath(target: string): boolean {
   return path.isAbsolute(target);
 }
 
-/** R2 key → 本地绝对路径（未配置 R2 时使用） */
+/**
+ * R2 key → 本地绝对路径（未配置 R2 时使用）。
+ * turbopackIgnore：抑制构建期文件系统追踪，避免把整个项目打进 standalone 产物；
+ * 该分支只在本地开发（未配置 R2）时执行，生产不会读本地磁盘。
+ */
 function keyToLocalPath(key: string): string {
   if (isLocalAbsolutePath(key)) return key;
   return path.join(
+    /*turbopackIgnore: true*/
     process.cwd(),
     key.replace(/^\/+/, '').split('/').join(path.sep)
   );
@@ -153,7 +158,7 @@ export async function listUploadSubdirectories(
 /** 读取文件内容，接受 R2 key 或本地绝对路径 */
 export async function readUploadFile(key: string): Promise<Buffer> {
   if (!isR2Configured() || isLocalAbsolutePath(key)) {
-    return fs.promises.readFile(keyToLocalPath(key));
+    return fs.promises.readFile(/*turbopackIgnore: true*/ keyToLocalPath(key));
   }
   return getR2ObjectBuffer(toUploadsKey(key));
 }
@@ -167,7 +172,10 @@ export async function readUploadFileHead(
   bytes = 64 * 1024
 ): Promise<Buffer> {
   if (!isR2Configured() || isLocalAbsolutePath(key)) {
-    const handle = await fs.promises.open(keyToLocalPath(key), 'r');
+    const handle = await fs.promises.open(
+      /*turbopackIgnore: true*/ keyToLocalPath(key),
+      'r'
+    );
     try {
       const { size } = await handle.stat();
       const length = Math.min(bytes, size);
@@ -273,7 +281,9 @@ export async function listUploadEntries(
 export async function uploadFileExists(key: string): Promise<boolean> {
   if (!isR2Configured()) {
     try {
-      return (await fs.promises.stat(keyToLocalPath(key))).isFile();
+      return (
+        await fs.promises.stat(/*turbopackIgnore: true*/ keyToLocalPath(key))
+      ).isFile();
     } catch {
       return false;
     }
@@ -285,7 +295,9 @@ export async function uploadFileExists(key: string): Promise<boolean> {
 export async function isUploadDirectory(key: string): Promise<boolean> {
   if (!isR2Configured()) {
     try {
-      return (await fs.promises.stat(keyToLocalPath(key))).isDirectory();
+      return (
+        await fs.promises.stat(/*turbopackIgnore: true*/ keyToLocalPath(key))
+      ).isDirectory();
     } catch {
       return false;
     }

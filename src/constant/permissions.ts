@@ -63,6 +63,8 @@ export type Permission =
   // 分析权限
   | 'analytics:read'
   | 'analytics:delete'
+  // 操作日志权限
+  | 'logs:read'
   // 电影管理权限
   | 'movies:read'
   | 'movies:create'
@@ -164,6 +166,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
     // 系统权限：可以刷新缓存
     'system:revalidate',
+    'logs:read',
   ],
 };
 
@@ -464,6 +467,11 @@ export const ALL_PERMISSIONS: {
         value: 'system:revalidate',
         label: '刷新缓存',
         description: '手动触发页面重新验证',
+      },
+      {
+        value: 'logs:read',
+        label: '查看操作日志',
+        description: '查看管理后台的操作审计日志',
       },
     ],
   },

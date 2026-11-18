@@ -145,6 +145,7 @@ func autoMigrate(db *gorm.DB) error {
 		&model.Tag{},
 		&model.AnalyticsLog{},
 		&model.Conversation{},
+		&model.OperationLog{},
 	}
 	if err := db.AutoMigrate(models...); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
@@ -156,6 +157,7 @@ func autoMigrate(db *gorm.DB) error {
 		"CREATE INDEX IF NOT EXISTS idx_guestbook_created_at ON guestbook_entries (created_at DESC)",
 		"CREATE INDEX IF NOT EXISTS idx_guestbook_approved ON guestbook_entries (is_approved)",
 		"CREATE INDEX IF NOT EXISTS idx_bugs_created_at ON bug_reports (created_at DESC)",
+		"CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs (created_at DESC)",
 	}
 	for _, sql := range indexes {
 		if err := db.Exec(sql).Error; err != nil {

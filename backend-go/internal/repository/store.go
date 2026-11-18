@@ -105,6 +105,10 @@ type Store interface {
 	CountExpiredAnalyticsLogs(ctx context.Context, before time.Time) (int64, error)
 	DeleteExpiredAnalyticsLogs(ctx context.Context, before time.Time) (int64, error)
 
+	// operation logs（管理端操作审计）
+	CreateOperationLog(ctx context.Context, l *model.OperationLog) error
+	ListOperationLogs(ctx context.Context, q model.OperationLogQuery) (*model.OperationLogPage, error)
+
 	// conversations（AI 对话存储：前端保留 AI 逻辑，本层仅负责落盘与读取）
 	UpsertConversation(ctx context.Context, c *model.Conversation) error
 	GetConversationByID(ctx context.Context, userID, id string) (*model.Conversation, error)

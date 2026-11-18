@@ -10,6 +10,7 @@ import {
   FileText,
   Film,
   FolderOpen,
+  History,
   Image,
   ImageIcon,
   Lock,
@@ -271,6 +272,13 @@ export const pageRoutesConfig: PageRouteConfig[] = [
     adminHref: '/admin/analytics',
     adminTitle: 'analytics_admin_title',
     adminDescription: 'analytics_admin_description',
+  },
+  {
+    name: 'operation_logs',
+    icon: History,
+    adminHref: '/admin/operation-logs',
+    adminTitle: 'operation_logs_admin_title',
+    adminDescription: 'operation_logs_admin_description',
   },
   {
     name: 'bug_report',

@@ -95,6 +95,9 @@
     "analytics_admin_title": "Access Logs",
     "analytics_admin_description": "View website access logs, including access time, pages, devices and other information.",
 
+    "operation_logs_admin_title": "Operation Logs",
+    "operation_logs_admin_description": "View and filter admin operation audit logs, including operator, action, resource, IP and time.",
+
     "bug_report_admin_title": "Feedback",
     "bug_report_admin_description": "View and handle website bugs reported by users.",
 
@@ -215,6 +218,9 @@
 
     "analytics_admin_title": "访问日志",
     "analytics_admin_description": "查看网站访问日志，包括访问时间、页面、设备等信息。",
+
+    "operation_logs_admin_title": "操作日志",
+    "operation_logs_admin_description": "查看并筛选后台操作审计日志，包含操作人、动作、资源、IP 与时间。",
 
     "bug_report_admin_title": "问题反馈",
     "bug_report_admin_description": "查看和处理用户反馈的网站 BUG。",

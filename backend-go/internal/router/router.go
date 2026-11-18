@@ -48,6 +48,8 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		return []gin.HandlerFunc{
 			middleware.RequireInternalSecret(internalSecret),
 			middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer),
+			// 写操作审计：置于会话解析之后，才能拿到操作人身份
+			middleware.OperationLogger(store),
 		}
 	}
 
@@ -177,8 +179,8 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	{
 		rolePerms.GET("", middleware.AllowAnonymous(), handler.ListRolePermissionsHandler(store))
 		rolePerms.GET("/:role", middleware.AllowAnonymous(), handler.GetRolePermissionsHandler(store))
-		rolePerms.PUT("", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "users:updateRole"), handler.UpdateRolePermissionsHandler(store))
-		rolePerms.DELETE("/:role", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.RequirePermission(store, "users:updateRole"), handler.DeleteRolePermissionsHandler(store))
+		rolePerms.PUT("", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.UpdateRolePermissionsHandler(store))
+		rolePerms.DELETE("/:role", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.DeleteRolePermissionsHandler(store))
 	}
 
 	// tags 路由
@@ -204,6 +206,12 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	{
 		analyticsAdmin.GET("", middleware.RequirePermission(store, "analytics:read"), handler.GetAnalyticsLogsHandler(store))
 		analyticsAdmin.DELETE("", middleware.RequirePermission(store, "analytics:delete"), handler.DeleteExpiredAnalyticsHandler(store))
+	}
+
+	// operation-logs 路由（后台操作审计：只读）
+	operationLogsAdmin := api.Group("/admin/operation-logs", adminOnly()...)
+	{
+		operationLogsAdmin.GET("", middleware.RequirePermission(store, "logs:read"), handler.ListOperationLogsHandler(store))
 	}
 
 	// conversations 路由（AI 对话存储）

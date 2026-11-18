@@ -45,6 +45,21 @@ func AdminLoginHandler(store repository.Store, cfg *config.Config) gin.HandlerFu
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "登录失败，请稍后重试"})
 			return
 		}
+		// 登录属于审计事件（无请求会话，故不走 OperationLogger 中间件）
+		if e := service.WriteOperationLog(c.Request.Context(), store, service.OperationLogInput{
+			OperatorID:   result.User.ID,
+			OperatorName: result.User.Username,
+			OperatorRole: string(result.User.Role),
+			Action:       "login",
+			Resource:     "auth",
+			Summary:      "登录管理后台",
+			IP:           c.ClientIP(),
+			UserAgent:    c.GetHeader("User-Agent"),
+			Success:      true,
+			Status:       http.StatusOK,
+		}); e != nil {
+			log.Printf("写入登录日志失败: %v", e)
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"token":                result.Token,
 			"user":                 result.User,
