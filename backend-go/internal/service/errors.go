@@ -15,4 +15,18 @@ var (
 	ErrGoogleEmailUnverified = errors.New("google email unverified")
 	// ErrGoogleEmailBound 该邮箱已绑定其他 Google 账号
 	ErrGoogleEmailBound = errors.New("google email bound to another google account")
+	// ErrGoogleLinkRequired 同邮箱的本地密码账户需要先用密码登录，再在设置页关联 Google
+	ErrGoogleLinkRequired = errors.New("google link required")
+	// ErrGoogleAlreadyLinked 该 Google 账号已绑定其他账户
+	ErrGoogleAlreadyLinked = errors.New("google already linked to another account")
+	// ErrGoogleNotLinked 当前账户未绑定 Google
+	ErrGoogleNotLinked = errors.New("google not linked")
+	// ErrPasswordNotSet 账户未设置密码（通常由 Google 登录创建）
+	ErrPasswordNotSet = errors.New("password not set")
+	// ErrPasswordRequired 解绑 Google 前必须先设置密码
+	ErrPasswordRequired = errors.New("password required before unlinking google")
+	// ErrCurrentPasswordInvalid 当前密码错误
+	ErrCurrentPasswordInvalid = errors.New("current password invalid")
+	// ErrEmailNotFound 邮箱对应的账户不存在
+	ErrEmailNotFound = errors.New("email not found")
 )

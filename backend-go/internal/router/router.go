@@ -74,6 +74,23 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		userAuthInternal.POST("/google", middleware.AllowAnonymous(), handler.UserGoogleLoginHandler(store, cfg))
 	}
 
+	// 前台账户自服务（账户设置页）：内部密钥 + user JWT（后台/前台 issuer 隔离）
+	userAccount := api.Group("/user/account",
+		middleware.RequireInternalSecret(internalSecret),
+		middleware.RequireUserSession(cfg.JWTSecret, cfg.UserIssuer),
+	)
+	{
+		userAccount.GET("", handler.GetUserAccountHandler(store))
+		userAccount.PUT("/password", handler.UpdateUserPasswordHandler(store))
+		userAccount.POST("/google/link", handler.LinkUserGoogleHandler(store))
+		userAccount.DELETE("/google", handler.UnlinkUserGoogleHandler(store))
+	}
+	// 忘记密码：Next 校验邮箱验证码后调用，无用户会话，仅内部密钥
+	userPasswordReset := api.Group("/user/account", middleware.RequireInternalSecret(internalSecret))
+	{
+		userPasswordReset.POST("/password/reset", middleware.AllowAnonymous(), handler.ResetUserPasswordHandler(store))
+	}
+
 	// movies 路由
 	movies := api.Group("/movies")
 	{
@@ -138,13 +155,18 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		bugsAdmin.DELETE("/:id", middleware.RequirePermission(store, "bugs:delete"), handler.DeleteBugHandler(store))
 	}
 
-	// accounts 路由（前台注册/登录/公开资料）
+	// accounts 路由（前台登录/公开资料）
 	accounts := api.Group("/accounts")
 	{
-		accounts.POST("", publicWriteLimit, middleware.AllowAnonymous(), handler.CreateAccountHandler(store))
 		accounts.POST("/login", loginLimit, middleware.AllowAnonymous(), handler.LoginAccountHandler(store))
 		accounts.GET("/exists", emailCheckLimit, middleware.AllowAnonymous(), handler.CheckAccountEmailExistsHandler(store))
 		accounts.GET("/:id", middleware.AllowAnonymous(), handler.GetPublicAccountHandler(store))
+	}
+	// 注册必须经 Next 校验邮箱验证码后转发（X-Internal-Secret），防止绕过验证直接建号。
+	// publicWriteLimit 仍保留，用于限制单个来源的注册频率。
+	accountsInternal := api.Group("/accounts", middleware.RequireInternalSecret(internalSecret))
+	{
+		accountsInternal.POST("", publicWriteLimit, middleware.AllowAnonymous(), handler.CreateAccountHandler(store))
 	}
 	accountsAdmin := api.Group("/admin/accounts", adminOnly()...)
 	{

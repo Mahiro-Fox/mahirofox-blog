@@ -106,6 +106,21 @@ func (s *GormStore) UpdateAccount(ctx context.Context, id string, patch *model.A
 	return nil
 }
 
+// ClearAccountGoogleSub 解除 Google 绑定（显式写入 NULL；AccountPatch 的 nil 指针语义无法表达）
+func (s *GormStore) ClearAccountGoogleSub(ctx context.Context, id string) error {
+	result := s.db.WithContext(ctx).
+		Model(&model.Account{}).
+		Where("id = ?", id).
+		Update("google_sub", nil)
+	if result.Error != nil {
+		return fmt.Errorf("clear account google sub: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return ErrAccountNotFound
+	}
+	return nil
+}
+
 // DeleteAccount 删除账户
 func (s *GormStore) DeleteAccount(ctx context.Context, id string) error {
 	result := s.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Account{})

@@ -111,6 +111,7 @@
     "user_menu.logout": "Logout",
     "user_menu.signin": "Sign In",
     "user_menu.welcome": "Hello",
+    "user_menu.settings": "Account settings",
 
     "global-music-player.playlist": "Playlist",
     "global-music-player.pause": "Pause",
@@ -235,6 +236,7 @@
     "user_menu.logout": "退出登录",
     "user_menu.signin": "登录",
     "user_menu.welcome": "你好",
+    "user_menu.settings": "账户设置",
 
     "global-music-player.playlist": "播放列表",
     "global-music-player.pause": "暂停",

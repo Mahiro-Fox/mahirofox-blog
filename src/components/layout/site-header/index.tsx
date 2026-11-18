@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Menu, User } from 'lucide-react';
+import { LogOut, Menu, Settings, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -41,6 +41,7 @@ import { SiteLogo } from '@/components/shared/site-logo';
 import { ThemeSwitcher } from '@/components/shared/theme-switcher';
 import { groupedNavRoutes, siteConfig } from '@/config/common';
 import { useT } from '@/i18n/dictionary-provider';
+import { useLocale } from '@/i18n/use-locale';
 
 interface SiteHeaderUser {
   id: string;
@@ -55,6 +56,7 @@ export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
   const t = useT();
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
   const authModal = useAuthModal();
   const isActive = (href: string) => pathname === href;
   const [currentUser, setCurrentUser] = useState<SiteHeaderUser | null>(
@@ -239,6 +241,12 @@ export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
                     {t('user_menu.welcome')}, {currentUser.username}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href={`/${locale}/settings`}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t('user_menu.settings')}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer"

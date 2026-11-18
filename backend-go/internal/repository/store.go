@@ -59,6 +59,7 @@ type Store interface {
 	GetAccountByGoogleSub(ctx context.Context, googleSub string) (*model.Account, error)
 	CreateAccount(ctx context.Context, a *model.Account) error
 	UpdateAccount(ctx context.Context, id string, patch *model.AccountPatch) error
+	ClearAccountGoogleSub(ctx context.Context, id string) error
 	DeleteAccount(ctx context.Context, id string) error
 
 	// admin users (后台用户)

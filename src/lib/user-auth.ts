@@ -10,6 +10,8 @@ type UserVerifyResponse = {
   accountId?: string;
   username?: string;
   email?: string;
+  hasPassword?: boolean;
+  googleLinked?: boolean;
   loggedInAt?: string;
   expiresAt?: number;
   sessionId?: string;
@@ -23,11 +25,24 @@ type UserLoginResponse = {
     username: string;
     email?: string | null;
     provider?: string;
+    hasPassword?: boolean;
+    googleLinked?: boolean;
     createdAt?: string;
   };
   expiresIn: number;
   sessionId: string;
   loggedInAt: string;
+};
+
+/** 账户设置页所需的账户安全信息 */
+export type UserAccountInfo = {
+  id: string;
+  username: string;
+  email: string;
+  provider: string;
+  hasPassword: boolean;
+  googleLinked: boolean;
+  createdAt?: string;
 };
 
 export type CurrentUser = {
@@ -170,5 +185,73 @@ export async function userLoginGoogleViaGo(
       emailVerified: identity.emailVerified,
       name: identity.name,
     }),
+  });
+}
+
+/** 读取当前 user-session token（仅服务端）；未登录返回空串 */
+export async function getUserSessionToken(): Promise<string> {
+  const cookieStore = await cookies();
+  return cookieStore.get(USER_SESSION_COOKIE)?.value ?? '';
+}
+
+function bearer(token: string): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** 账户设置页：读取当前账户的登录方式状态 */
+export async function getUserAccountViaGo(): Promise<UserAccountInfo | null> {
+  try {
+    const token = await getUserSessionToken();
+    if (!token) return null;
+    return await goFetch<UserAccountInfo>('/api/user/account', {
+      headers: bearer(token),
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** 设置/修改密码：已有密码时需提供 currentPassword */
+export async function setUserPasswordViaGo(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const token = await getUserSessionToken();
+  await goFetch('/api/user/account/password', {
+    method: 'PUT',
+    headers: bearer(token),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+/** 解绑 Google（Go 侧要求已设置密码） */
+export async function unlinkUserGoogleViaGo(): Promise<void> {
+  const token = await getUserSessionToken();
+  await goFetch('/api/user/account/google', {
+    method: 'DELETE',
+    headers: bearer(token),
+  });
+}
+
+/** 把已校验的 Google 身份绑定到指定会话账户（OAuth 回调中使用） */
+export async function linkUserGoogleViaGo(
+  token: string,
+  sub: string
+): Promise<void> {
+  await goFetch('/api/user/account/google/link', {
+    method: 'POST',
+    headers: bearer(token),
+    body: JSON.stringify({ sub }),
+  });
+}
+
+/** 忘记密码：Next 校验邮箱验证码后调用（内部接口，无需用户会话） */
+export async function resetUserPasswordViaGo(
+  email: string,
+  password: string
+): Promise<void> {
+  await goFetch('/api/user/account/password/reset', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
   });
 }

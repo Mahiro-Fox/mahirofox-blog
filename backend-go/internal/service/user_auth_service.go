@@ -29,15 +29,17 @@ type UserLoginResult struct {
 
 // UserVerifyResult 前台鉴权返回（对齐 Next user-auth.ts verifyUserAuth）
 type UserVerifyResult struct {
-	Success   bool   `json:"success"`
-	Error     string `json:"error,omitempty"`
-	AccountID string `json:"accountId,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Email     string `json:"email,omitempty"`
-	LoggedInAt string `json:"loggedInAt,omitempty"`
-	ExpiresAt  int64  `json:"expiresAt,omitempty"`
-	SessionID  string `json:"sessionId,omitempty"`
-	RecoveredSession bool `json:"recoveredSession,omitempty"`
+	Success          bool   `json:"success"`
+	Error            string `json:"error,omitempty"`
+	AccountID        string `json:"accountId,omitempty"`
+	Username         string `json:"username,omitempty"`
+	Email            string `json:"email,omitempty"`
+	HasPassword      bool   `json:"hasPassword"`
+	GoogleLinked     bool   `json:"googleLinked"`
+	LoggedInAt       string `json:"loggedInAt,omitempty"`
+	ExpiresAt        int64  `json:"expiresAt,omitempty"`
+	SessionID        string `json:"sessionId,omitempty"`
+	RecoveredSession bool   `json:"recoveredSession,omitempty"`
 }
 
 // UserLogin 前台登录：username/email + password → 查 accounts → bcrypt → 删旧会话 → 签发 JWT → 写会话
@@ -62,7 +64,7 @@ func UserLogin(ctx context.Context, store repository.Store, cfg *config.Config, 
 		}
 	}
 	if a.PasswordHash == "" {
-		return nil, fmt.Errorf("%w", ErrInvalidCredentials)
+		return nil, fmt.Errorf("%w", ErrPasswordNotSet)
 	}
 	if !verifyPassword(ctx, password, a.PasswordHash) {
 		return nil, fmt.Errorf("%w", ErrInvalidCredentials)
@@ -103,9 +105,23 @@ func issueUserSession(ctx context.Context, store repository.Store, cfg *config.C
 		Token:      token,
 		SessionID:  sessionID,
 		ExpiresIn:  cfg.SessionTTLSeconds,
-		Account:    model.PublicAccountDTO{ID: a.ID, Username: a.Username, Email: a.Email, Provider: a.Provider, CreatedAt: a.CreatedAt},
+		Account:    toPublicAccountDTO(a),
 		LoggedInAt: now.UTC().Format(time.RFC3339),
 	}, nil
+}
+
+// toPublicAccountDTO 统一构造对外账户信息：显式暴露登录方式状态，
+// 避免前端用 provider 推断（自动绑定后 provider 仍可能是 credentials）。
+func toPublicAccountDTO(a *model.Account) model.PublicAccountDTO {
+	return model.PublicAccountDTO{
+		ID:           a.ID,
+		Username:     a.Username,
+		Email:        a.Email,
+		Provider:     a.Provider,
+		HasPassword:  a.PasswordHash != "",
+		GoogleLinked: a.GoogleSub != nil && *a.GoogleSub != "",
+		CreatedAt:    a.CreatedAt,
+	}
 }
 
 // UserVerify 前台鉴权：JWT 校验 → 查会话（必要时恢复）→ 更新 last_used_at → 返回最新账户信息
@@ -166,6 +182,8 @@ func UserVerify(ctx context.Context, store repository.Store, cfg *config.Config,
 		AccountID:        a.ID,
 		Username:         a.Username,
 		Email:            a.Email,
+		HasPassword:      a.PasswordHash != "",
+		GoogleLinked:     a.GoogleSub != nil && *a.GoogleSub != "",
 		LoggedInAt:       claims.LoggedInAt,
 		ExpiresAt:        claims.ExpiresAtUnix(),
 		SessionID:        session.SessionID,
@@ -209,13 +227,18 @@ func UserLoginWithGoogle(ctx context.Context, store repository.Store, cfg *confi
 		return nil, fmt.Errorf("查 Google 账户失败: %w", err)
 	}
 
-	// 2) 同邮箱已有账户：绑定后登录（Google 已验证邮箱，视为同一人）
+	// 2) 同邮箱已有账户
 	a, err = store.GetAccountByEmail(ctx, email)
 	if err == nil {
 		if a.GoogleSub != nil && *a.GoogleSub != sub {
 			return nil, ErrGoogleEmailBound
 		}
 		if a.GoogleSub == nil {
+			// 已有密码的本地账户不静默绑定：避免仅凭邮箱就改变既有账户的登录方式。
+			// 用户需先用密码登录，再到账户设置页主动关联 Google。
+			if a.PasswordHash != "" {
+				return nil, ErrGoogleLinkRequired
+			}
 			now := time.Now()
 			subCopy := sub
 			if e := store.UpdateAccount(ctx, a.ID, &model.AccountPatch{

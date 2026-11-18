@@ -73,6 +73,27 @@ func RequireSession(secret, adminIssuer string) gin.HandlerFunc {
 	}
 }
 
+// RequireUserSession 前台用户会话守卫：解析 user JWT（issuer 与后台隔离），
+// 把账户 ID 写入 CtxKeyUserID。用于 /api/user/account 自服务接口。
+func RequireUserSession(secret, userIssuer string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := extractBearerToken(c)
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+			return
+		}
+		claims, err := auth.VerifyUser(token, []byte(secret), userIssuer)
+		if err != nil || claims.AccountID == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "登录已过期"})
+			return
+		}
+		c.Set(CtxKeyUserID, claims.AccountID)
+		c.Set(CtxKeyUsername, claims.Username)
+		c.Set(CtxKeySessionID, claims.SessionID)
+		c.Next()
+	}
+}
+
 // RequirePermission fail-closed：必须先经过 RequireSession 写入 role；
 // 若无 role，直接 401（说明未登录或 RequireSession 未挂）；否则查 DB 鉴权。
 // 不信任任何上游明文头（如 X-User-Permissions）。

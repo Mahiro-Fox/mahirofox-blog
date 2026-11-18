@@ -181,3 +181,114 @@ func UpdateAccountPassword(ctx context.Context, store repository.Store, id, newP
 func DeleteAccount(ctx context.Context, store repository.Store, id string) error {
 	return store.DeleteAccount(ctx, id)
 }
+
+// GetAccountSecurity 当前登录账户的对外信息（含 hasPassword / googleLinked）。
+func GetAccountSecurity(ctx context.Context, store repository.Store, accountID string) (*model.PublicAccountDTO, error) {
+	a, err := store.GetAccountByID(ctx, accountID)
+	if err != nil {
+		return nil, err
+	}
+	dto := toPublicAccountDTO(a)
+	return &dto, nil
+}
+
+// SetAccountPassword 登录态下设置/修改密码。
+// - 已设置密码：必须校验当前密码，防止会话被盗后直接改密
+// - 未设置密码（Google 登录创建）：凭有效登录态直接设置，完成两种登录方式打通
+func SetAccountPassword(ctx context.Context, store repository.Store, accountID, currentPassword, newPassword string) error {
+	if len(newPassword) < 6 {
+		return errors.New("密码长度不能少于 6 位")
+	}
+	a, err := store.GetAccountByID(ctx, accountID)
+	if err != nil {
+		return err
+	}
+	if a.PasswordHash != "" && !verifyPassword(ctx, currentPassword, a.PasswordHash) {
+		return ErrCurrentPasswordInvalid
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("密码加密失败")
+	}
+	now := time.Now()
+	hashStr := string(hash)
+	return store.UpdateAccount(ctx, accountID, &model.AccountPatch{
+		PasswordHash: &hashStr,
+		LastUpdated:  &now,
+	})
+}
+
+// ResetAccountPasswordByEmail 邮箱验证码校验通过后重置密码（由 Next 内部调用）。
+// 重置成功后清理该账户全部会话，强制各端重新登录。
+func ResetAccountPasswordByEmail(ctx context.Context, store repository.Store, email, newPassword string) error {
+	if len(newPassword) < 6 {
+		return errors.New("密码长度不能少于 6 位")
+	}
+	a, err := store.GetAccountByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrAccountNotFound) {
+			return ErrEmailNotFound
+		}
+		return err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.New("密码加密失败")
+	}
+	now := time.Now()
+	hashStr := string(hash)
+	if err := store.UpdateAccount(ctx, a.ID, &model.AccountPatch{
+		PasswordHash: &hashStr,
+		LastUpdated:  &now,
+	}); err != nil {
+		return err
+	}
+	if _, err := store.DeleteUserSessionsByAccountID(ctx, a.ID); err != nil {
+		return fmt.Errorf("清理旧会话失败: %w", err)
+	}
+	return nil
+}
+
+// LinkGoogleAccount 把 Google sub 绑定到当前登录账户。
+// sub 已属于其他账户时拒绝；当前账户已绑定其他 Google 时同样拒绝。
+func LinkGoogleAccount(ctx context.Context, store repository.Store, accountID, sub string) error {
+	sub = strings.TrimSpace(sub)
+	if sub == "" {
+		return ErrGoogleIdentityInvalid
+	}
+	existing, err := store.GetAccountByGoogleSub(ctx, sub)
+	if err == nil && existing.ID != accountID {
+		return ErrGoogleAlreadyLinked
+	}
+	if err != nil && !errors.Is(err, repository.ErrAccountNotFound) {
+		return err
+	}
+	a, err := store.GetAccountByID(ctx, accountID)
+	if err != nil {
+		return err
+	}
+	if a.GoogleSub != nil && *a.GoogleSub != "" && *a.GoogleSub != sub {
+		return ErrGoogleEmailBound
+	}
+	now := time.Now()
+	subCopy := sub
+	return store.UpdateAccount(ctx, accountID, &model.AccountPatch{
+		GoogleSub:   &subCopy,
+		LastUpdated: &now,
+	})
+}
+
+// UnlinkGoogleAccount 解绑 Google。必须已设置密码，否则账户会失去唯一登录方式。
+func UnlinkGoogleAccount(ctx context.Context, store repository.Store, accountID string) error {
+	a, err := store.GetAccountByID(ctx, accountID)
+	if err != nil {
+		return err
+	}
+	if a.GoogleSub == nil || *a.GoogleSub == "" {
+		return ErrGoogleNotLinked
+	}
+	if a.PasswordHash == "" {
+		return ErrPasswordRequired
+	}
+	return store.ClearAccountGoogleSub(ctx, accountID)
+}

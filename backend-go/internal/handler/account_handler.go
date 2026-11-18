@@ -71,7 +71,8 @@ func GetPublicAccountHandler(store repository.Store) gin.HandlerFunc {
 }
 
 // CheckAccountEmailExistsHandler GET /api/accounts/exists?email=
-// 公开端点：判断邮箱是否已注册。仅返回 exists 布尔，不泄露账户信息。
+// 公开端点：判断邮箱是否已注册，并告知是否已设置密码。
+// 仅返回布尔，不泄露账户其他信息；hasPassword 用于前端区分「密码登录」与「Google 账户」。
 func CheckAccountEmailExistsHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		email := strings.TrimSpace(c.Query("email"))
@@ -79,12 +80,12 @@ func CheckAccountEmailExistsHandler(store repository.Store) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "缺少 email 参数"})
 			return
 		}
-		_, err := service.GetAccountByEmail(c.Request.Context(), store, email)
+		a, err := service.GetAccountByEmail(c.Request.Context(), store, email)
 		switch {
 		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"exists": true})
+			c.JSON(http.StatusOK, gin.H{"exists": true, "hasPassword": a.PasswordHash != ""})
 		case errors.Is(err, repository.ErrAccountNotFound):
-			c.JSON(http.StatusOK, gin.H{"exists": false})
+			c.JSON(http.StatusOK, gin.H{"exists": false, "hasPassword": false})
 		default:
 			log.Printf("check account email internal error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败，请稍后重试"})

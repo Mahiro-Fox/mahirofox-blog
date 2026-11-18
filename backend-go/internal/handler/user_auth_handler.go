@@ -36,7 +36,12 @@ func UserLoginHandler(store repository.Store, cfg *config.Config) gin.HandlerFun
 		if err != nil {
 			if errors.Is(err, service.ErrInvalidCredentials) {
 				// 凭据错误：统一 401 固定文案，不透出内部细节
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误", "code": "INVALID_CREDENTIALS"})
+				return
+			}
+			if errors.Is(err, service.ErrPasswordNotSet) {
+				// 账户存在但未设置密码（Google 登录创建），前端引导改用 Google 或设置密码
+				c.JSON(http.StatusConflict, gin.H{"error": "该账户尚未设置密码", "code": "PASSWORD_NOT_SET"})
 				return
 			}
 			// 其余视为服务端内部错误：只进日志，对外返回通用文案
@@ -71,11 +76,13 @@ func UserGoogleLoginHandler(store repository.Store, cfg *config.Config) gin.Hand
 		if err != nil {
 			switch {
 			case errors.Is(err, service.ErrGoogleIdentityInvalid):
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Google 身份信息不完整"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Google 身份信息不完整", "code": "GOOGLE_IDENTITY_INVALID"})
 			case errors.Is(err, service.ErrGoogleEmailUnverified):
-				c.JSON(http.StatusForbidden, gin.H{"error": "Google 邮箱未经验证"})
+				c.JSON(http.StatusForbidden, gin.H{"error": "Google 邮箱未经验证", "code": "GOOGLE_EMAIL_UNVERIFIED"})
 			case errors.Is(err, service.ErrGoogleEmailBound):
-				c.JSON(http.StatusConflict, gin.H{"error": "该邮箱已绑定其他 Google 账号"})
+				c.JSON(http.StatusConflict, gin.H{"error": "该邮箱已绑定其他 Google 账号", "code": "GOOGLE_EMAIL_TAKEN"})
+			case errors.Is(err, service.ErrGoogleLinkRequired):
+				c.JSON(http.StatusConflict, gin.H{"error": "请先用密码登录，再到账户设置页关联 Google", "code": "GOOGLE_LINK_REQUIRED"})
 			default:
 				log.Printf("user google login internal error: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "登录失败，请稍后重试"})

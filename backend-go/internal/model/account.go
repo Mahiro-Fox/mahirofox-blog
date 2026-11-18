@@ -28,11 +28,13 @@ type Account struct {
 
 // PublicAccountDTO 对外（公开只读端点）暴露的账户信息（不含密码哈希）
 type PublicAccountDTO struct {
-	ID          string          `json:"id"`
-	Username    string          `json:"username"`
-	Email       string          `json:"email"`
-	Provider    AccountProvider `json:"provider"`
-	CreatedAt   time.Time       `json:"createdAt"`
+	ID           string          `json:"id"`
+	Username     string          `json:"username"`
+	Email        string          `json:"email"`
+	Provider     AccountProvider `json:"provider"`
+	HasPassword  bool            `json:"hasPassword"`
+	GoogleLinked bool            `json:"googleLinked"`
+	CreatedAt    time.Time       `json:"createdAt"`
 }
 
 // AccountCreateInput 注册入参（username / email 均为必填）

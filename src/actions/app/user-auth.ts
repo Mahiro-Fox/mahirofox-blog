@@ -14,6 +14,9 @@ import {
 } from '@/lib/server/email-verification';
 import {
   getCurrentUser,
+  resetUserPasswordViaGo,
+  setUserPasswordViaGo,
+  unlinkUserGoogleViaGo,
   userLoginViaGo,
   userLogoutViaGo,
 } from '@/lib/user-auth';
@@ -72,9 +75,14 @@ export async function userLogin(
     try {
       loginRes = await userLoginViaGo(username, password);
     } catch (err) {
-      // 类型化错误：401 表示用户名或密码错误
-      if (err instanceof GoApiError && err.status === 401) {
-        return { success: false, error: 'Invalid username or password' };
+      // 类型化错误：401 用户名/密码错误；409 PASSWORD_NOT_SET 表示该账户由 Google 创建
+      if (err instanceof GoApiError) {
+        if (err.status === 409 && err.code === 'PASSWORD_NOT_SET') {
+          return { success: false, error: 'PASSWORD_NOT_SET' };
+        }
+        if (err.status === 401) {
+          return { success: false, error: 'Invalid username or password' };
+        }
       }
       throw err;
     }
@@ -96,7 +104,7 @@ export async function userLogin(
 // —— 邮箱优先认证流程（弹窗登录/注册共用） ——
 
 export type StartEmailAuthResult =
-  | { success: true; exists: boolean }
+  | { success: true; exists: boolean; hasPassword?: boolean }
   | { success: false; error: string; retryAfter?: number };
 
 /**
@@ -126,12 +134,13 @@ export async function startEmailAuth(
       };
     }
 
-    // 是否已注册（公开端点，仅返回布尔）
-    const { exists } = await goFetch<{ exists: boolean }>(
-      `/api/accounts/exists${buildQuery({ email: normalized })}`
-    );
+    // 是否已注册（公开端点，仅返回布尔 + 是否已设置密码）
+    const { exists, hasPassword } = await goFetch<{
+      exists: boolean;
+      hasPassword?: boolean;
+    }>(`/api/accounts/exists${buildQuery({ email: normalized })}`);
     if (exists) {
-      return { success: true, exists: true };
+      return { success: true, exists: true, hasPassword: hasPassword !== false };
     }
 
     // 未注册：生成验证码（含 60s 重发节流）
@@ -316,6 +325,177 @@ export async function registerWithEmail(input: {
       action: 'registerWithEmail',
     });
     return { success: false, error: 'REGISTER_FAILED' };
+  }
+}
+
+// —— 账户设置 / 忘记密码 ——
+
+export type AccountActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export type StartPasswordResetResult =
+  | { success: true }
+  | { success: false; error: string; retryAfter?: number };
+
+/**
+ * 忘记密码 / Google 账户首次设置密码：向邮箱发送验证码。
+ * 与注册共用验证码存储与 60s 重发节流。
+ */
+export async function startPasswordReset(
+  email: string
+): Promise<StartPasswordResetResult> {
+  const normalized = normalizeEmail(email);
+  if (!EMAIL_PATTERN.test(normalized)) {
+    return { success: false, error: 'INVALID_EMAIL' };
+  }
+  try {
+    const ipLimit = await serverActionRateLimiter.check(
+      `password-reset-ip:${await clientIp()}`
+    );
+    if (!ipLimit.success) {
+      return { success: false, error: 'RATE_LIMITED' };
+    }
+
+    const { exists } = await goFetch<{ exists: boolean }>(
+      `/api/accounts/exists${buildQuery({ email: normalized })}`
+    );
+    if (!exists) {
+      return { success: false, error: 'EMAIL_NOT_FOUND' };
+    }
+
+    const issued = issueVerificationCode(normalized);
+    if (!issued.ok) {
+      return {
+        success: false,
+        error: 'RESEND_TOO_SOON',
+        retryAfter: toRetrySeconds(Date.now() + issued.retryAfterMs),
+      };
+    }
+
+    const sent = await sendVerificationCode({
+      toEmail: normalized,
+      code: issued.code,
+      expiresMinutes: CODE_TTL_MINUTES,
+    });
+    if (!sent.success) {
+      clearVerification(normalized);
+      return { success: false, error: 'SEND_FAILED' };
+    }
+    return { success: true };
+  } catch (error) {
+    logger.error('startPasswordReset failed', error, {
+      email: normalized,
+      action: 'startPasswordReset',
+    });
+    return { success: false, error: 'SEND_FAILED' };
+  }
+}
+
+/**
+ * 验证码校验通过后重置密码，并自动登录。
+ * 重置会清理该账户全部旧会话（Go 侧完成），此处重新建立当前浏览器会话。
+ */
+export async function resetPasswordWithCode(input: {
+  email: string;
+  code: string;
+  newPassword: string;
+}): Promise<AccountActionResult> {
+  const email = normalizeEmail(input.email);
+  if (!EMAIL_PATTERN.test(email)) {
+    return { success: false, error: 'INVALID_EMAIL' };
+  }
+  if (input.newPassword.length < 6) {
+    return { success: false, error: 'PASSWORD_TOO_SHORT' };
+  }
+  try {
+    const ipLimit = await serverActionRateLimiter.check(
+      `password-reset-ip:${await clientIp()}`
+    );
+    if (!ipLimit.success) {
+      return { success: false, error: 'RATE_LIMITED' };
+    }
+
+    if (!isVerified(email)) {
+      const checked = checkVerificationCode(email, input.code.trim());
+      if (!checked.ok) {
+        return { success: false, error: checked.error };
+      }
+    }
+
+    await resetUserPasswordViaGo(email, input.newPassword);
+    clearVerification(email);
+
+    // 自动登录（重置时旧会话已全部清理）
+    try {
+      await userLoginViaGo(email, input.newPassword);
+    } catch (loginErr) {
+      logger.error('重置密码后自动登录失败', loginErr, {
+        email,
+        action: 'resetPasswordWithCode:autologin',
+      });
+    }
+    return { success: true };
+  } catch (error) {
+    if (error instanceof GoApiError && error.status === 404) {
+      return { success: false, error: 'ACCOUNT_NOT_FOUND' };
+    }
+    logger.error('resetPasswordWithCode failed', error, {
+      email,
+      action: 'resetPasswordWithCode',
+    });
+    return { success: false, error: 'RESET_FAILED' };
+  }
+}
+
+/** 账户设置页：设置 / 修改密码（已设置密码时需校验当前密码） */
+export async function setAccountPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<AccountActionResult> {
+  if (newPassword.length < 6) {
+    return { success: false, error: 'PASSWORD_TOO_SHORT' };
+  }
+  try {
+    await setUserPasswordViaGo(currentPassword, newPassword);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof GoApiError) {
+      if (error.code === 'CURRENT_PASSWORD_INVALID') {
+        return { success: false, error: 'CURRENT_PASSWORD_INVALID' };
+      }
+      if (error.status === 401) {
+        return { success: false, error: 'LOGIN_REQUIRED' };
+      }
+    }
+    logger.error('setAccountPassword failed', error, {
+      action: 'setAccountPassword',
+    });
+    return { success: false, error: 'PASSWORD_UPDATE_FAILED' };
+  }
+}
+
+/** 账户设置页：解绑 Google（Go 侧要求已设置密码） */
+export async function unlinkGoogleAccount(): Promise<AccountActionResult> {
+  try {
+    await unlinkUserGoogleViaGo();
+    return { success: true };
+  } catch (error) {
+    if (error instanceof GoApiError) {
+      if (error.code === 'PASSWORD_REQUIRED') {
+        return { success: false, error: 'PASSWORD_REQUIRED' };
+      }
+      if (error.code === 'GOOGLE_NOT_LINKED') {
+        return { success: false, error: 'GOOGLE_NOT_LINKED' };
+      }
+      if (error.status === 401) {
+        return { success: false, error: 'LOGIN_REQUIRED' };
+      }
+    }
+    logger.error('unlinkGoogleAccount failed', error, {
+      action: 'unlinkGoogleAccount',
+    });
+    return { success: false, error: 'GOOGLE_UNLINK_FAILED' };
   }
 }
 

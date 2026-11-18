@@ -61,11 +61,12 @@ export class GoApiError extends Error {
   }
 }
 
-// 从 Go 响应体中提取 error 字段
+// 从 Go 响应体中提取错误码：优先 `code`（稳定机器码），回退 `error`（旧接口文案）
 function parseGoErrorField(body: string): string | undefined {
   if (!body) return undefined;
   try {
-    const parsed = JSON.parse(body) as { error?: unknown };
+    const parsed = JSON.parse(body) as { error?: unknown; code?: unknown };
+    if (typeof parsed?.code === 'string' && parsed.code) return parsed.code;
     return typeof parsed?.error === 'string' ? parsed.error : undefined;
   } catch {
     return undefined;

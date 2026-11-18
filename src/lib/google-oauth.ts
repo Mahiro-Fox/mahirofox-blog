@@ -19,6 +19,14 @@ const GOOGLE_USERINFO_ENDPOINT =
 export const GOOGLE_STATE_COOKIE = 'google-oauth-state';
 export const GOOGLE_VERIFIER_COOKIE = 'google-oauth-verifier';
 export const GOOGLE_REDIRECT_COOKIE = 'google-oauth-redirect';
+/** 流程模式：login（默认）| link（把 Google 绑定到当前登录账户） */
+export const GOOGLE_MODE_COOKIE = 'google-oauth-mode';
+/**
+ * 绑定流程专用的会话令牌副本。
+ * user-session 默认 SameSite=Strict，跨站从 Google 回跳时不会携带；
+ * 这里用 Lax 的临时 Cookie 承载，回调结束立即删除。
+ */
+export const GOOGLE_LINK_TOKEN_COOKIE = 'google-oauth-link-token';
 const TEMP_COOKIE_MAX_AGE = 600;
 
 export type GoogleOAuthConfig = {
@@ -92,6 +100,21 @@ export function signinPathFor(target: string, errorCode?: string): string {
   const base = `${prefix}/signin`;
   if (!errorCode) return base;
   return `${base}?${new URLSearchParams({ error: errorCode, redirect: target }).toString()}`;
+}
+
+/** 在站内相对路径后追加查询参数（已有查询串时用 &） */
+export function appendQuery(path: string, params: Record<string, string>): string {
+  const query = new URLSearchParams(params).toString();
+  if (!query) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}${query}`;
+}
+
+/** 根据回跳路径推断语言前缀，得到该语言下的账户设置页地址 */
+export function settingsPathFor(target: string): string {
+  const first = target.split('?')[0].split('/').filter(Boolean)[0];
+  return i18nConfig.locales.includes(first)
+    ? `/${first}/settings`
+    : '/settings';
 }
 
 /**
