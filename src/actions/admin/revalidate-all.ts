@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import { consumeRateLimit } from '@/utils/action-response';
 
 export async function adminRevalidateAll() {

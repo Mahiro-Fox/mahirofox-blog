@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getPhotosAction, type PhotosResponse } from '@/actions/app/photos';
-import type { PhotoItem } from '@/lib/photos';
+import type { PhotoItem } from '@/lib/content/photos';
 
 /** 分页加载图片的函数，默认读取相册目录 */
 type PhotosFetcher = (page: number, limit: number) => Promise<PhotosResponse>;

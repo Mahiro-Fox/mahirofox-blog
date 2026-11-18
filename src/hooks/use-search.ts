@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { searchContent } from '@/actions/app/search';
-import type { SearchResult } from '@/lib/search';
+import type { SearchResult } from '@/lib/content/search';
 import { debounce } from '@/utils/utils';
 
 /**

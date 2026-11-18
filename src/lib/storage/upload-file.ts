@@ -5,7 +5,7 @@ import {
   putUploadFile,
   resolveUploadKey,
   uploadFileExists,
-} from '@/lib/server/uploads';
+} from '@/lib/storage/uploads';
 
 /**
  * 服务端文件上传（写 R2，未配置时写本地 uploads）。
@@ -106,9 +106,9 @@ function detectMime(buffer: Buffer): string {
   }
   if (
     buffer.length >= 8 &&
-    buffer.subarray(0, 8).equals(
-      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-    )
+    buffer
+      .subarray(0, 8)
+      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
   ) {
     return 'image/png';
   }
@@ -121,7 +121,10 @@ function detectMime(buffer: Buffer): string {
   if (ascii(0, 4) === 'MThd') {
     return 'audio/midi';
   }
-  if (ascii(0, 3) === 'ID3' || (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)) {
+  if (
+    ascii(0, 3) === 'ID3' ||
+    (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0)
+  ) {
     return 'audio/mpeg';
   }
   if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WAVE') {

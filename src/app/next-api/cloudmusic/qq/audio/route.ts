@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { proxyGoStream } from '@/lib/server/cloudmusic-stream';
+import { proxyGoStream } from '@/lib/integrations/cloudmusic-stream';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -2,6 +2,12 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
 import {
+  linkUserGoogleViaGo,
+  userLoginGoogleViaGo,
+  userSessionCookieOptions,
+} from '@/lib/auth/user-auth';
+import { GoApiError } from '@/lib/integrations/go-api';
+import {
   appendQuery,
   exchangeCodeForAccessToken,
   fetchGoogleIdentity,
@@ -15,13 +21,7 @@ import {
   sanitizeRedirectPath,
   settingsPathFor,
   signinPathFor,
-} from '@/lib/google-oauth';
-import { GoApiError } from '@/lib/server/api-client';
-import {
-  linkUserGoogleViaGo,
-  userLoginGoogleViaGo,
-  userSessionCookieOptions,
-} from '@/lib/user-auth';
+} from '@/lib/integrations/google-oauth';
 import { createLogger } from '@/utils/logger';
 
 export const runtime = 'nodejs';

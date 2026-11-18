@@ -18,8 +18,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { obfuscateImageData } from '@/lib/image-obfuscator';
-import { embedObfuscationMeta } from '@/lib/image-obfuscator/metadata';
+import { obfuscateImageData } from '@/lib/media';
+import { embedObfuscationMeta } from '@/lib/media/metadata';
 import {
   ALGORITHM_VERSION,
   MAX_PIXELS,
@@ -27,7 +27,7 @@ import {
   MAX_STRENGTH,
   MIN_STRENGTH,
   type RgbaImage,
-} from '@/lib/image-obfuscator/types';
+} from '@/lib/media/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -6,8 +6,8 @@ import {
   embedObfuscationMeta,
   readObfuscationMeta,
   type ObfuscationMeta,
-} from '@/lib/image-obfuscator/metadata';
-import type { RgbaImage } from '@/lib/image-obfuscator/types';
+} from '@/lib/media/metadata';
+import type { RgbaImage } from '@/lib/media/types';
 
 export type OutputFormat = 'png' | 'jpeg';
 

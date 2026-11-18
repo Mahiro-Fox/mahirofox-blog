@@ -1,6 +1,6 @@
 'use server';
 
-import { buildQuery, goFetch } from '@/lib/server/api-client';
+import { buildQuery, goFetch } from '@/lib/integrations/go-api';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('CloudMusicActions');

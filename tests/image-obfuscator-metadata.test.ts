@@ -4,8 +4,8 @@ import {
   embedObfuscationMeta,
   readObfuscationMeta,
   type ObfuscationMeta,
-} from '@/lib/image-obfuscator/metadata';
-import { ALGORITHM_VERSION } from '@/lib/image-obfuscator/types';
+} from '@/lib/media/metadata';
+import { ALGORITHM_VERSION } from '@/lib/media/types';
 
 const SAMPLE_META: ObfuscationMeta = {
   version: ALGORITHM_VERSION,

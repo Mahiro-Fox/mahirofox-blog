@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { createUploadAction } from '@/lib/upload';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
+import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {
   withActionPermission,
   type ActionResponse,
@@ -56,15 +56,18 @@ export async function adminCreateMoment(input: {
           return { success: false, error: '内容不能超过200字' };
         }
 
-        await goFetch('/api/moments', withGoAuth(ctx, {
-          method: 'POST',
-          body: JSON.stringify({
-            content: content.trim(),
-            image: image ?? null,
-            moodEmoji: moodEmoji?.trim() || '',
-            location: location?.trim() || '',
-          }),
-        }));
+        await goFetch(
+          '/api/moments',
+          withGoAuth(ctx, {
+            method: 'POST',
+            body: JSON.stringify({
+              content: content.trim(),
+              image: image ?? null,
+              moodEmoji: moodEmoji?.trim() || '',
+              location: location?.trim() || '',
+            }),
+          })
+        );
 
         logger.info('创建碎碎念成功', { userId: user.id });
         revalidatePath('/', 'layout');
@@ -108,10 +111,13 @@ export async function adminUpdateMoment(
         if (moodEmoji !== undefined) body.moodEmoji = moodEmoji.trim();
         if (location !== undefined) body.location = location.trim();
 
-        await goFetch(`/api/moments/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        }));
+        await goFetch(
+          `/api/moments/${encodeURIComponent(id)}`,
+          withGoAuth(ctx, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          })
+        );
 
         logger.info('更新碎碎念成功', { momentId: id, userId: user.id });
         revalidatePath('/', 'layout');
@@ -133,10 +139,13 @@ export async function adminDeleteMoment(
     'moments:delete',
     async (user, ctx) => {
       try {
-        await goFetch(`/api/moments/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-          method: 'DELETE',
-          parseJson: false,
-        }));
+        await goFetch(
+          `/api/moments/${encodeURIComponent(id)}`,
+          withGoAuth(ctx, {
+            method: 'DELETE',
+            parseJson: false,
+          })
+        );
 
         logger.info('删除碎碎念成功', { momentId: id, userId: user.id });
         revalidatePath('/', 'layout');

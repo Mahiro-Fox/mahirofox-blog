@@ -1,6 +1,6 @@
 import { userStore } from '@/store/user-store';
 import { redirect } from 'next/navigation';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import { getAdminActionContext } from '@/utils/action-response';
 import UsersClient from './users-client';
 

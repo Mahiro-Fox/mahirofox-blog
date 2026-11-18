@@ -1,8 +1,8 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { apiRateLimiter } from '@/lib/rate-limit';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
+import { apiRateLimiter } from '@/lib/auth/rate-limit';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 import {
   withActionPermission,
   type ActionResponse,

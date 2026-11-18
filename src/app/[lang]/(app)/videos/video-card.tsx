@@ -2,7 +2,7 @@
 
 import { Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { VideoItem } from '@/lib/videos';
+import type { VideoItem } from '@/lib/content/videos';
 import { cn } from '@/utils/utils';
 
 interface VideoCardProps {

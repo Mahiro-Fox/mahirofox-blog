@@ -1,15 +1,15 @@
 'use server';
 
 import { MIDI_DIR } from '@/constant/dir';
-import { getMidis, readMidiFile } from '@/lib/midi';
+import { getMidis, readMidiFile } from '@/lib/content/midi';
+import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {
   deleteUploadFile,
   listUploadFiles,
   renameUploadEntry,
   resolveUploadKey,
   uploadFileExists,
-} from '@/lib/server/uploads';
-import { createUploadAction } from '@/lib/upload';
+} from '@/lib/storage/uploads';
 import {
   withActionPermission,
   type ActionResponse,

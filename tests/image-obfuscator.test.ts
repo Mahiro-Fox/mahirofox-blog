@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  deobfuscateImageData,
-  obfuscateImageData,
-} from '@/lib/image-obfuscator';
-import { buildCurveOrder, computeCellSize } from '@/lib/image-obfuscator/curve';
-import type { RgbaImage } from '@/lib/image-obfuscator/types';
+import { deobfuscateImageData, obfuscateImageData } from '@/lib/media';
+import { buildCurveOrder, computeCellSize } from '@/lib/media/curve';
+import type { RgbaImage } from '@/lib/media/types';
 
 const TEST_ITERATIONS = 1_000;
 

@@ -19,7 +19,7 @@ import { Input } from '@/components/shadcn-ui/input';
 import { Link } from '@/components/shared/link';
 import { useSearch } from '@/hooks/use-search';
 import { useT } from '@/i18n/dictionary-provider';
-import type { SearchResult } from '@/lib/search';
+import type { SearchResult } from '@/lib/content/search';
 import { trackEvent } from '@/utils/tracker';
 
 export function Search() {

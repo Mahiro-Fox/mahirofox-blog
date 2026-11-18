@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { createUploadAction } from '@/lib/upload';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
+import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {
   withActionPermission,
   type ActionResponse,
@@ -57,15 +57,18 @@ export async function adminCreateMusic(input: {
           return { success: false, error: '歌曲链接不能为空' };
         }
 
-        await goFetch('/api/music', withGoAuth(ctx, {
-          method: 'POST',
-          body: JSON.stringify({
-            name: name.trim(),
-            artist: artist.trim(),
-            url: url.trim(),
-            cover: cover.trim() || '',
-          }),
-        }));
+        await goFetch(
+          '/api/music',
+          withGoAuth(ctx, {
+            method: 'POST',
+            body: JSON.stringify({
+              name: name.trim(),
+              artist: artist.trim(),
+              url: url.trim(),
+              cover: cover.trim() || '',
+            }),
+          })
+        );
 
         logger.info('创建音乐成功', { userId: user.id });
         revalidatePath('/', 'layout');
@@ -110,10 +113,13 @@ export async function adminUpdateMusic(
           body.cover = input.cover.trim() || '';
         }
 
-        await goFetch(`/api/music/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        }));
+        await goFetch(
+          `/api/music/${encodeURIComponent(id)}`,
+          withGoAuth(ctx, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          })
+        );
 
         logger.info('更新音乐成功', { songId: id, userId: user.id });
         revalidatePath('/', 'layout');
@@ -134,10 +140,13 @@ export async function adminDeleteMusic(
     'music:delete',
     async (user, ctx) => {
       try {
-        await goFetch(`/api/music/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-          method: 'DELETE',
-          parseJson: false,
-        }));
+        await goFetch(
+          `/api/music/${encodeURIComponent(id)}`,
+          withGoAuth(ctx, {
+            method: 'DELETE',
+            parseJson: false,
+          })
+        );
 
         logger.info('删除音乐成功', { songId: id, userId: user.id });
         revalidatePath('/', 'layout');

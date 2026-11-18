@@ -2,7 +2,7 @@
 
 import matter from 'gray-matter';
 import { DEFAULT_BLOG_LIST_LIMIT } from '@/config/limit';
-import { paginateItems, PaginationResult } from '@/lib/pagination';
+import { paginateItems, PaginationResult } from '@/lib/shared/pagination';
 import {
   createBlogFile,
   deleteBlogFile,
@@ -10,8 +10,8 @@ import {
   readBlogFile,
   renameBlogFile,
   updateBlogFile,
-} from '@/lib/server/content-files';
-import { createUploadAction } from '@/lib/upload';
+} from '@/lib/storage/content-files';
+import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {
   withActionPermission,
   type ActionResponse,

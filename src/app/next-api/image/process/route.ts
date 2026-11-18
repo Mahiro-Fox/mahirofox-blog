@@ -6,7 +6,7 @@ import {
   ImageProcessOptions,
   ProcessedImageMetadata,
   processImagesGenerator,
-} from '@/lib/image-processor';
+} from '@/lib/media/image-processor';
 
 /**
  * 单张图片处理结果

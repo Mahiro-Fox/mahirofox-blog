@@ -8,7 +8,7 @@ import {
   readUploadFileHead,
   toUploadUrl,
   type UploadEntry,
-} from '@/lib/server/uploads';
+} from '@/lib/storage/uploads';
 
 export interface PhotoItem {
   id: string;

@@ -13,7 +13,7 @@ import {
 } from '@/components/ai-elements/message';
 import { Spinner } from '@/components/shared/spinner';
 import { useT } from '@/i18n/dictionary-provider';
-import { MAX_CONTEXT_TOKENS } from '@/lib/tokens';
+import { MAX_CONTEXT_TOKENS } from '@/lib/ai/tokens';
 
 /**
  * 消息会话区域（含空状态、思考中提示、错误条）

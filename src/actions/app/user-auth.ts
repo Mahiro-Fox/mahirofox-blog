@@ -1,10 +1,6 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { sendVerificationCode } from '@/lib/email-send/verification-code';
-import { loginRateLimiter, serverActionRateLimiter } from '@/lib/rate-limit';
-import { buildQuery, GoApiError, goFetch } from '@/lib/server/api-client';
-import { verifyTurnstile } from '@/lib/server/turnstile';
 import {
   checkVerificationCode,
   clearVerification,
@@ -12,7 +8,11 @@ import {
   issueVerificationCode,
   isVerified,
   normalizeEmail,
-} from '@/lib/server/email-verification';
+} from '@/lib/auth/email-verification';
+import {
+  loginRateLimiter,
+  serverActionRateLimiter,
+} from '@/lib/auth/rate-limit';
 import {
   getCurrentUser,
   resetUserPasswordViaGo,
@@ -20,7 +20,10 @@ import {
   unlinkUserGoogleViaGo,
   userLoginViaGo,
   userLogoutViaGo,
-} from '@/lib/user-auth';
+} from '@/lib/auth/user-auth';
+import { passHumanCheck } from '@/lib/cloudflare/turnstile';
+import { buildQuery, GoApiError, goFetch } from '@/lib/integrations/go-api';
+import { sendVerificationCode } from '@/lib/integrations/verification-code';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('UserAuthAction');
@@ -48,7 +51,8 @@ async function clientIp(): Promise<string> {
 export async function userLogin(
   username: string,
   password: string,
-  turnstileToken: string
+  turnstileToken: string,
+  captchaTicket?: string
 ): Promise<
   | {
       success: true;
@@ -62,8 +66,17 @@ export async function userLogin(
       return { success: false, error: 'Username and password required' };
     }
     const ip = await clientIp();
-    // 人机验证：密码登录是暴力破解的主要入口
-    if (!(await verifyTurnstile(turnstileToken, 'login', ip))) {
+    // 人机验证：密码登录是暴力破解的主要入口（同流程已验过则认票）
+    const human = await passHumanCheck(
+      {
+        turnstileToken,
+        captchaTicket,
+        email: normalizeEmail(username),
+      },
+      'login',
+      ip
+    );
+    if (!human.ok) {
       return { success: false, error: 'CAPTCHA_FAILED' };
     }
     const rateLimit = await loginRateLimiter.check(`user-login:${username}`);
@@ -109,7 +122,13 @@ export async function userLogin(
 // —— 邮箱优先认证流程（弹窗登录/注册共用） ——
 
 export type StartEmailAuthResult =
-  | { success: true; exists: boolean; hasPassword?: boolean }
+  | {
+      success: true;
+      exists: boolean;
+      hasPassword?: boolean;
+      /** 本次验证通过后签发的票据，后续步骤用它免去重复验证 */
+      captchaTicket?: string;
+    }
   | { success: false; error: string; retryAfter?: number };
 
 /**
@@ -120,7 +139,8 @@ export type StartEmailAuthResult =
  */
 export async function startEmailAuth(
   email: string,
-  turnstileToken: string
+  turnstileToken: string,
+  captchaTicket?: string
 ): Promise<StartEmailAuthResult> {
   const normalized = normalizeEmail(email);
   if (!EMAIL_PATTERN.test(normalized)) {
@@ -129,14 +149,17 @@ export async function startEmailAuth(
 
   try {
     const ip = await clientIp();
-    // 人机验证：该入口会探测邮箱是否注册并发送验证码
-    if (!(await verifyTurnstile(turnstileToken, 'email_auth', ip))) {
+    // 人机验证：该入口会探测邮箱是否注册并发送验证码（同流程已验过则认票）
+    const human = await passHumanCheck(
+      { turnstileToken, captchaTicket, email: normalized },
+      'email_auth',
+      ip
+    );
+    if (!human.ok) {
       return { success: false, error: 'CAPTCHA_FAILED' };
     }
     // IP 维度限流，防止批量探测邮箱是否已注册
-    const ipLimit = await serverActionRateLimiter.check(
-      `email-auth-ip:${ip}`
-    );
+    const ipLimit = await serverActionRateLimiter.check(`email-auth-ip:${ip}`);
     if (!ipLimit.success) {
       return {
         success: false,
@@ -151,7 +174,12 @@ export async function startEmailAuth(
       hasPassword?: boolean;
     }>(`/api/accounts/exists${buildQuery({ email: normalized })}`);
     if (exists) {
-      return { success: true, exists: true, hasPassword: hasPassword !== false };
+      return {
+        success: true,
+        exists: true,
+        hasPassword: hasPassword !== false,
+        captchaTicket: human.ticket,
+      };
     }
 
     // 未注册：生成验证码（含 60s 重发节流）
@@ -175,7 +203,7 @@ export async function startEmailAuth(
       return { success: false, error: 'SEND_FAILED' };
     }
 
-    return { success: true, exists: false };
+    return { success: true, exists: false, captchaTicket: human.ticket };
   } catch (error) {
     logger.error('startEmailAuth failed', error, {
       email: normalized,
@@ -252,6 +280,7 @@ export async function registerWithEmail(input: {
   username: string;
   password: string;
   turnstileToken: string;
+  captchaTicket?: string;
 }): Promise<RegisterWithEmailResult> {
   const email = normalizeEmail(input.email);
   const username = input.username.trim();
@@ -268,8 +297,17 @@ export async function registerWithEmail(input: {
 
   try {
     const ip = await clientIp();
-    // 人机验证：注册是批量灌号的主要目标
-    if (!(await verifyTurnstile(input.turnstileToken, 'signup', ip))) {
+    // 人机验证：注册是批量灌号的主要目标（同流程已验过则认票）
+    const human = await passHumanCheck(
+      {
+        turnstileToken: input.turnstileToken,
+        captchaTicket: input.captchaTicket,
+        email,
+      },
+      'signup',
+      ip
+    );
+    if (!human.ok) {
       return { success: false, error: 'CAPTCHA_FAILED' };
     }
     // 注册 IP 维度限流（与老注册流程共用计数键）
@@ -352,7 +390,7 @@ export type AccountActionResult =
   | { success: false; error: string };
 
 export type StartPasswordResetResult =
-  | { success: true }
+  | { success: true; captchaTicket?: string }
   | { success: false; error: string; retryAfter?: number };
 
 /**
@@ -361,7 +399,8 @@ export type StartPasswordResetResult =
  */
 export async function startPasswordReset(
   email: string,
-  turnstileToken: string
+  turnstileToken: string,
+  captchaTicket?: string
 ): Promise<StartPasswordResetResult> {
   const normalized = normalizeEmail(email);
   if (!EMAIL_PATTERN.test(normalized)) {
@@ -369,8 +408,13 @@ export async function startPasswordReset(
   }
   try {
     const ip = await clientIp();
-    // 人机验证：发送重置验证码前必须通过
-    if (!(await verifyTurnstile(turnstileToken, 'password_reset', ip))) {
+    // 人机验证：发送重置验证码前必须通过（同流程已验过则认票）
+    const human = await passHumanCheck(
+      { turnstileToken, captchaTicket, email: normalized },
+      'password_reset',
+      ip
+    );
+    if (!human.ok) {
       return { success: false, error: 'CAPTCHA_FAILED' };
     }
     const ipLimit = await serverActionRateLimiter.check(
@@ -405,7 +449,7 @@ export async function startPasswordReset(
       clearVerification(normalized);
       return { success: false, error: 'SEND_FAILED' };
     }
-    return { success: true };
+    return { success: true, captchaTicket: human.ticket };
   } catch (error) {
     logger.error('startPasswordReset failed', error, {
       email: normalized,
@@ -424,6 +468,7 @@ export async function resetPasswordWithCode(input: {
   code: string;
   newPassword: string;
   turnstileToken: string;
+  captchaTicket?: string;
 }): Promise<AccountActionResult> {
   const email = normalizeEmail(input.email);
   if (!EMAIL_PATTERN.test(email)) {
@@ -434,8 +479,17 @@ export async function resetPasswordWithCode(input: {
   }
   try {
     const ip = await clientIp();
-    // 人机验证：防止批量重置 / 撞库
-    if (!(await verifyTurnstile(input.turnstileToken, 'reset_password', ip))) {
+    // 人机验证：防止批量重置 / 撞库（同流程已验过则认票）
+    const human = await passHumanCheck(
+      {
+        turnstileToken: input.turnstileToken,
+        captchaTicket: input.captchaTicket,
+        email,
+      },
+      'reset_password',
+      ip
+    );
+    if (!human.ok) {
       return { success: false, error: 'CAPTCHA_FAILED' };
     }
     const ipLimit = await serverActionRateLimiter.check(

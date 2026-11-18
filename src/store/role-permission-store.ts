@@ -3,7 +3,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   type Permission,
 } from '@/constant';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 
 /**
  * 角色权限配置存储

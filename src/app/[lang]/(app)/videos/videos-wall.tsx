@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVideosAction } from '@/actions/app/videos';
 import { useT } from '@/i18n/dictionary-provider';
-import type { VideoItem } from '@/lib/videos';
+import type { VideoItem } from '@/lib/content/videos';
 import { formatDate } from '@/utils/utils';
 import { VideoCard } from './video-card';
 import { VideoLightbox } from './video-lightbox';
@@ -27,10 +27,7 @@ function spanClass(index: number): string {
   return 'row-span-2';
 }
 
-export function VideosWall({
-  initialVideos,
-  initialHasMore,
-}: VideosWallProps) {
+export function VideosWall({ initialVideos, initialHasMore }: VideosWallProps) {
   const t = useT();
   const [videos, setVideos] = useState(initialVideos);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -114,13 +111,11 @@ export function VideosWall({
             <p className="text-muted-foreground font-mono text-xl tracking-[0.4em]">
               NO SIGNAL
             </p>
-            <p className="text-muted-foreground text-sm">
-              {t('videos.empty')}
-            </p>
+            <p className="text-muted-foreground text-sm">{t('videos.empty')}</p>
           </div>
         ) : (
           <>
-            <div className="grid auto-rows-[72px] grid-flow-dense grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-flow-dense auto-rows-[72px] grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {videos.map((video, index) => (
                 <VideoCard
                   key={video.src}

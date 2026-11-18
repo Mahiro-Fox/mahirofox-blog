@@ -1,8 +1,8 @@
-import type { ObfuscationMeta } from "@/lib/image-obfuscator/metadata";
-import type { ObfuscationStage } from "@/lib/image-obfuscator/types";
-import type { OutputFormat } from "./image-codec";
+import type { ObfuscationMeta } from '@/lib/media/metadata';
+import type { ObfuscationStage } from '@/lib/media/types';
+import type { OutputFormat } from './image-codec';
 
-export type ImageItemStatus = "pending" | "running" | "done" | "error";
+export type ImageItemStatus = 'pending' | 'running' | 'done' | 'error';
 
 export interface ResultImage {
   url: string;
@@ -10,7 +10,7 @@ export interface ResultImage {
   format: OutputFormat;
   width: number;
   height: number;
-  mode: "obfuscate" | "deobfuscate";
+  mode: 'obfuscate' | 'deobfuscate';
   hadAlpha: boolean;
 }
 

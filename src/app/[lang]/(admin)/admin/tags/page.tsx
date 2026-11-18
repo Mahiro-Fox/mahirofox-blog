@@ -1,6 +1,6 @@
 import { tagStore } from '@/store/tag-store';
 import { redirect } from 'next/navigation';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import TagsClient from './tags-client';
 
 export default async function TagsManagementPage() {

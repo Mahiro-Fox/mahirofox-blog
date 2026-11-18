@@ -1,11 +1,11 @@
 'use server';
 
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 import {
   withActionPermission,
   type ActionResponse,
 } from '@/utils/action-response';
 import { createLogger } from '@/utils/logger';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
 
 const logger = createLogger('AnalyticsActions');
 
@@ -48,10 +48,10 @@ export async function adminGetAnalyticsLogs(): Promise<
 > {
   return withActionPermission('analytics:read', async (_user, ctx) => {
     try {
-      const data = await goFetch<{ logs: AnalyticsLog[]; stats: AnalyticsStats }>(
-        '/api/admin/analytics',
-        withGoAuth(ctx)
-      );
+      const data = await goFetch<{
+        logs: AnalyticsLog[];
+        stats: AnalyticsStats;
+      }>('/api/admin/analytics', withGoAuth(ctx));
       return { success: true, data };
     } catch (error) {
       logger.error('获取访问日志失败', error);
@@ -80,7 +80,8 @@ export async function deleteExpiredAnalyticsLogs(): Promise<
         message?: string;
       }>('/api/admin/analytics', withGoAuth(ctx, { method: 'DELETE' }));
 
-      const message = data?.message ?? `成功删除 ${data?.deletedLogs ?? 0} 条过期记录`;
+      const message =
+        data?.message ?? `成功删除 ${data?.deletedLogs ?? 0} 条过期记录`;
       logger.info(message);
       return {
         success: true,

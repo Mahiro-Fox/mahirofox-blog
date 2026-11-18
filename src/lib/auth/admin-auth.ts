@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { ADMIN_SESSION_COOKIE } from '@/constant/auth';
-import { goFetch, GoApiError } from '@/lib/server/api-client';
+import { GoApiError, goFetch } from '@/lib/integrations/go-api';
 
 type AdminVerifyResponse = {
   success: boolean;

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   BadgeCheck,
@@ -8,27 +8,24 @@ import {
   RotateCcw,
   ShieldCheck,
   X,
-} from "lucide-react";
-import { Button } from "@/components/shadcn-ui/button";
-import { Input } from "@/components/shadcn-ui/input";
-import { Label } from "@/components/shadcn-ui/label";
+} from 'lucide-react';
+import { Button } from '@/components/shadcn-ui/button';
+import { Input } from '@/components/shadcn-ui/input';
+import { Label } from '@/components/shadcn-ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/shadcn-ui/select";
-import { Toggle } from "@/components/shadcn-ui/toggle";
-import { Spinner } from "@/components/shared/spinner";
-import { useT } from "@/i18n/dictionary-provider";
-import type { ObfuscationMeta } from "@/lib/image-obfuscator/metadata";
-import type {
-  ObfuscationMode,
-  ObfuscationStage,
-} from "@/lib/image-obfuscator/types";
-import type { JobStatus } from "../_hooks/use-obfuscation-job";
-import type { OutputFormat } from "../_lib/image-codec";
+} from '@/components/shadcn-ui/select';
+import { Toggle } from '@/components/shadcn-ui/toggle';
+import { Spinner } from '@/components/shared/spinner';
+import { useT } from '@/i18n/dictionary-provider';
+import type { ObfuscationMeta } from '@/lib/media/metadata';
+import type { ObfuscationMode, ObfuscationStage } from '@/lib/media/types';
+import type { JobStatus } from '../_hooks/use-obfuscation-job';
+import type { OutputFormat } from '../_lib/image-codec';
 
 interface ControlPanelProps {
   mode: ObfuscationMode;
@@ -64,11 +61,11 @@ interface ControlPanelProps {
 }
 
 const STAGE_LABEL_KEYS: Record<ObfuscationStage, string> = {
-  "derive-key": "image-obfuscator.stage_derive_key",
-  "build-curve": "image-obfuscator.stage_build_curve",
-  permute: "image-obfuscator.stage_permute",
-  enhance: "image-obfuscator.stage_enhance",
-  done: "image-obfuscator.stage_done",
+  'derive-key': 'image-obfuscator.stage_derive_key',
+  'build-curve': 'image-obfuscator.stage_build_curve',
+  permute: 'image-obfuscator.stage_permute',
+  enhance: 'image-obfuscator.stage_enhance',
+  done: 'image-obfuscator.stage_done',
 };
 
 export default function ControlPanel({
@@ -101,7 +98,7 @@ export default function ControlPanel({
   onReset,
 }: ControlPanelProps) {
   const t = useT();
-  const isRunning = status === "running";
+  const isRunning = status === 'running';
   const disabled = isRunning;
 
   return (
@@ -109,7 +106,7 @@ export default function ControlPanel({
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-[var(--primary)]" />
         <h2 className="text-base font-semibold">
-          {t("image-obfuscator.panel_title")}
+          {t('image-obfuscator.panel_title')}
         </h2>
       </div>
 
@@ -119,20 +116,20 @@ export default function ControlPanel({
           <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
-              {t("image-obfuscator.meta_detected")}
+              {t('image-obfuscator.meta_detected')}
             </p>
             <p className="text-xs opacity-80">
-              {t("image-obfuscator.meta_detected_hint")}
+              {t('image-obfuscator.meta_detected_hint')}
             </p>
             <p className="font-mono text-xs opacity-80">
-              {`${t("image-obfuscator.strength")} ${metaNotice.strength.toFixed(2)} · ${
-                metaNotice.format === "png"
-                  ? "PNG"
+              {`${t('image-obfuscator.strength')} ${metaNotice.strength.toFixed(2)} · ${
+                metaNotice.format === 'png'
+                  ? 'PNG'
                   : `JPEG ${Math.round(metaNotice.quality * 100)}%`
               } · ${
-                metaNotice.enhancement === "green-boost"
-                  ? t("image-obfuscator.meta_enhance_on")
-                  : t("image-obfuscator.meta_enhance_off")
+                metaNotice.enhancement === 'green-boost'
+                  ? t('image-obfuscator.meta_enhance_on')
+                  : t('image-obfuscator.meta_enhance_off')
               }`}
             </p>
           </div>
@@ -151,36 +148,36 @@ export default function ControlPanel({
       <div className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1">
         <button
           type="button"
-          aria-pressed={mode === "obfuscate"}
+          aria-pressed={mode === 'obfuscate'}
           disabled={disabled}
-          onClick={() => onModeChange("obfuscate")}
+          onClick={() => onModeChange('obfuscate')}
           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-            mode === "obfuscate"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+            mode === 'obfuscate'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          {t("image-obfuscator.mode_obfuscate")}
+          {t('image-obfuscator.mode_obfuscate')}
         </button>
         <button
           type="button"
-          aria-pressed={mode === "deobfuscate"}
+          aria-pressed={mode === 'deobfuscate'}
           disabled={disabled}
-          onClick={() => onModeChange("deobfuscate")}
+          onClick={() => onModeChange('deobfuscate')}
           className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
-            mode === "deobfuscate"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+            mode === 'deobfuscate'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          {t("image-obfuscator.mode_deobfuscate")}
+          {t('image-obfuscator.mode_deobfuscate')}
         </button>
       </div>
 
       {/* 密码 */}
       <div className="space-y-1.5">
         <Label htmlFor="obfuscator-password">
-          {t("image-obfuscator.password")}
+          {t('image-obfuscator.password')}
         </Label>
         <Input
           id="obfuscator-password"
@@ -189,11 +186,11 @@ export default function ControlPanel({
           autoComplete="off"
           spellCheck={false}
           disabled={disabled}
-          placeholder={t("image-obfuscator.password_placeholder")}
+          placeholder={t('image-obfuscator.password_placeholder')}
           onChange={(event) => onPasswordChange(event.target.value)}
         />
         <p className="text-muted-foreground text-xs">
-          {t("image-obfuscator.password_hint")}
+          {t('image-obfuscator.password_hint')}
         </p>
       </div>
 
@@ -201,7 +198,7 @@ export default function ControlPanel({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="obfuscator-strength">
-            {t("image-obfuscator.strength")}
+            {t('image-obfuscator.strength')}
           </Label>
           <span className="text-muted-foreground font-mono text-xs">
             {strength.toFixed(2)}
@@ -220,8 +217,8 @@ export default function ControlPanel({
         />
         <p className="text-muted-foreground text-xs">
           {strength === 0
-            ? t("image-obfuscator.strength_zero_hint")
-            : t("image-obfuscator.strength_hint")}
+            ? t('image-obfuscator.strength_zero_hint')
+            : t('image-obfuscator.strength_hint')}
         </p>
       </div>
 
@@ -234,16 +231,16 @@ export default function ControlPanel({
           variant="outline"
           className="w-full justify-start px-3"
         >
-          {t("image-obfuscator.green_boost")}
+          {t('image-obfuscator.green_boost')}
         </Toggle>
         <p className="text-muted-foreground text-xs">
-          {t("image-obfuscator.green_boost_desc")}
+          {t('image-obfuscator.green_boost_desc')}
         </p>
       </div>
 
       {/* 输出格式 */}
       <div className="space-y-1.5">
-        <Label>{t("image-obfuscator.output_format")}</Label>
+        <Label>{t('image-obfuscator.output_format')}</Label>
         <Select
           value={format}
           disabled={disabled}
@@ -254,26 +251,26 @@ export default function ControlPanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="png">
-              {t("image-obfuscator.format_png")}
+              {t('image-obfuscator.format_png')}
             </SelectItem>
             <SelectItem value="jpeg">
-              {t("image-obfuscator.format_jpeg")}
+              {t('image-obfuscator.format_jpeg')}
             </SelectItem>
           </SelectContent>
         </Select>
         <p className="text-muted-foreground text-xs">
-          {format === "png"
-            ? t("image-obfuscator.format_png_desc")
-            : t("image-obfuscator.format_jpeg_desc")}
+          {format === 'png'
+            ? t('image-obfuscator.format_png_desc')
+            : t('image-obfuscator.format_jpeg_desc')}
         </p>
       </div>
 
       {/* JPG 质量 */}
-      {format === "jpeg" ? (
+      {format === 'jpeg' ? (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="obfuscator-quality">
-              {t("image-obfuscator.quality")}
+              {t('image-obfuscator.quality')}
             </Label>
             <span className="text-muted-foreground font-mono text-xs">
               {Math.round(quality * 100)}%
@@ -302,10 +299,10 @@ export default function ControlPanel({
             <span>
               {isRunning
                 ? t(STAGE_LABEL_KEYS[stage])
-                : t("image-obfuscator.stage_done")}
+                : t('image-obfuscator.stage_done')}
               {counts.total > 0 ? (
                 <span className="font-mono">
-                  {" · "}
+                  {' · '}
                   {counts.done}/{counts.total}
                 </span>
               ) : null}
@@ -343,18 +340,18 @@ export default function ControlPanel({
         >
           {isRunning ? <Spinner /> : <Play className="h-4 w-4" />}
           {isRunning
-            ? t("image-obfuscator.processing")
-            : mode === "obfuscate"
+            ? t('image-obfuscator.processing')
+            : mode === 'obfuscate'
               ? counts.total > 1
-                ? t("image-obfuscator.start_obfuscate_all", {
+                ? t('image-obfuscator.start_obfuscate_all', {
                     count: counts.total,
                   })
-                : t("image-obfuscator.start_obfuscate")
+                : t('image-obfuscator.start_obfuscate')
               : counts.total > 1
-                ? t("image-obfuscator.start_deobfuscate_all", {
+                ? t('image-obfuscator.start_deobfuscate_all', {
                     count: counts.total,
                   })
-                : t("image-obfuscator.start_deobfuscate")}
+                : t('image-obfuscator.start_deobfuscate')}
         </Button>
 
         {isRunning ? (
@@ -365,7 +362,7 @@ export default function ControlPanel({
             className="w-full"
           >
             <X className="h-4 w-4" />
-            {t("image-obfuscator.cancel")}
+            {t('image-obfuscator.cancel')}
           </Button>
         ) : null}
 
@@ -378,7 +375,7 @@ export default function ControlPanel({
             disabled={counts.total === 0}
           >
             <RotateCcw className="h-4 w-4" />
-            {t("image-obfuscator.retry_failed", { count: counts.failed })}
+            {t('image-obfuscator.retry_failed', { count: counts.failed })}
           </Button>
         ) : null}
 
@@ -391,8 +388,8 @@ export default function ControlPanel({
           >
             <Download className="h-4 w-4" />
             {isDownloading
-              ? t("image-obfuscator.zipping")
-              : t("image-obfuscator.download_all", { count: counts.done })}
+              ? t('image-obfuscator.zipping')
+              : t('image-obfuscator.download_all', { count: counts.done })}
           </Button>
           <Button
             type="button"
@@ -401,7 +398,7 @@ export default function ControlPanel({
             disabled={isRunning}
           >
             <RotateCcw className="h-4 w-4" />
-            {t("image-obfuscator.clear_all")}
+            {t('image-obfuscator.clear_all')}
           </Button>
         </div>
       </div>
@@ -410,15 +407,15 @@ export default function ControlPanel({
       <div className="border-border text-muted-foreground space-y-1.5 border-t pt-3 text-xs">
         <p className="flex items-start gap-1.5">
           <span>1.</span>
-          <span>{t("image-obfuscator.note_params")}</span>
+          <span>{t('image-obfuscator.note_params')}</span>
         </p>
         <p className="flex items-start gap-1.5">
           <span>2.</span>
-          <span>{t("image-obfuscator.note_security")}</span>
+          <span>{t('image-obfuscator.note_security')}</span>
         </p>
         <p className="flex items-start gap-1.5">
           <span>3.</span>
-          <span>{t("image-obfuscator.privacy_notice")}</span>
+          <span>{t('image-obfuscator.privacy_notice')}</span>
         </p>
       </div>
     </div>

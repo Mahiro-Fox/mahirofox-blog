@@ -2,8 +2,8 @@
 
 import { conversationStore } from '@/store/conversation-store';
 import type { Conversation, ConversationSummary } from '@/types/conversation';
+import { verifyUserAuth } from '@/lib/auth/user-auth';
 import { createLogger } from '@/utils/logger';
-import { verifyUserAuth } from '@/lib/user-auth';
 
 const logger = createLogger('ConversationActions');
 

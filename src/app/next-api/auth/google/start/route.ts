@@ -1,6 +1,6 @@
+import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
 import {
   createPkceChallenge,
@@ -16,7 +16,7 @@ import {
   sanitizeRedirectPath,
   signinPathFor,
   temporaryCookieOptions,
-} from '@/lib/google-oauth';
+} from '@/lib/integrations/google-oauth';
 import { createLogger } from '@/utils/logger';
 
 export const runtime = 'nodejs';

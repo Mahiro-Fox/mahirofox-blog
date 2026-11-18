@@ -3,7 +3,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useEffect, useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   registerWithEmail,
   resetPasswordWithCode,
@@ -32,7 +32,7 @@ import {
 } from '@/components/turnstile/turnstile-widget';
 import { siteConfig } from '@/config/common';
 import { useT } from '@/i18n/dictionary-provider';
-import type { PhotoItem } from '@/lib/photos';
+import type { PhotoItem } from '@/lib/content/photos';
 
 /** 弹窗步骤：邮箱 → （已注册）密码 | （未注册）验证码 → 设置密码 */
 type AuthStep =
@@ -149,8 +149,10 @@ export function AuthModal({
   const [error, setError] = useState('');
   const [resendIn, setResendIn] = useState(0); // 验证码重发倒计时（秒）
   const [rateLimitIn, setRateLimitIn] = useState(0); // 登录限流倒计时（秒）
-  // 人机验证：token 单次有效，校验失败后通过 nonce 重建小部件取新 token
+  // 人机验证：token 单次有效，校验失败后通过 nonce 重建小部件取新 token；
+  // 首次通过后服务端会签发票据，同流程后续步骤认票，不再重复弹验证
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaTicket, setCaptchaTicket] = useState<string | null>(null);
   const [captchaNonce, setCaptchaNonce] = useState(0);
 
   const handleCaptchaToken = useCallback((token: string) => {
@@ -161,6 +163,9 @@ export function AuthModal({
     setCaptchaToken(null);
     setCaptchaNonce((prev) => prev + 1);
   }, []);
+
+  /** 票据失效（过期 / 换邮箱）时才需要重新弹验证 */
+  const dropTicket = useCallback(() => setCaptchaTicket(null), []);
 
   // 切换步骤时旧 token 已不适用于新 action，清空等待新 token
   useEffect(() => {
@@ -182,6 +187,7 @@ export function AuthModal({
     setRateLimitIn(0);
     setLoading(false);
     setCaptchaToken(null);
+    setCaptchaTicket(null);
   }, [open]);
 
   // 重发倒计时
@@ -224,10 +230,16 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await startEmailAuth(email, captchaToken ?? '');
+      const res = await startEmailAuth(
+        email,
+        captchaToken ?? '',
+        captchaTicket ?? undefined
+      );
       if (!res.success) {
         // token 已被本次 siteverify 消耗，失败后需要重新获取
         resetCaptcha();
+        // 票据失效（过期 / 换邮箱）才需要重新弹验证
+        if (res.error === 'CAPTCHA_FAILED') dropTicket();
         // 已有验证码在有效期内：直接进入验证码步骤，并展示重发倒计时
         if (res.error === 'RESEND_TOO_SOON') {
           setResendIn(res.retryAfter ?? RESEND_SECONDS);
@@ -237,6 +249,7 @@ export function AuthModal({
         setError(errorText(res.error));
         return;
       }
+      if (res.captchaTicket) setCaptchaTicket(res.captchaTicket);
       if (res.exists) {
         // Google 账户未设置密码：直接引导改用 Google 或通过邮箱验证码设置密码
         setStep(res.hasPassword === false ? 'passwordNotSet' : 'password');
@@ -256,12 +269,21 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await userLogin(email, password, captchaToken ?? '');
+      const res = await userLogin(
+        email,
+        password,
+        captchaToken ?? '',
+        captchaTicket ?? undefined
+      );
       if (!res.success) {
         resetCaptcha();
         if (res.resetTime) {
           setRateLimitIn(Math.ceil((res.resetTime - Date.now()) / 1000));
           setError(t('auth.err_rate_limited'));
+        } else if (res.error === 'CAPTCHA_FAILED') {
+          // 票据过期 / 无效：清掉重验，别误报成密码错误
+          dropTicket();
+          setError(errorText('CAPTCHA_FAILED'));
         } else if (res.error === 'PASSWORD_NOT_SET') {
           setStep('passwordNotSet');
         } else {
@@ -302,28 +324,40 @@ export function AuthModal({
     setLoading(true);
     try {
       if (step === 'resetCode') {
-        const reset = await startPasswordReset(email, captchaToken ?? '');
+        const reset = await startPasswordReset(
+          email,
+          captchaToken ?? '',
+          captchaTicket ?? undefined
+        );
         if (!reset.success) {
           if (reset.error === 'RESEND_TOO_SOON') {
             setResendIn(reset.retryAfter ?? RESEND_SECONDS);
             return;
           }
+          if (reset.error === 'CAPTCHA_FAILED') dropTicket();
           setError(errorText(reset.error));
           return;
         }
+        if (reset.captchaTicket) setCaptchaTicket(reset.captchaTicket);
         setResendIn(RESEND_SECONDS);
         toast.success(t('auth.code_sent'));
         return;
       }
-      const res = await startEmailAuth(email, captchaToken ?? '');
+      const res = await startEmailAuth(
+        email,
+        captchaToken ?? '',
+        captchaTicket ?? undefined
+      );
       if (!res.success) {
         if (res.error === 'RESEND_TOO_SOON') {
           setResendIn(res.retryAfter ?? RESEND_SECONDS);
           return;
         }
+        if (res.error === 'CAPTCHA_FAILED') dropTicket();
         setError(errorText(res.error));
         return;
       }
+      if (res.captchaTicket) setCaptchaTicket(res.captchaTicket);
       setResendIn(RESEND_SECONDS);
       toast.success(t('auth.code_sent'));
     } finally {
@@ -337,7 +371,11 @@ export function AuthModal({
     setError('');
     setLoading(true);
     try {
-      const res = await startPasswordReset(email, captchaToken ?? '');
+      const res = await startPasswordReset(
+        email,
+        captchaToken ?? '',
+        captchaTicket ?? undefined
+      );
       if (!res.success) {
         resetCaptcha();
         if (res.error === 'RESEND_TOO_SOON') {
@@ -346,9 +384,11 @@ export function AuthModal({
           setStep('resetCode');
           return;
         }
+        if (res.error === 'CAPTCHA_FAILED') dropTicket();
         setError(errorText(res.error));
         return;
       }
+      if (res.captchaTicket) setCaptchaTicket(res.captchaTicket);
       setResendIn(RESEND_SECONDS);
       setStep('resetCode');
       toast.success(t('auth.code_sent'));
@@ -395,9 +435,11 @@ export function AuthModal({
         code,
         newPassword,
         turnstileToken: captchaToken ?? '',
+        captchaTicket: captchaTicket ?? undefined,
       });
       if (!res.success) {
         resetCaptcha();
+        if (res.error === 'CAPTCHA_FAILED') dropTicket();
         setError(errorText(res.error));
         return;
       }
@@ -423,9 +465,11 @@ export function AuthModal({
         username,
         password: newPassword,
         turnstileToken: captchaToken ?? '',
+        captchaTicket: captchaTicket ?? undefined,
       });
       if (!res.success) {
         resetCaptcha();
+        if (res.error === 'CAPTCHA_FAILED') dropTicket();
         setError(errorText(res.error));
         return;
       }
@@ -455,16 +499,18 @@ export function AuthModal({
     resetPassword: t('auth.reset_password_desc'),
   };
 
-  // 人机验证挂载点：key 随步骤 / nonce 变化，确保拿到与新 action 匹配的 token
-  const captchaWidget = TURNSTILE_SITE_KEY ? (
-    <TurnstileWidget
-      key={`${step}-${captchaNonce}`}
-      action={CAPTCHA_ACTION_BY_STEP[step]}
-      onToken={handleCaptchaToken}
-      className="flex justify-center"
-    />
-  ) : null;
-  const captchaBlocked = Boolean(TURNSTILE_SITE_KEY) && !captchaToken;
+  // 人机验证挂载点：已有票据就不再渲染，key 随步骤 / nonce 变化，确保拿到与新 action 匹配的 token
+  const captchaWidget =
+    TURNSTILE_SITE_KEY && !captchaTicket ? (
+      <TurnstileWidget
+        key={`${step}-${captchaNonce}`}
+        action={CAPTCHA_ACTION_BY_STEP[step]}
+        onToken={handleCaptchaToken}
+        className="flex justify-center"
+      />
+    ) : null;
+  const captchaBlocked =
+    Boolean(TURNSTILE_SITE_KEY) && !captchaToken && !captchaTicket;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -553,7 +599,11 @@ export function AuthModal({
                     autoFocus
                     placeholder={t('auth.enter_email')}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      // 票据绑定邮箱：改了邮箱就得重新验证，否则服务端也会拒
+                      if (captchaTicket) dropTicket();
+                    }}
                     required
                     autoComplete="email"
                   />
@@ -589,10 +639,7 @@ export function AuthModal({
                   type="submit"
                   className={GRADIENT_BUTTON}
                   disabled={
-                    loading ||
-                    !password ||
-                    rateLimitIn > 0 ||
-                    captchaBlocked
+                    loading || !password || rateLimitIn > 0 || captchaBlocked
                   }
                 >
                   {rateLimitIn > 0
@@ -731,7 +778,9 @@ export function AuthModal({
                   className={GRADIENT_BUTTON}
                   disabled={loading || captchaBlocked}
                 >
-                  {loading ? t('auth.sending') : t('auth.set_password_via_email')}
+                  {loading
+                    ? t('auth.sending')
+                    : t('auth.set_password_via_email')}
                 </Button>
                 <BackButton
                   onClick={() => {

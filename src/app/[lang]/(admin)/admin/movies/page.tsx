@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { adminGetMovies } from '@/actions/admin/movie-actions';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import MoviesClient from './movies-client';
 
 export default async function MoviesAdminPage() {

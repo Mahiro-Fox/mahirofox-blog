@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { adminGetGalleries } from '@/actions/admin/gallery-actions';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import GalleryClient from './gallery-client';
 
 export default async function GalleryAdminPage() {

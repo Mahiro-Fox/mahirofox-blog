@@ -2,8 +2,8 @@
 
 import { conversationStore } from '@/store/conversation-store';
 import { PROVIDERS, type ProviderValue } from '@/config/providers';
-import { generateTitle } from '@/lib/ai-chat/ai-title';
-import { verifyUserAuth } from '@/lib/user-auth';
+import { generateTitle } from '@/lib/ai/ai-title';
+import { verifyUserAuth } from '@/lib/auth/user-auth';
 
 export interface GenerateTitleInput {
   conversationId: string;

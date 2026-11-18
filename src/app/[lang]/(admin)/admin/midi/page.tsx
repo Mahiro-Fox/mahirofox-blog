@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { adminGetMidiFiles } from '@/actions/admin/midi-actions';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import MidiClient from './midi-client';
 
 export default async function MidiAdminPage() {

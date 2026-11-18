@@ -13,7 +13,7 @@ import {
   putR2Object,
   r2ObjectExists,
   toUploadsKey,
-} from './r2';
+} from '@/lib/cloudflare/r2';
 
 /**
  * uploads 资源访问层：
@@ -401,10 +401,7 @@ export async function renameUploadEntry(
     const objects = await listR2Objects(prefix);
     await Promise.all(
       objects.map((object) =>
-        copyR2Object(
-          object.key,
-          `${target}/${object.key.slice(prefix.length)}`
-        )
+        copyR2Object(object.key, `${target}/${object.key.slice(prefix.length)}`)
       )
     );
     await deleteUploadDirectory(source);

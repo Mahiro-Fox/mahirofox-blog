@@ -12,7 +12,7 @@ import { BlurFade } from '@/components/magicui/blur-fade';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { usePhotos } from '@/hooks/use-photos';
 import { useT } from '@/i18n/dictionary-provider';
-import type { PhotoCollection } from '@/lib/photos';
+import type { PhotoCollection } from '@/lib/content/photos';
 
 /**
  * R18 图库：顶部横向排列作者，下方以瀑布流展示当前作者的作品。

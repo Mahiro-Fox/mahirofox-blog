@@ -2,10 +2,10 @@
 
 import path from 'path';
 import { userStore } from '@/store/user-store';
-import { verifyAuth } from '@/lib/admin-auth';
-import { requirePermission } from '@/lib/permissions';
-import { uploadAssetFile } from '@/lib/server/asset-upload';
-import { deleteUploadFile, resolveUploadKey } from '@/lib/server/uploads';
+import { verifyAuth } from '@/lib/auth/admin-auth';
+import { requirePermission } from '@/lib/auth/permissions';
+import { uploadAssetFile } from '@/lib/storage/upload-file';
+import { deleteUploadFile, resolveUploadKey } from '@/lib/storage/uploads';
 import {
   consumeRateLimit,
   getAdminActionContext,

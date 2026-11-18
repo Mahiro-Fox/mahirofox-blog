@@ -17,7 +17,7 @@ import {
   MAX_SIDE,
   type ObfuscationMode,
   type ObfuscationStage,
-} from '@/lib/image-obfuscator/types';
+} from '@/lib/media/types';
 import { formatSize } from '@/utils/utils';
 import ControlPanel from './_components/control-panel';
 import GalleryPickerDialog from './_components/gallery-picker-dialog';

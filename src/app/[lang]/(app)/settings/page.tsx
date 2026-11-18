@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
-import { getCurrentUser, getUserAccountViaGo } from '@/lib/user-auth';
+import { getCurrentUser, getUserAccountViaGo } from '@/lib/auth/user-auth';
+import { isGoogleOAuthEnabled } from '@/lib/integrations/google-oauth';
 import { AccountSettings } from './account-settings';
 
 export const dynamic = 'force-dynamic';

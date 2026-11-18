@@ -1,4 +1,4 @@
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 
 /**
  * 前台用户（accounts）Store

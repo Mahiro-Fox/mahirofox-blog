@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { adminGetOperationLogs } from '@/actions/admin/operation-log-actions';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import OperationLogsClient from './operation-logs-client';
 
 export default async function OperationLogsAdminPage() {

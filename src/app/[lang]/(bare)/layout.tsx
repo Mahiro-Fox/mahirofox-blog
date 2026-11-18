@@ -3,7 +3,7 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { PageTracker } from '@/components/shared/tracker';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
-import { getCurrentUser } from '@/lib/user-auth';
+import { getCurrentUser } from '@/lib/auth/user-auth';
 
 interface BareLayoutProps {
   children: React.ReactNode;

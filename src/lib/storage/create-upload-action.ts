@@ -1,5 +1,5 @@
 import { Permission } from '@/constant';
-import { uploadAssetFile } from '@/lib/server/asset-upload';
+import { uploadAssetFile } from '@/lib/storage/upload-file';
 import {
   withActionPermission,
   type ActionResponse,

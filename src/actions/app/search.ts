@@ -1,6 +1,6 @@
 'use server';
 
-import { performSearch } from '@/lib/search';
+import { performSearch } from '@/lib/content/search';
 
 export async function searchContent(query: string, limit: number = 10) {
   if (!query.trim()) {

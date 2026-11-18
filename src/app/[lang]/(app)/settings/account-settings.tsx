@@ -1,8 +1,8 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 import {
   setAccountPassword,
   unlinkGoogleAccount,
@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/shadcn-ui/input';
 import { Label } from '@/components/shadcn-ui/label';
 import { useT } from '@/i18n/dictionary-provider';
-import type { UserAccountInfo } from '@/lib/user-auth';
+import type { UserAccountInfo } from '@/lib/auth/user-auth';
 
 interface AccountSettingsProps {
   account: UserAccountInfo;
@@ -286,11 +286,7 @@ export function AccountSettings({
             {passwordError && (
               <p className="text-destructive text-sm">{passwordError}</p>
             )}
-            <Button
-              type="submit"
-              className={GRADIENT_BUTTON}
-              disabled={saving}
-            >
+            <Button type="submit" className={GRADIENT_BUTTON} disabled={saving}>
               {saving ? t('settings.saving') : t('settings.save_password')}
             </Button>
           </form>

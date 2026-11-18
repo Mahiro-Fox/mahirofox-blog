@@ -15,7 +15,7 @@ import {
 import { BlurredHeroImage } from '@/components/shared/blurred-hero-image';
 import { LinkBadge } from '@/components/shared/link-badge';
 import { siteConfig } from '@/config/common';
-import { author } from '@/lib/author';
+import { author } from '@/lib/shared/author';
 import { formatDate, generateAbsoluteUrl } from '@/utils/utils';
 
 interface BlogPostPageProps {

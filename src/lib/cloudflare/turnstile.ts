@@ -1,3 +1,7 @@
+import {
+  issueCaptchaTicket,
+  verifyCaptchaTicket,
+} from '@/lib/cloudflare/captcha-ticket';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('Turnstile');
@@ -72,9 +76,14 @@ export async function verifyTurnstile(
 
     const result = (await res.json()) as SiteverifyResult;
     if (!result.success) {
+      // 一次把判定所需的上下文全打出来，避免再靠"猜"定位线上问题
       logger.warn('Turnstile 校验失败', {
-        action: expectedAction,
+        expectedAction,
         errorCodes: result['error-codes'] ?? [],
+        actualAction: result.action ?? null,
+        hostname: result.hostname ?? null,
+        allowedHostnames: Array.from(hostnames),
+        tokenLength: token.length,
       });
       return false;
     }
@@ -82,12 +91,14 @@ export async function verifyTurnstile(
       logger.warn('Turnstile action 不匹配', {
         expected: expectedAction,
         actual: result.action,
+        hostname: result.hostname ?? null,
       });
       return false;
     }
     if (!result.hostname || !hostnames.has(result.hostname.toLowerCase())) {
       logger.warn('Turnstile hostname 不在允许列表', {
         hostname: result.hostname,
+        allowedHostnames: Array.from(hostnames),
       });
       return false;
     }
@@ -96,4 +107,45 @@ export async function verifyTurnstile(
     logger.error('Turnstile siteverify 请求异常', error);
     return false;
   }
+}
+
+/** 人机验证凭据：首次用 token，同流程后续步骤用票据 */
+export interface HumanProof {
+  turnstileToken?: string;
+  captchaTicket?: string;
+  /** 票据绑定的邮箱；不传则不走票据路径 */
+  email?: string;
+}
+
+/**
+ * 人机验证放行判定：票据优先，其次现场校验 token。
+ * 任一通过都会返回一张（新的）票据，供同流程后续步骤复用，
+ * 这样「邮箱 → 密码 / 验证码 → 设置密码」全程只需过一次验证。
+ */
+export async function passHumanCheck(
+  proof: HumanProof,
+  expectedAction: string,
+  remoteIp?: string
+): Promise<{ ok: boolean; ticket?: string }> {
+  if (
+    proof.captchaTicket &&
+    proof.email &&
+    verifyCaptchaTicket(proof.captchaTicket, proof.email)
+  ) {
+    return { ok: true, ticket: proof.captchaTicket };
+  }
+
+  if (!proof.turnstileToken) return { ok: false };
+  if (
+    !(await verifyTurnstile(proof.turnstileToken, expectedAction, remoteIp))
+  ) {
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    ticket: proof.email
+      ? (issueCaptchaTicket(proof.email) ?? undefined)
+      : undefined,
+  };
 }

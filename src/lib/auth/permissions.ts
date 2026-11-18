@@ -1,7 +1,7 @@
 import type { Permission } from '@/constant';
 import { rolePermissionStore } from '@/store/role-permission-store';
 import { NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/admin-auth';
+import { verifyAuth } from '@/lib/auth/admin-auth';
 
 /**
  * 权限检查结果接口

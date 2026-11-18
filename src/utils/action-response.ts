@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers';
 import { ADMIN_SESSION_COOKIE } from '@/constant/auth';
 import type { Permission } from '@/constant/permissions';
-import { requirePermission } from '@/lib/permissions';
-import { serverActionRateLimiter } from '@/lib/rate-limit';
-import { GoApiError } from '@/lib/server/api-client';
+import { requirePermission } from '@/lib/auth/permissions';
+import { serverActionRateLimiter } from '@/lib/auth/rate-limit';
+import { GoApiError } from '@/lib/integrations/go-api';
 
 export type ActionResponse<T = unknown> =
   | { success: true; data: T; message?: string }

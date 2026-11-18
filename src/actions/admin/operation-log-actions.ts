@@ -1,6 +1,6 @@
 'use server';
 
-import { buildQuery, goFetch, withGoAuth } from '@/lib/server/api-client';
+import { buildQuery, goFetch, withGoAuth } from '@/lib/integrations/go-api';
 import {
   withActionPermission,
   type ActionResponse,

@@ -16,7 +16,7 @@ import {
   Utensils,
   Video,
 } from 'lucide-react';
-import { author } from '@/lib/author';
+import { author } from '@/lib/shared/author';
 
 // 卡片内容类型定义
 export interface ProfileContent {

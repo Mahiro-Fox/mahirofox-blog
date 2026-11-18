@@ -3,14 +3,14 @@
 import path from 'path';
 import { cache } from 'react';
 import { OBUSCATOR_PHOTO_DIR, PHOTO_DIR, R18_PHOTO_DIR } from '@/constant/dir';
+import { verifyUserAuth } from '@/lib/auth/user-auth';
 import {
   getPhotoCollections,
   getPhotos,
   getPhotosPage,
   PhotoCollection,
   PhotoItem,
-} from '@/lib/photos';
-import { verifyUserAuth } from '@/lib/user-auth';
+} from '@/lib/content/photos';
 
 export interface PhotosResponse {
   images: PhotoItem[];

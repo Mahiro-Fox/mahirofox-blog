@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { AuthModal } from '@/components/auth/auth-modal';
-import type { PhotoItem } from '@/lib/photos';
+import type { PhotoItem } from '@/lib/content/photos';
 
 interface SignInModalProps {
   redirectTo: string;

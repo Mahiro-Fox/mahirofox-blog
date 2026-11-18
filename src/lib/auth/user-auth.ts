@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
-import type { GoogleIdentity } from '@/lib/google-oauth';
-import { goFetch } from '@/lib/server/api-client';
+import { goFetch } from '@/lib/integrations/go-api';
+import type { GoogleIdentity } from '@/lib/integrations/google-oauth';
 
 type UserVerifyResponse = {
   success: boolean;

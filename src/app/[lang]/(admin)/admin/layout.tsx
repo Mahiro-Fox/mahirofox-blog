@@ -6,8 +6,8 @@ import AdminShell from '@/components/admin/admin-shell';
 import { QueryToast } from '@/components/admin/query-toast';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
-import { verifyAuth } from '@/lib/admin-auth';
-import { requirePermission } from '@/lib/permissions';
+import { verifyAuth } from '@/lib/auth/admin-auth';
+import { requirePermission } from '@/lib/auth/permissions';
 
 export const metadata: Metadata = {
   title: 'Admin Panel',

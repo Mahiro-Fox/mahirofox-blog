@@ -1,5 +1,5 @@
 import { getAllPhotos } from '@/actions/app/photos';
-import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
+import { isGoogleOAuthEnabled } from '@/lib/integrations/google-oauth';
 import { SignInModal } from './signin-modal';
 
 interface SignInPageProps {

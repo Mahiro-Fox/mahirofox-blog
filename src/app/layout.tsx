@@ -3,7 +3,7 @@ import { RouteLoadingProvider } from '@/context/route-loading-provider';
 import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
 import { Toaster } from '@/components/shadcn-ui/sonner';
 import { TailwindIndicator } from '@/components/shared/tailwind-indicator';
-import { fontVariables } from '@/lib/fonts';
+import { fontVariables } from '@/lib/shared/fonts';
 import { cn } from '@/utils/utils';
 import '@/styles/globals.css';
 import '@/styles/theme.css';

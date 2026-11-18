@@ -1,16 +1,13 @@
 /**
  * 图片混淆 Worker：只做像素运算，不接触 DOM。
  */
-import {
-  deobfuscateImageData,
-  obfuscateImageData,
-} from '@/lib/image-obfuscator';
-import { isObfuscationError } from '@/lib/image-obfuscator/types';
-import type { ObfuscationProgress } from '@/lib/image-obfuscator/types';
+import { deobfuscateImageData, obfuscateImageData } from '@/lib/media';
+import { isObfuscationError } from '@/lib/media/types';
+import type { ObfuscationProgress } from '@/lib/media/types';
 import type {
   ObfuscatorWorkerRequest,
   ObfuscatorWorkerResponse,
-} from '@/lib/image-obfuscator/worker-protocol';
+} from '@/lib/media/worker-protocol';
 
 const context = globalThis as unknown as {
   onmessage: ((event: MessageEvent<ObfuscatorWorkerRequest>) => void) | null;

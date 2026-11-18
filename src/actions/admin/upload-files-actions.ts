@@ -1,8 +1,9 @@
 'use server';
 
 import path from 'path';
+import { pathCacheStore } from '@/store/path-cache-store';
 import { UPLOADS_DIR } from '@/constant/dir';
-import { uploadAssetFile } from '@/lib/server/asset-upload';
+import { uploadAssetFile } from '@/lib/storage/upload-file';
 import {
   createUploadDirectory,
   deleteUploadDirectory,
@@ -12,8 +13,7 @@ import {
   renameUploadEntry,
   resolveUploadKey,
   uploadFileExists,
-} from '@/lib/server/uploads';
-import { pathCacheStore } from '@/store/path-cache-store';
+} from '@/lib/storage/uploads';
 import {
   withActionPermission,
   type ActionResponse,
@@ -208,19 +208,18 @@ export async function createFolder(
     try {
       const dir = normalizeRelativePath(relativePath);
       const name = assertValidName(folderName, '文件夹名称');
-      const key = resolveUploadKey(
-        `uploads/${dir ? `${dir}/` : ''}${name}`
-      );
+      const key = resolveUploadKey(`uploads/${dir ? `${dir}/` : ''}${name}`);
 
-      if (
-        (await uploadFileExists(key)) ||
-        (await isUploadDirectory(key))
-      ) {
+      if ((await uploadFileExists(key)) || (await isUploadDirectory(key))) {
         return { success: false, error: `文件夹 ${name} 已存在` };
       }
 
       await createUploadDirectory(key);
-      logger.info('创建文件夹成功', { relativePath: dir, folderName: name, userId: user.id });
+      logger.info('创建文件夹成功', {
+        relativePath: dir,
+        folderName: name,
+        userId: user.id,
+      });
       return {
         success: true,
         data: { folderName: name, message: '创建成功' },
@@ -328,7 +327,11 @@ export async function renameFile(
       }
 
       await renameUploadEntry(key, name);
-      logger.info('重命名文件成功', { oldPath, newName: name, userId: user.id });
+      logger.info('重命名文件成功', {
+        oldPath,
+        newName: name,
+        userId: user.id,
+      });
       return { success: true, data: { message: '重命名成功', newName: name } };
     } catch (error) {
       logger.error('重命名失败', error, { oldPath, newName });

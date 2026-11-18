@@ -1,6 +1,6 @@
 import { conversationStore } from '@/store/conversation-store';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/user-auth';
+import { getCurrentUser } from '@/lib/auth/user-auth';
 import { ChatClient } from './chat-client';
 
 interface ChatDetailPageProps {

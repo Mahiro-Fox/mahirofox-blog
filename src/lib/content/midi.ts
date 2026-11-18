@@ -4,7 +4,7 @@ import {
   listUploadFiles,
   readUploadFile,
   resolveUploadKey,
-} from '@/lib/server/uploads';
+} from '@/lib/storage/uploads';
 
 /**
  * 解析 MIDI 文件总时长（秒）

@@ -7,14 +7,14 @@ import {
   type EnhancementId,
   type ObfuscationMode,
   type RgbaImage,
-} from "@/lib/image-obfuscator/types";
+} from '@/lib/media/types';
 import {
   attachObfuscationMeta,
   decodeImageFile,
   encodeImageData,
   type OutputFormat,
-} from "./image-codec";
-import type { ResultImage } from "./types";
+} from './image-codec';
+import type { ResultImage } from './types';
 
 export interface ProcessingSettings {
   mode: ObfuscationMode;
@@ -36,12 +36,12 @@ export interface ProcessRunnerInput {
 export type ProcessRunner = (input: ProcessRunnerInput) => Promise<RgbaImage>;
 
 /** 尚未创建预览地址的处理结果 */
-export type ProcessedImage = Omit<ResultImage, "url">;
+export type ProcessedImage = Omit<ResultImage, 'url'>;
 
 export async function processImageFile(
   file: File,
   settings: ProcessingSettings,
-  runner: ProcessRunner,
+  runner: ProcessRunner
 ): Promise<ProcessedImage> {
   const decoded = await decodeImageFile(file);
   const processed = await runner({
@@ -55,11 +55,11 @@ export async function processImageFile(
   const encoded = await encodeImageData(
     processed,
     settings.format,
-    settings.quality,
+    settings.quality
   );
 
   const blob =
-    settings.mode === "obfuscate"
+    settings.mode === 'obfuscate'
       ? await attachObfuscationMeta(encoded.blob, {
           version: ALGORITHM_VERSION,
           strength: settings.strength,

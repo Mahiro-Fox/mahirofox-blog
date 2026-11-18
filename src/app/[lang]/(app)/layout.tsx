@@ -13,8 +13,8 @@ import { siteConfig } from '@/config/common';
 import { APP_URL } from '@/config/env';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
-import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
-import { getCurrentUser } from '@/lib/user-auth';
+import { getCurrentUser } from '@/lib/auth/user-auth';
+import { isGoogleOAuthEnabled } from '@/lib/integrations/google-oauth';
 
 export const generateMetadata = async ({
   params,

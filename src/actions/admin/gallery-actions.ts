@@ -1,7 +1,7 @@
 'use server';
 
 import { DEFAULT_GALLERY_LIST_LIMIT } from '@/config/limit';
-import { paginateItems, PaginationResult } from '@/lib/pagination';
+import { paginateItems, PaginationResult } from '@/lib/shared/pagination';
 import {
   createGalleryFile,
   deleteGalleryFile,
@@ -10,8 +10,8 @@ import {
   readGalleryDetail,
   renameGalleryFile,
   updateGalleryFile,
-} from '@/lib/server/content-files';
-import { createUploadAction } from '@/lib/upload';
+} from '@/lib/storage/content-files';
+import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {
   withActionPermission,
   type ActionResponse,

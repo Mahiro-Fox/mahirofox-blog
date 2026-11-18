@@ -1,5 +1,5 @@
 import { ADMIN_DEFAULT_PASSWORD } from '@/constant/auth';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 
 /**
  * 后台用户（admin_users）Store

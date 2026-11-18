@@ -1,10 +1,7 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import {
-  deobfuscateImageData,
-  obfuscateImageData,
-} from '@/lib/image-obfuscator';
-import type { RgbaImage } from '@/lib/image-obfuscator/types';
+import { deobfuscateImageData, obfuscateImageData } from '@/lib/media';
+import type { RgbaImage } from '@/lib/media/types';
 import { psnr, ssim } from './helpers/image-metrics';
 
 const SIZE = 256;

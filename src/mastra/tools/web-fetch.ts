@@ -1,6 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { runPythonTool } from '@/lib/ai-chat/python-tool';
+import { runPythonTool } from '@/lib/ai/python-tool';
 
 export const webFetch = createTool({
   id: 'web_fetch',

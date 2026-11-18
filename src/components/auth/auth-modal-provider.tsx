@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import type { PhotoItem } from '@/lib/photos';
+import type { PhotoItem } from '@/lib/content/photos';
 import { AuthModal } from './auth-modal';
 
 interface AuthModalOpenOptions {

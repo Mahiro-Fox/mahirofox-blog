@@ -19,7 +19,7 @@ import {
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { usePhotos } from '@/hooks/use-photos';
 import { useT } from '@/i18n/dictionary-provider';
-import type { PhotoCollection } from '@/lib/photos';
+import type { PhotoCollection } from '@/lib/content/photos';
 
 interface GalleryPickerDialogProps {
   open: boolean;

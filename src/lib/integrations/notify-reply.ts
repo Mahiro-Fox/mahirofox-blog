@@ -1,5 +1,5 @@
 import ReplyNotificationEmail from '@/components/admin/reply-notification';
-import { sendEmailWithRetry } from './send-with-retry';
+import { sendEmailWithRetry } from '@/lib/integrations/send-with-retry';
 
 interface NotifyReplyParams {
   toEmail: string;

@@ -1,6 +1,6 @@
 import { accountStore } from '@/store/account-store';
 import { redirect } from 'next/navigation';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import { getAdminActionContext } from '@/utils/action-response';
 import FrontUsersClient from './front-users-client';
 

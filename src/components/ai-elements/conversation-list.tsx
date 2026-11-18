@@ -23,7 +23,7 @@ import { useT } from '@/i18n/dictionary-provider';
 import {
   conversationLocalStorage,
   type StoredConversationSummary,
-} from '@/lib/ai-chat/conversation-local-storage';
+} from '@/lib/ai/conversation-local-storage';
 import { cn } from '@/utils/utils';
 
 interface ConversationListProps {

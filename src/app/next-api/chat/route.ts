@@ -10,10 +10,10 @@ import {
 } from 'ai';
 import { z } from 'zod';
 import { DEFAULT_PROVIDER, PROVIDERS, ProviderValue } from '@/config/providers';
-import { getModel } from '@/lib/ai-chat/model';
-import { runPythonTool } from '@/lib/ai-chat/python-tool';
-import { estimateTokens, MAX_CONTEXT_TOKENS } from '@/lib/tokens';
-import { verifyUserAuth } from '@/lib/user-auth';
+import { getModel } from '@/lib/ai/model';
+import { runPythonTool } from '@/lib/ai/python-tool';
+import { estimateTokens, MAX_CONTEXT_TOKENS } from '@/lib/ai/tokens';
+import { verifyUserAuth } from '@/lib/auth/user-auth';
 
 export const runtime = 'nodejs';
 

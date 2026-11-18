@@ -2,7 +2,7 @@ import {
   listUploadFiles,
   toUploadUrl,
   type UploadEntry,
-} from '@/lib/server/uploads';
+} from '@/lib/storage/uploads';
 
 /**
  * 视频资源读取层。

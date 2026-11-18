@@ -7,7 +7,7 @@ import { imageSizes } from '@/components/shared/image-sizes';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { siteConfig } from '@/config/common';
 import { Trans } from '@/i18n/Trans';
-import { PhotoItem } from '@/lib/photos';
+import { PhotoItem } from '@/lib/content/photos';
 
 interface HomeBannerImage {
   images: PhotoItem[];

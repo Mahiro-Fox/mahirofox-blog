@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import type { UIMessage } from 'ai';
-import { goFetch } from '@/lib/server/api-client';
 import type { Conversation, ConversationSummary } from '@/types/conversation';
+import type { UIMessage } from 'ai';
+import { goFetch } from '@/lib/integrations/go-api';
 
 /**
  * 对话存储（Go/PostgreSQL 版）

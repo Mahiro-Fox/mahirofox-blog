@@ -2,7 +2,7 @@
 
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
-import type { VideoItem } from '@/lib/videos';
+import type { VideoItem } from '@/lib/content/videos';
 import { formatDate, formatMediaSize } from '@/utils/utils';
 
 interface VideoLightboxProps {

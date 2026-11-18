@@ -1,5 +1,5 @@
 import { adminGetMusic } from '@/actions/admin/music-actions';
-import { requirePermission } from '@/lib/permissions';
+import { requirePermission } from '@/lib/auth/permissions';
 import MusicClient from './music-client';
 
 export default async function MusicAdminPage() {

@@ -6,8 +6,8 @@ import {
   createUIMessageStreamResponse,
   type UIMessage,
 } from 'ai';
-import { estimateTokens, MAX_CONTEXT_TOKENS } from '@/lib/tokens';
-import { verifyUserAuth } from '@/lib/user-auth';
+import { estimateTokens, MAX_CONTEXT_TOKENS } from '@/lib/ai/tokens';
+import { verifyUserAuth } from '@/lib/auth/user-auth';
 
 export const runtime = 'nodejs';
 

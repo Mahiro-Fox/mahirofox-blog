@@ -2,10 +2,10 @@
 
 import { headers } from 'next/headers';
 import { siteConfig } from '@/config/common';
-import { notifyReply } from '@/lib/email-send/notify-reply';
-import { serverActionRateLimiter } from '@/lib/rate-limit';
-import { goFetch, withGoAuth } from '@/lib/server/api-client';
-import { verifyTurnstile } from '@/lib/server/turnstile';
+import { serverActionRateLimiter } from '@/lib/auth/rate-limit';
+import { verifyTurnstile } from '@/lib/cloudflare/turnstile';
+import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
+import { notifyReply } from '@/lib/integrations/notify-reply';
 import {
   withActionPermission,
   type ActionResponse,
@@ -156,10 +156,13 @@ export async function adminUpdateGuestbook(
         body.content = content.trim();
       }
 
-      await goFetch(`/api/admin/guestbook/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      }));
+      await goFetch(
+        `/api/admin/guestbook/${encodeURIComponent(id)}`,
+        withGoAuth(ctx, {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        })
+      );
 
       logger.info('管理员更新留言成功', { entryId: id, adminId: user.id });
       return { success: true, data: undefined };
@@ -276,10 +279,13 @@ export async function adminDeleteGuestbook(
 ): Promise<ActionResponse<void>> {
   return withActionPermission('guestbook:delete', async (user, ctx) => {
     try {
-      await goFetch(`/api/admin/guestbook/${encodeURIComponent(id)}`, withGoAuth(ctx, {
-        method: 'DELETE',
-        parseJson: false,
-      }));
+      await goFetch(
+        `/api/admin/guestbook/${encodeURIComponent(id)}`,
+        withGoAuth(ctx, {
+          method: 'DELETE',
+          parseJson: false,
+        })
+      );
 
       logger.info('管理员删除留言成功', { entryId: id, adminId: user.id });
       return { success: true, data: undefined };
