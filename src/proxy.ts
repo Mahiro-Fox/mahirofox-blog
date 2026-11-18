@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { pageRoutesConfig } from '@/config/common';
+import { UPLOADS_ORIGIN as UPLOADS_ORIGIN_ENV } from '@/config/env';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
 import { i18nConfig } from '@/i18n/i18n.config';
 
@@ -10,10 +11,9 @@ import { i18nConfig } from '@/i18n/i18n.config';
  * 避免逐页面、逐字段改路径，也保证富文本/动态数据不遗漏。
  *
  * 生产环境前置 Nginx 时，/uploads/ 请求会被转发到达 Next。
+ * 目标域名只认 NEXT_PUBLIC_UPLOADS_ORIGIN，留空即关闭跳转，不再有硬编码兜底。
  */
-const UPLOADS_ORIGIN =
-  process.env.NEXT_PUBLIC_UPLOADS_ORIGIN ||
-  (process.env.NODE_ENV === 'production' ? 'https://static.mahirofox.com' : '');
+const UPLOADS_ORIGIN = UPLOADS_ORIGIN_ENV;
 
 function redirectUploads(req: NextRequest): NextResponse | null {
   const { pathname } = req.nextUrl;

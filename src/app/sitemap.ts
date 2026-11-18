@@ -4,7 +4,7 @@ import { unstable_cache } from 'next/cache';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
 import { getPublicMovies } from '@/actions/admin/movie-actions';
-import { siteConfig } from '@/config/common';
+import { APP_URL } from '@/config/env';
 
 // 路由本身声明为动态,保证构建时绝不执行
 export const dynamic = 'force-dynamic';
@@ -41,7 +41,7 @@ const getCachedSitemapData = unstable_cache(
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || siteConfig.url;
+  const baseUrl = APP_URL;
 
   const { blogPosts, galleryItems, movieItems, allTags } =
     await getCachedSitemapData();

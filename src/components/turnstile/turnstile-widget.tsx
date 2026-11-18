@@ -56,6 +56,19 @@ interface TurnstileWidgetProps {
 export const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
 
+// 站点密钥在构建期内联，缺失时小部件会静默不渲染、服务端一律判失败；
+// 这里显式报错一次，避免"前端没报错、只是提交后提示人机验证未通过"这种难查的情况
+let warnedMissingSiteKey = false;
+function warnMissingSiteKey(): void {
+  if (warnedMissingSiteKey) return;
+  warnedMissingSiteKey = true;
+  console.error(
+    '[turnstile] NEXT_PUBLIC_TURNSTILE_SITE_KEY 为空：验证小部件不会渲染，' +
+      '服务端会判定人机验证失败。该变量在 next build 时内联，' +
+      '请在构建期注入（docker 需 build args）后重新构建。'
+  );
+}
+
 /** 显式渲染的 Turnstile 小部件；key 变化时会卸载旧实例并重新获取 token */
 export function TurnstileWidget({
   action,
@@ -65,7 +78,11 @@ export function TurnstileWidget({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY || !containerRef.current) return;
+    if (!TURNSTILE_SITE_KEY) {
+      warnMissingSiteKey();
+      return;
+    }
+    if (!containerRef.current) return;
 
     let widgetId: string | undefined;
     let cancelled = false;

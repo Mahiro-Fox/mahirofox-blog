@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig } from '@/config/common';
+import { APP_URL } from '@/config/env';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || siteConfig.url;
   return {
     rules: {
       userAgent: '*',
@@ -18,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         '/cn/login',
       ],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${APP_URL}/sitemap.xml`,
   };
 }

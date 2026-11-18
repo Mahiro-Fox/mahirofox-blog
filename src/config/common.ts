@@ -24,10 +24,11 @@ import {
   User,
   Video,
 } from 'lucide-react';
+import { APP_URL, UPLOADS_ORIGIN } from '@/config/env';
 
-// 站点域名与静态资源域名均可通过环境变量覆盖
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mahirofox.com';
-const uploadsOrigin = process.env.NEXT_PUBLIC_UPLOADS_ORIGIN;
+// 站点域名必填（缺失会在构建期抛错）；静态资源域名可为空
+const siteUrl = APP_URL;
+const uploadsOrigin = UPLOADS_ORIGIN;
 
 export const siteConfig = {
   name: 'MahiroFox Blog',

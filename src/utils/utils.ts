@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { APP_URL } from '@/config/env';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -41,7 +42,7 @@ export function formatDateWithHMS(input: string | number): string {
  * @returns 绝对URL
  */
 export function generateAbsoluteUrl(path: string): string {
-  return `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
+  return `${APP_URL}${path}`;
 }
 
 /** 判断是否为带 scheme 的绝对 URL */

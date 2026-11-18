@@ -10,6 +10,7 @@ import { SiteHeader } from '@/components/layout/site-header';
 // import { ScrollProgress } from '@/components/shared/scroll-progress';
 import { PageTracker } from '@/components/shared/tracker';
 import { siteConfig } from '@/config/common';
+import { APP_URL } from '@/config/env';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
 import { isGoogleOAuthEnabled } from '@/lib/google-oauth';
@@ -27,16 +28,8 @@ export const generateMetadata = async ({
     `${homeDictionary['home.description_1']}${homeDictionary['home.description_2']}${homeDictionary['home.description_3']}`
       .replace(/<a>/g, '')
       .replace(/<\/a>/g, '');
-  // 解析 base URL，配置缺失或非法时退回 undefined（Next.js 会按请求推断）
-  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-  let metadataBase: URL | undefined;
-  if (rawAppUrl) {
-    try {
-      metadataBase = new URL(rawAppUrl);
-    } catch {
-      metadataBase = undefined;
-    }
-  }
+  // base URL 由 @/config/env 保证非空且合法，缺失会在构建期抛错
+  const metadataBase = new URL(APP_URL);
   const metaData = {
     title: {
       default: title,
@@ -58,7 +51,7 @@ export const generateMetadata = async ({
     openGraph: {
       type: 'website',
       locale: 'zh_CN',
-      url: process.env.NEXT_PUBLIC_APP_URL!,
+      url: APP_URL,
       title: siteConfig.name,
       description,
       siteName: siteConfig.name,
@@ -76,7 +69,7 @@ export const generateMetadata = async ({
       shortcut: '/favicon-16x16.webp',
       apple: '/apple-touch-icon.webp',
     },
-    manifest: `${process.env.NEXT_PUBLIC_APP_URL}/site.webmanifest`,
+    manifest: `${APP_URL}/site.webmanifest`,
   };
   return metaData;
 };

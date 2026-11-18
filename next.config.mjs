@@ -1,3 +1,17 @@
+// 构建期校验：NEXT_PUBLIC_* 会被字面量内联进客户端产物，缺失时构建照样能过，
+// 只会在线上拼出 "undefined/xxx" 这种 URL。这里提前拦住，避免又一次"构建成功、线上报错"。
+const REQUIRED_PUBLIC_ENV = ['NEXT_PUBLIC_APP_URL'];
+const missingPublicEnv = REQUIRED_PUBLIC_ENV.filter(
+  (key) => !process.env[key]?.trim()
+);
+if (missingPublicEnv.length > 0) {
+  throw new Error(
+    `[next.config] 缺少构建期公开环境变量：${missingPublicEnv.join(', ')}。` +
+      '请在 next build 前注入（docker 走 build args，本地走 .env），' +
+      '运行期 environment 对浏览器端无效。'
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',

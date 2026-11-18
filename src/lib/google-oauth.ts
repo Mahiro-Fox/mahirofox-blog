@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { APP_URL } from '@/config/env';
 import { i18nConfig } from '@/i18n/i18n.config';
 
 export const GOOGLE_AUTH_ENDPOINT =
@@ -46,14 +47,11 @@ export type GoogleIdentity = {
 export function getGoogleOAuthConfig(): GoogleOAuthConfig | null {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   const redirectUri =
     process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ||
-    (appUrl
-      ? `${appUrl.replace(/\/+$/, '')}/next-api/auth/google/callback`
-      : '');
+    `${APP_URL}/next-api/auth/google/callback`;
 
-  if (!clientId || !clientSecret || !redirectUri) return null;
+  if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret, redirectUri };
 }
 

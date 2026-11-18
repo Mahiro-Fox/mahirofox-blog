@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
 import { siteConfig } from '@/config/common';
+import { APP_URL } from '@/config/env';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || siteConfig.url;
   const blogResult = await getPublicBlogs({ all: true });
   const posts = blogResult.success ? blogResult.data.items : [];
 
@@ -14,18 +14,18 @@ export async function GET() {
     <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
       <channel>
         <title>${siteConfig.name}</title>
-        <link>${baseUrl}</link>
+        <link>${APP_URL}</link>
         <description>${siteConfig.description}</description>
         <language>ja</language>
         <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-        <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml"/>
+        <atom:link href="${APP_URL}/rss.xml" rel="self" type="application/rss+xml"/>
         ${posts
           .map((post) => {
             return `
               <item>
                 <title><![CDATA[${post.title}]]></title>
-                <link>${baseUrl}/blog/${post.slug}</link>
-                <guid isPermaLink="true">${baseUrl}/blog/${post.slug}</guid>
+                <link>${APP_URL}/blog/${post.slug}</link>
+                <guid isPermaLink="true">${APP_URL}/blog/${post.slug}</guid>
                 <pubDate>${new Date(post.lastUpdated).toUTCString()}</pubDate>
                 <description><![CDATA[${post.description || ''}]]></description>
                 ${
@@ -44,8 +44,8 @@ export async function GET() {
             return `
               <item>
                 <title><![CDATA[${gallery.title}]]></title>
-                <link>${baseUrl}/gallery/${gallery.slug}</link>
-                <guid isPermaLink="true">${baseUrl}/gallery/${gallery.slug}</guid>
+                <link>${APP_URL}/gallery/${gallery.slug}</link>
+                <guid isPermaLink="true">${APP_URL}/gallery/${gallery.slug}</guid>
                 <pubDate>${
                   gallery.lastUpdated
                     ? new Date(gallery.lastUpdated).toUTCString()
