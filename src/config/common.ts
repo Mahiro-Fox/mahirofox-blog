@@ -8,6 +8,7 @@ import {
   Clapperboard,
   EyeOff,
   FileText,
+  Film,
   FolderOpen,
   Image,
   ImageIcon,
@@ -106,6 +107,14 @@ export const pageRoutesConfig: PageRouteConfig[] = [
     navHref: '/photos',
     navLabel: 'photos_nav_label',
     navDescription: 'photos_nav_description',
+  },
+  {
+    name: 'videos',
+    icon: Film,
+    category: 'content',
+    navHref: '/videos',
+    navLabel: 'videos_nav_label',
+    navDescription: 'videos_nav_description',
   },
   {
     name: 'r18_photos',

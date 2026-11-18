@@ -1,0 +1,24 @@
+{
+  "en": {
+    "videos.title": "VRChat Recordings",
+    "videos.description": "Casual VRChat sessions, world hops and late-night hangs.",
+    "videos.keywords": "mahiro, mahirofox, VRChat, VRC, recordings, clips",
+    "videos.records": "RECORDS",
+    "videos.clips": "clips",
+    "videos.last_sync": "last sync",
+    "videos.sort_newest": "sort · newest",
+    "videos.empty": "No clips yet",
+    "videos.all_loaded": "End of tape"
+  },
+  "cn": {
+    "videos.title": "VRChat 游玩录像",
+    "videos.description": "VRChat 的日常片段、跳世界与深夜闲聊。",
+    "videos.keywords": "mahiro, mahirofox, VRChat, VRC, 录像, 视频",
+    "videos.records": "RECORDS",
+    "videos.clips": "段录像",
+    "videos.last_sync": "最近更新",
+    "videos.sort_newest": "按时间倒序",
+    "videos.empty": "暂无录像",
+    "videos.all_loaded": "已经到底了"
+  }
+}

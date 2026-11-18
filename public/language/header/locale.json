@@ -29,6 +29,9 @@
     "photos_nav_label": "Photos",
     "photos_nav_description": "Waterfall layout image display",
 
+    "videos_nav_label": "Videos",
+    "videos_nav_description": "VRChat gameplay recordings",
+
     "r18_photos_nav_label": "R-18 Gallery",
     "r18_photos_nav_description": "Private pixiv collection (sign-in required)",
 
@@ -146,6 +149,9 @@
 
     "photos_nav_label": "照片",
     "photos_nav_description": "瀑布流图片展示",
+
+    "videos_nav_label": "录像",
+    "videos_nav_description": "VRChat 游玩录像",
 
     "r18_photos_nav_label": "R-18 图库",
     "r18_photos_nav_description": "登录后可见的私密 pixiv 收藏",

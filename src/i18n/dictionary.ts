@@ -13,6 +13,7 @@ const loaders: Record<string, () => Promise<LocaleModule>> = {
   home: () => import('../../public/language/home/locale.json'),
   page: () => import('../../public/language/page/locale.json'),
   photos: () => import('../../public/language/photos/locale.json'),
+  videos: () => import('../../public/language/videos/locale.json'),
   moments: () => import('../../public/language/moments/locale.json'),
   guestbook: () => import('../../public/language/guestbook/locale.json'),
   login: () => import('../../public/language/login/locale.json'),
