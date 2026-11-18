@@ -142,10 +142,23 @@ export async function passHumanCheck(
     return { ok: false };
   }
 
-  return {
-    ok: true,
-    ticket: proof.email
-      ? (issueCaptchaTicket(proof.email) ?? undefined)
-      : undefined,
-  };
+  const ticket = proof.email ? issueCaptchaTicket(proof.email) : null;
+  // 签不出票不会放行任何东西，只会退回「每步都验」——但这个退化是静默的，
+  // 前端表现就是"明明改过一次验证、密码步骤还在弹"。这里必须喊出来。
+  if (proof.email && !ticket) {
+    warnMissingTicketSecret();
+  }
+
+  return { ok: true, ticket: ticket ?? undefined };
+}
+
+// 每个进程只警告一次，避免登录高峰期刷日志
+let warnedMissingTicketSecret = false;
+function warnMissingTicketSecret(): void {
+  if (warnedMissingTicketSecret) return;
+  warnedMissingTicketSecret = true;
+  logger.error(
+    'JWT_SECRET 未配置，无法签发人机验证票据：' +
+      '同一登录流程的后续步骤会重复要求验证。请在运行环境注入 JWT_SECRET。'
+  );
 }

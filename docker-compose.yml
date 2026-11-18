@@ -82,6 +82,9 @@ services:
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET}
       TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES}
+      # 人机验证票据的 HMAC 签名密钥（src/lib/cloudflare/captcha-ticket.ts）。
+      # 缺失时票据恒为空，登录流程会退回「每一步都验证」——不报错，只是白改。
+      JWT_SECRET: ${JWT_SECRET}
       # uploads 静态资源已迁移到 Cloudflare R2
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
