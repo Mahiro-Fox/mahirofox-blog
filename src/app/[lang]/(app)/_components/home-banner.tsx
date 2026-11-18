@@ -41,7 +41,7 @@ export const HomeBanner: React.FC<HomeBannerImage> = ({
       />
       {/* <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-5" /> */}
       <div className="absolute inset-0 z-10 flex items-center justify-center px-6">
-        <div className="text-center">
+        <div className="text-center transition-opacity duration-300 hover:opacity-20">
           <h2 className="text-4xl font-bold text-white md:text-5xl">
             <Trans i18nKey="home.banner.title" components={{ AuroraText }} />
           </h2>

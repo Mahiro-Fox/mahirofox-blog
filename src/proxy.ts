@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { pageRoutesConfig } from '@/config/common';
+import { CONTENT_SECURITY_POLICY } from '@/config/csp';
 import { UPLOADS_ORIGIN as UPLOADS_ORIGIN_ENV } from '@/config/env';
 import { USER_SESSION_COOKIE } from '@/constant/auth';
 import { i18nConfig } from '@/i18n/i18n.config';
@@ -51,21 +52,8 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // 全站只在这里下发 CSP。影视/音乐地址来自内容，connect/media 不能收成固定域名。
-  response.headers.set(
-    'Content-Security-Policy',
-    [
-      "default-src 'self'",
-      "frame-src 'self' https://challenges.cloudflare.com",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' blob: data: https: http:",
-      "media-src 'self' blob: data: https: http:",
-      "font-src 'self' data:",
-      "connect-src 'self' https://nominatim.openstreetmap.org https: http:",
-      "frame-ancestors 'none'",
-    ].join('; ')
-  );
+  // 全站只在这里下发 CSP；策略内容见 src/config/csp.ts
+  response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   return response;
 }
 
