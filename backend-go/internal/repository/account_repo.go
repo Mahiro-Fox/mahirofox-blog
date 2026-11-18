@@ -53,13 +53,14 @@ func (s *GormStore) GetAccountByUsername(ctx context.Context, username string) (
 // ErrAccountEmailTaken Email 已被占用
 var ErrAccountEmailTaken = errors.New("email already taken")
 
-// GetAccountByEmail 按 Email 查询账户（nullable unique 索引：email 为 nil 不命中）
+// GetAccountByEmail 按 Email 查询账户（大小写不敏感，兼容历史大写的存量数据）
 func (s *GormStore) GetAccountByEmail(ctx context.Context, email string) (*model.Account, error) {
-	if strings.TrimSpace(email) == "" {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	if normalized == "" {
 		return nil, ErrAccountNotFound
 	}
 	var a model.Account
-	if err := s.db.WithContext(ctx).Where("email = ?", strings.TrimSpace(email)).First(&a).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("LOWER(email) = ?", normalized).First(&a).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrAccountNotFound
 		}

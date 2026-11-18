@@ -48,15 +48,15 @@ func (s MovieSources) MarshalJSON() ([]byte, error) {
 
 // Movie 电影数据模型（GORM 映射）
 type Movie struct {
-	ID        string       `gorm:"primaryKey;type:text" json:"id"`
-	Title     string       `gorm:"type:text;not null" json:"title"`
-	Poster    string       `gorm:"type:text;not null" json:"poster"`
-	Year      string       `gorm:"type:text;not null" json:"year"`
+	ID        string         `gorm:"primaryKey;type:text" json:"id"`
+	Title     string         `gorm:"type:text;not null" json:"title"`
+	Poster    string         `gorm:"type:text;not null" json:"poster"`
+	Year      string         `gorm:"type:text;not null" json:"year"`
 	Tags      pq.StringArray `gorm:"type:text[];not null;default:'{}'" json:"tags"`
-	Summary   string       `gorm:"type:text;not null;default:''" json:"summary"`
-	Sources   MovieSources `gorm:"type:jsonb;not null;default:'[]'" json:"sources"`
-	CreatedAt time.Time    `gorm:"not null;default:now()" json:"created_at"`
-	UpdatedAt time.Time    `gorm:"not null;default:now()" json:"updated_at"`
+	Summary   string         `gorm:"type:text;not null;default:''" json:"summary"`
+	Sources   MovieSources   `gorm:"type:jsonb;not null;default:'[]'" json:"sources"`
+	CreatedAt time.Time      `gorm:"not null;default:now()" json:"created_at"`
+	UpdatedAt time.Time      `gorm:"not null;default:now()" json:"updated_at"`
 }
 
 // MovieInput 创建电影的入参（id 由调用方传入）
@@ -83,12 +83,12 @@ type MovieUpdate struct {
 // MoviePatch 部分更新电影用的类型化补丁（指针字段，nil 表示不更新）。
 // repository.UpdateMovie 直接以该结构调用 GORM Updates，避免字符串列名 + map[string]any。
 type MoviePatch struct {
-	Title   *string        `json:"title"`
-	Poster  *string        `json:"poster"`
-	Year    *string        `json:"year"`
+	Title   *string         `json:"title"`
+	Poster  *string         `json:"poster"`
+	Year    *string         `json:"year"`
 	Tags    *pq.StringArray `gorm:"type:text[]" json:"tags"`
-	Summary *string        `json:"summary"`
-	Sources *MovieSources  `gorm:"type:jsonb" json:"sources"`
+	Summary *string         `json:"summary"`
+	Sources *MovieSources   `gorm:"type:jsonb" json:"sources"`
 	// UpdatedAt 内部字段：更新时刷新时间戳，不出现在 API 请求/响应中
 	UpdatedAt *time.Time `gorm:"type:timestamptz" json:"-"`
 }

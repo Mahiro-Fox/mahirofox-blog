@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"mahirofox-blog/backend-go/internal/model"
 )
@@ -15,18 +14,40 @@ import (
 // ErrConversationNotFound 会话不存在
 var ErrConversationNotFound = errors.New("conversation not found")
 
+// ErrConversationIDConflict 会话 ID 已被其他用户占用
+var ErrConversationIDConflict = errors.New("conversation belongs to another user")
+
 // UpsertConversation 按 id 写入会话。
-// 冲突（已存在）时仅更新 title / messages / updated_at，保留 user_id 与 created_at。
+// 已存在时仅更新 title / messages / updated_at，保留 user_id 与 created_at。
+// 若已存在记录的 user_id 与入参不一致，拒绝写入（防止跨用户覆盖他人会话）。
 func (s *GormStore) UpsertConversation(ctx context.Context, c *model.Conversation) error {
-	if err := s.db.WithContext(ctx).
-		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"title", "messages", "updated_at"}),
-		}).
-		Create(c).Error; err != nil {
-		return fmt.Errorf("upsert conversation: %w", err)
-	}
-	return nil
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var existing model.Conversation
+		err := tx.Select("user_id").Where("id = ?", c.ID).First(&existing).Error
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			if err := tx.Create(c).Error; err != nil {
+				return fmt.Errorf("create conversation: %w", err)
+			}
+			return nil
+		case err != nil:
+			return fmt.Errorf("load conversation owner: %w", err)
+		}
+		if existing.UserID != c.UserID {
+			return ErrConversationIDConflict
+		}
+		res := tx.Model(&model.Conversation{}).
+			Where("id = ? AND user_id = ?", c.ID, c.UserID).
+			Updates(map[string]any{
+				"title":      c.Title,
+				"messages":   c.Messages,
+				"updated_at": c.UpdatedAt,
+			})
+		if res.Error != nil {
+			return fmt.Errorf("update conversation: %w", res.Error)
+		}
+		return nil
+	})
 }
 
 // GetConversationByID 按 id 查询某用户的会话

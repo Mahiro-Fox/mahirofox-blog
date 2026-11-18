@@ -62,6 +62,10 @@ func UpsertConversationHandler(store repository.Store) gin.HandlerFunc {
 			Messages:  model.MessagesJSON(body.Messages),
 		}
 		if err := store.UpsertConversation(c.Request.Context(), conv); err != nil {
+			if errors.Is(err, repository.ErrConversationIDConflict) {
+				c.JSON(http.StatusConflict, gin.H{"error": "会话 ID 已被占用"})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "保存会话失败"})
 			return
 		}

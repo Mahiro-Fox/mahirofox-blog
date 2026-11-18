@@ -47,7 +47,7 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	adminOnly := func() []gin.HandlerFunc {
 		return []gin.HandlerFunc{
 			middleware.RequireInternalSecret(internalSecret),
-			middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer),
+			middleware.RequireSession(store, cfg.JWTSecret, cfg.AdminIssuer),
 			// 写操作审计：置于会话解析之后，才能拿到操作人身份
 			middleware.OperationLogger(store),
 		}
@@ -77,7 +77,7 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	// 前台账户自服务（账户设置页）：内部密钥 + user JWT（后台/前台 issuer 隔离）
 	userAccount := api.Group("/user/account",
 		middleware.RequireInternalSecret(internalSecret),
-		middleware.RequireUserSession(cfg.JWTSecret, cfg.UserIssuer),
+		middleware.RequireUserSession(store, cfg.JWTSecret, cfg.UserIssuer),
 	)
 	{
 		userAccount.GET("", handler.GetUserAccountHandler(store))
@@ -129,7 +129,7 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	guestbook := api.Group("/guestbook")
 	{
 		guestbook.GET("", middleware.AllowAnonymous(), handler.ListApprovedGuestbookHandler(store))
-		guestbook.GET("/:id", middleware.AllowAnonymous(), handler.GetGuestbookHandler(store))
+		guestbook.GET("/:id", middleware.AllowAnonymous(), handler.GetPublicGuestbookHandler(store))
 		guestbook.POST("", publicWriteLimit, middleware.AllowAnonymous(), handler.CreateGuestbookHandler(store))
 	}
 	guestbookAdmin := api.Group("/admin/guestbook", adminOnly()...)
@@ -201,8 +201,8 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	{
 		rolePerms.GET("", middleware.AllowAnonymous(), handler.ListRolePermissionsHandler(store))
 		rolePerms.GET("/:role", middleware.AllowAnonymous(), handler.GetRolePermissionsHandler(store))
-		rolePerms.PUT("", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.UpdateRolePermissionsHandler(store))
-		rolePerms.DELETE("/:role", middleware.RequireSession(cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.DeleteRolePermissionsHandler(store))
+		rolePerms.PUT("", middleware.RequireSession(store, cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.UpdateRolePermissionsHandler(store))
+		rolePerms.DELETE("/:role", middleware.RequireSession(store, cfg.JWTSecret, cfg.AdminIssuer), middleware.OperationLogger(store), middleware.RequirePermission(store, "users:updateRole"), handler.DeleteRolePermissionsHandler(store))
 	}
 
 	// tags 路由

@@ -61,12 +61,12 @@ func AdminLoginHandler(store repository.Store, cfg *config.Config) gin.HandlerFu
 			log.Printf("写入登录日志失败: %v", e)
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"token":                result.Token,
-			"user":                 result.User,
-			"expiresIn":            result.ExpiresIn,
-			"mustChangePassword":   result.User.MustChangePassword,
-			"sessionId":            result.SessionID,
-			"loggedInAt":           result.LoggedInAt,
+			"token":              result.Token,
+			"user":               result.User,
+			"expiresIn":          result.ExpiresIn,
+			"mustChangePassword": result.User.MustChangePassword,
+			"sessionId":          result.SessionID,
+			"loggedInAt":         result.LoggedInAt,
 		})
 	}
 }

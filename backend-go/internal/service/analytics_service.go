@@ -136,14 +136,14 @@ func parseDevice(ua string) model.AnalyticsDevice {
 // ============================================================
 
 const (
-	geoCacheTTL      = 10 * time.Hour       // 单 IP 解析结果缓存时长
-	geoQueryTimeout  = 3 * time.Second
+	geoCacheTTL     = 10 * time.Hour // 单 IP 解析结果缓存时长
+	geoQueryTimeout = 3 * time.Second
 )
 
 // geoCacheEntry 单 IP 的解析结果 + 缓存时间
 type geoCacheEntry struct {
-	loc  model.AnalyticsLocation
-	at   time.Time
+	loc model.AnalyticsLocation
+	at  time.Time
 }
 
 var geoCacheState = struct {
@@ -180,7 +180,7 @@ func resolveLocation(ctx context.Context, ip string) model.AnalyticsLocation {
 	defer resp.Body.Close()
 
 	var payload struct {
-		Status     string  `json:"status"`
+		Status     string `json:"status"`
 		Country    string `json:"country"`
 		RegionName string `json:"regionName"`
 		City       string `json:"city"`
@@ -290,11 +290,11 @@ func GetAnalyticsSummary(ctx context.Context, store repository.Store, retention 
 		expiredFiles = 1
 	}
 	stats := map[string]any{
-		"totalLogs":       total,
-		"totalFiles":      0,
-		"expiredFiles":    expiredFiles,
+		"totalLogs":        total,
+		"totalFiles":       0,
+		"expiredFiles":     expiredFiles,
 		"expiredLogsCount": expired,
-		"retentionDays":   int(retention.Hours() / 24),
+		"retentionDays":    int(retention.Hours() / 24),
 	}
 	return logs, stats, nil
 }

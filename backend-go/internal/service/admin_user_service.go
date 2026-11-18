@@ -27,25 +27,25 @@ func GetAdminUser(ctx context.Context, store repository.Store, id string) (*mode
 // CreateAdminUser 创建后台用户
 func CreateAdminUser(ctx context.Context, store repository.Store, input model.AdminUserCreateInput) (*model.AdminUser, error) {
 	if strings.TrimSpace(input.Username) == "" {
-		return nil, errors.New("用户名不能为空")
+		return nil, fmt.Errorf("%w: 用户名不能为空", ErrInvalidAccountInput)
 	}
 	if len(input.Password) < 6 {
-		return nil, errors.New("密码长度不能少于 6 位")
+		return nil, fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 	if input.Role != model.AdminRoleSuperAdmin && input.Role != model.AdminRoleUser {
-		return nil, errors.New("无效的角色类型")
+		return nil, ErrAdminRoleInvalid
 	}
 
 	// 用户名唯一性
 	if _, err := store.GetAdminUserByUsername(ctx, input.Username); err == nil {
-		return nil, errors.New("用户名已被占用")
+		return nil, ErrAdminUsernameTaken
 	} else if !errors.Is(err, repository.ErrAdminUserNotFound) {
 		return nil, err
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.New("密码加密失败")
+		return nil, fmt.Errorf("hash admin password: %w", err)
 	}
 
 	u := model.AdminUser{
@@ -94,7 +94,7 @@ func UpdateAdminUser(ctx context.Context, store repository.Store, id string, inp
 	}
 	if input.Role != nil {
 		if *input.Role != model.AdminRoleSuperAdmin && *input.Role != model.AdminRoleUser {
-			return nil, errors.New("无效的角色类型")
+			return nil, ErrAdminRoleInvalid
 		}
 		patch.Role = input.Role
 	}
@@ -108,11 +108,11 @@ func UpdateAdminUser(ctx context.Context, store repository.Store, id string, inp
 // UpdateAdminUserPassword 更新后台用户密码
 func UpdateAdminUserPassword(ctx context.Context, store repository.Store, id, newPassword string) error {
 	if len(newPassword) < 6 {
-		return errors.New("密码长度不能少于 6 位")
+		return fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return errors.New("密码加密失败")
+		return fmt.Errorf("hash admin password: %w", err)
 	}
 	now := time.Now()
 	mustChange := false

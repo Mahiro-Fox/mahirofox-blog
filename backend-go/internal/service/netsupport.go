@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"html"
 	"io"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -18,9 +19,26 @@ import (
 )
 
 var (
-	// cloudHTTPClient 云音乐共享 http.Client（不设全局超时，音频流需长连接）。
-	cloudHTTPClient = &http.Client{}
+	// cloudHTTPClient 云音乐共享 http.Client。
+	// 刻意不设置 Client.Timeout：音频流需要长时间读取。
+	// 改为在 Transport 层限制连接、TLS 握手与首字节等待，避免上游无响应时
+	// 连接和 goroutine 被无限期占住。
+	cloudHTTPClient = &http.Client{Transport: newCloudTransport()}
 )
+
+// newCloudTransport 构造带超时的 Transport（复用默认连接池参数）
+func newCloudTransport() *http.Transport {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.DialContext = (&net.Dialer{
+		Timeout:   5 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
+	t.TLSHandshakeTimeout = 5 * time.Second
+	t.ResponseHeaderTimeout = 15 * time.Second
+	t.ExpectContinueTimeout = time.Second
+	t.IdleConnTimeout = 90 * time.Second
+	return t
+}
 
 // SharedClient 返回云音乐共享 http.Client
 func SharedClient() *http.Client {
@@ -116,8 +134,21 @@ func (c *ttlCache[K, V]) Clear() {
 
 // --- JSON fetch（重试） ---
 
+// sleepWithContext 可取消的退避等待；ctx 结束时立即返回 false
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
+}
+
 // fetchJSON 请求并解析 JSON；build 用于每次尝试构造新请求（POST body 复用需重建）。
 // retries 为额外重试次数；遇到 HTTP 非 2xx 或业务 code==400 时按退避重试。
+// 退避等待响应 ctx 取消，避免请求已被客户端放弃后仍空转。
 func fetchJSON(ctx context.Context, client *http.Client, build func() (*http.Request, error), retries int) map[string]any {
 	var last map[string]any
 	for attempt := 0; attempt <= retries; attempt++ {
@@ -128,16 +159,16 @@ func fetchJSON(ctx context.Context, client *http.Client, build func() (*http.Req
 		req = req.WithContext(ctx)
 		resp, err := client.Do(req)
 		if err != nil {
-			if attempt < retries {
-				time.Sleep(time.Duration(180*(attempt+1)) * time.Millisecond)
+			if attempt < retries && !sleepWithContext(ctx, time.Duration(180*(attempt+1))*time.Millisecond) {
+				return last
 			}
 			continue
 		}
 		body, readErr := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if readErr != nil {
-			if attempt < retries {
-				time.Sleep(time.Duration(180*(attempt+1)) * time.Millisecond)
+			if attempt < retries && !sleepWithContext(ctx, time.Duration(180*(attempt+1))*time.Millisecond) {
+				return last
 			}
 			continue
 		}
@@ -152,8 +183,8 @@ func fetchJSON(ctx context.Context, client *http.Client, build func() (*http.Req
 		if codeOK && apiCode != 400 {
 			return data
 		}
-		if attempt < retries {
-			time.Sleep(time.Duration(180*(attempt+1)) * time.Millisecond)
+		if attempt < retries && !sleepWithContext(ctx, time.Duration(180*(attempt+1))*time.Millisecond) {
+			return last
 		}
 	}
 	return last

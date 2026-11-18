@@ -38,7 +38,26 @@ func ListAllGuestbookHandler(store repository.Store) gin.HandlerFunc {
 	}
 }
 
-// GetGuestbookHandler GET /api/guestbook/:id
+// GetPublicGuestbookHandler GET /api/guestbook/:id
+// 公开详情：仅返回已审核通过的留言，未审核的一律 404。
+func GetPublicGuestbookHandler(store repository.Store) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		e, err := service.GetApprovedGuestbook(c.Request.Context(), store, id)
+		if err != nil {
+			if errors.Is(err, repository.ErrGuestbookNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "留言不存在"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "获取留言失败"})
+			return
+		}
+		c.JSON(http.StatusOK, e)
+	}
+}
+
+// GetGuestbookHandler GET /api/admin/guestbook/:id
+// 管理端详情：可读取未审核留言。
 func GetGuestbookHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")

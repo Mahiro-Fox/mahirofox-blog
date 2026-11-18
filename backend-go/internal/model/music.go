@@ -4,11 +4,11 @@ package model
 
 // Song 音乐模型
 type Song struct {
-	ID    string `gorm:"primaryKey;type:text" json:"id"`
-	Name  string `gorm:"type:text;not null" json:"name"`
+	ID     string `gorm:"primaryKey;type:text" json:"id"`
+	Name   string `gorm:"type:text;not null" json:"name"`
 	Artist string `gorm:"type:text;not null" json:"artist"`
-	URL   string `gorm:"type:text;not null" json:"url"`
-	Cover string `gorm:"type:text;not null;default:''" json:"cover"`
+	URL    string `gorm:"type:text;not null" json:"url"`
+	Cover  string `gorm:"type:text;not null;default:''" json:"cover"`
 }
 
 // SongInput 创建音乐的入参

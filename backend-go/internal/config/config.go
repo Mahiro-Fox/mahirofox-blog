@@ -8,14 +8,14 @@ import (
 
 // Config 服务配置（纯数据结构，无方法）
 type Config struct {
-	HTTPPort          string
-	DBHost            string
-	DBPort            int
-	DBUser            string
-	DBPassword        string
-	DBName            string
-	InternalSecret    string
-	DataDir           string
+	HTTPPort       string
+	DBHost         string
+	DBPort         int
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	InternalSecret string
+	DataDir        string
 	// 登录 & JWT
 	JWTSecret         string
 	AdminCookieName   string
@@ -37,22 +37,22 @@ func LoadFromEnv() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid SESSION_TTL_SECONDS: %w", err)
 	}
-	autoRecover, _ := strconv.ParseBool(getenv("SESSION_AUTO_RECOVER", "true"))
+	autoRecover, _ := strconv.ParseBool(getenv("SESSION_AUTO_RECOVER", "false"))
 	return &Config{
-		HTTPPort:          getenv("HTTP_PORT", "8080"),
-		DBHost:            getenv("DB_HOST", "localhost"),
-		DBPort:            port,
-		DBUser:            getenv("DB_USER", "mahiro"),
-		DBPassword:        getenv("DB_PASSWORD", "mahiro"),
-		DBName:            getenv("DB_NAME", "mahiro"),
-		InternalSecret:    getenv("GO_API_SHARED_SECRET", ""),
-		DataDir:           getenv("DATA_DIR", "./data"),
-		JWTSecret:         getenv("JWT_SECRET", ""),
-		AdminCookieName:   getenv("ADMIN_COOKIE_NAME", "admin-session"),
-		UserCookieName:    getenv("USER_COOKIE_NAME", "user-session"),
-		SessionTTLSeconds: ttl,
-		AdminIssuer:       getenv("ADMIN_ISSUER", "admin:mahirofox"),
-		UserIssuer:        getenv("USER_ISSUER", "user:mahirofox"),
+		HTTPPort:           getenv("HTTP_PORT", "8080"),
+		DBHost:             getenv("DB_HOST", "localhost"),
+		DBPort:             port,
+		DBUser:             getenv("DB_USER", "mahiro"),
+		DBPassword:         getenv("DB_PASSWORD", "mahiro"),
+		DBName:             getenv("DB_NAME", "mahiro"),
+		InternalSecret:     getenv("GO_API_SHARED_SECRET", ""),
+		DataDir:            getenv("DATA_DIR", "./data"),
+		JWTSecret:          getenv("JWT_SECRET", ""),
+		AdminCookieName:    getenv("ADMIN_COOKIE_NAME", "admin-session"),
+		UserCookieName:     getenv("USER_COOKIE_NAME", "user-session"),
+		SessionTTLSeconds:  ttl,
+		AdminIssuer:        getenv("ADMIN_ISSUER", "admin:mahirofox"),
+		UserIssuer:         getenv("USER_ISSUER", "user:mahirofox"),
 		SessionAutoRecover: autoRecover,
 	}, nil
 }

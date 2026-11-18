@@ -14,7 +14,8 @@ import (
 // NewGormDB 创建并返回 GORM DB 连接（含连接池配置）
 func NewGormDB(cfg *config.Config) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(config.DSN(cfg)), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		// Warn 只记录慢查询与错误；Info 会把每条 SQL 都打出来，生产环境开销大且噪音高。
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("connect postgres: %w", err)

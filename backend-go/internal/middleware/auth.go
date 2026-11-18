@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -49,11 +50,11 @@ func AllowAnonymous() gin.HandlerFunc {
 	}
 }
 
-// RequireSession 从 Authorization: Bearer <token> 解析 JWT，
-// 把 userId / role / sessionId 写入 gin context。
-// fail-closed：无合法 token 直接 401。
-// 阶段 1 灰度：只识别 admin issuer，因为只保护后台写接口。
-func RequireSession(secret, adminIssuer string) gin.HandlerFunc {
+// RequireSession 从 Authorization: Bearer <token> 解析 admin JWT，
+// 并校验 admin_sessions 中仍存在未过期会话（登出/踢下线/改密后立即失效）。
+// role 以数据库中的最新值为准，避免 JWT 内的旧角色继续生效。
+// fail-closed：无合法 token 或会话已失效直接 401。
+func RequireSession(store repository.Store, secret, adminIssuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractBearerToken(c)
 		if token == "" {
@@ -65,17 +66,28 @@ func RequireSession(secret, adminIssuer string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "登录已过期"})
 			return
 		}
-		c.Set(CtxKeyUserID, claims.UserID)
-		c.Set(CtxKeyUsername, claims.Username)
-		c.Set(CtxKeyRole, claims.Role)
-		c.Set(CtxKeySessionID, claims.SessionID)
+		session, err := store.GetAdminSessionByToken(c.Request.Context(), token)
+		if err != nil || session.AdminUserID != claims.UserID || session.ExpiresAt.Before(time.Now()) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "会话已失效，请重新登录"})
+			return
+		}
+		user, err := store.GetAdminUserByID(c.Request.Context(), session.AdminUserID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "用户不存在或已被删除"})
+			return
+		}
+		c.Set(CtxKeyUserID, user.ID)
+		c.Set(CtxKeyUsername, user.Username)
+		c.Set(CtxKeyRole, string(user.Role))
+		c.Set(CtxKeySessionID, session.SessionID)
 		c.Next()
 	}
 }
 
 // RequireUserSession 前台用户会话守卫：解析 user JWT（issuer 与后台隔离），
-// 把账户 ID 写入 CtxKeyUserID。用于 /api/user/account 自服务接口。
-func RequireUserSession(secret, userIssuer string) gin.HandlerFunc {
+// 并校验 user_sessions 中的会话仍然存在且未过期。
+// 这样登出、重置密码、单设备登录清理会话后，旧 token 立即失效。
+func RequireUserSession(store repository.Store, secret, userIssuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractBearerToken(c)
 		if token == "" {
@@ -85,6 +97,11 @@ func RequireUserSession(secret, userIssuer string) gin.HandlerFunc {
 		claims, err := auth.VerifyUser(token, []byte(secret), userIssuer)
 		if err != nil || claims.AccountID == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "登录已过期"})
+			return
+		}
+		session, err := store.GetUserSessionByToken(c.Request.Context(), token)
+		if err != nil || session.AccountID != claims.AccountID || session.ExpiresAt.Before(time.Now()) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "会话已失效，请重新登录"})
 			return
 		}
 		c.Set(CtxKeyUserID, claims.AccountID)
@@ -121,6 +138,21 @@ func RequirePermission(store repository.Store, perm string) gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+// HasPermission 供 handler 做二次鉴权（例如：创建/修改后台用户角色时额外要求
+// users:updateRole，防止仅有 users:create / users:update 的角色自行提权）。
+// 必须先经过 RequireSession；role 缺失或查库失败一律视为无权限（fail-closed）。
+func HasPermission(c *gin.Context, store repository.Store, perm string) bool {
+	role := c.GetString(CtxKeyRole)
+	if role == "" {
+		return false
+	}
+	rp, err := store.GetRolePermissions(c.Request.Context(), role)
+	if err != nil || rp == nil {
+		return false
+	}
+	return hasPermission(rp.Permissions, perm)
 }
 
 // extractBearerToken 从 Authorization: Bearer <token> 提取 token

@@ -21,12 +21,12 @@ type AdminSession struct {
 
 // UserSession 前台访客账户会话
 type UserSession struct {
-	Token       string    `gorm:"primaryKey;type:text" json:"token"`
-	AccountID   string    `gorm:"type:text;not null;index" json:"accountId"`
-	SessionID   string    `gorm:"type:text;not null" json:"sessionId"`
-	CreatedAt   time.Time `gorm:"not null;default:now()" json:"createdAt"`
-	LastUsedAt  time.Time `gorm:"not null;default:now();index" json:"lastUsedAt"`
-	ExpiresAt   time.Time `gorm:"not null;index" json:"expiresAt"`
-	UserAgent   string    `gorm:"type:text;not null;default:''" json:"userAgent"`
-	IP          string    `gorm:"type:text;not null;default:''" json:"ip"`
+	Token      string    `gorm:"primaryKey;type:text" json:"token"`
+	AccountID  string    `gorm:"type:text;not null;index" json:"accountId"`
+	SessionID  string    `gorm:"type:text;not null" json:"sessionId"`
+	CreatedAt  time.Time `gorm:"not null;default:now()" json:"createdAt"`
+	LastUsedAt time.Time `gorm:"not null;default:now();index" json:"lastUsedAt"`
+	ExpiresAt  time.Time `gorm:"not null;index" json:"expiresAt"`
+	UserAgent  string    `gorm:"type:text;not null;default:''" json:"userAgent"`
+	IP         string    `gorm:"type:text;not null;default:''" json:"ip"`
 }

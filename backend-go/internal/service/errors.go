@@ -29,4 +29,12 @@ var (
 	ErrCurrentPasswordInvalid = errors.New("current password invalid")
 	// ErrEmailNotFound 邮箱对应的账户不存在
 	ErrEmailNotFound = errors.New("email not found")
+	// ErrPasswordTooShort 密码长度不足
+	ErrPasswordTooShort = errors.New("password too short")
+	// ErrInvalidAccountInput 账户输入的领域校验错误（消息可直接展示给用户）
+	ErrInvalidAccountInput = errors.New("invalid account input")
+	// ErrAdminUsernameTaken 后台用户名已被占用
+	ErrAdminUsernameTaken = errors.New("admin username taken")
+	// ErrAdminRoleInvalid 后台用户角色非法
+	ErrAdminRoleInvalid = errors.New("admin role invalid")
 )

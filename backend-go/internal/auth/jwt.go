@@ -13,14 +13,14 @@ import (
 
 // 标准声明中使用的自定义字段名（与 Next 端 JWT 保持一一对应，便于上线初期 JWT 兼容）
 const (
-	claimKeyUserID      = "userId"
-	claimKeyAccountID   = "accountId" // Next 历史字段：前台 accountId；新版统一写 sub
-	claimKeyUsername    = "username"
-	claimKeyAvatar      = "avatar"
-	claimKeyRole        = "role"
-	claimKeyEmail       = "email"
-	claimKeySessionID   = "sessionId"
-	claimKeyLoggedInAt  = "loggedInAt"
+	claimKeyUserID     = "userId"
+	claimKeyAccountID  = "accountId" // Next 历史字段：前台 accountId；新版统一写 sub
+	claimKeyUsername   = "username"
+	claimKeyAvatar     = "avatar"
+	claimKeyRole       = "role"
+	claimKeyEmail      = "email"
+	claimKeySessionID  = "sessionId"
+	claimKeyLoggedInAt = "loggedInAt"
 )
 
 // ErrInvalidToken token 验签/声明失败

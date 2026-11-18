@@ -35,17 +35,35 @@ func respondAccountError(c *gin.Context, err error) {
 		c.JSON(http.StatusConflict, gin.H{"error": "当前账户未绑定 Google", "code": "GOOGLE_NOT_LINKED"})
 	case errors.Is(err, service.ErrGoogleIdentityInvalid):
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Google 身份信息不完整", "code": "GOOGLE_IDENTITY_INVALID"})
+	case errors.Is(err, service.ErrPasswordTooShort):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "密码长度不能少于 6 位", "code": "PASSWORD_TOO_SHORT"})
+	case errors.Is(err, service.ErrInvalidAccountInput):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "输入内容不合法", "code": "INVALID_ACCOUNT_INPUT"})
 	default:
+		// 内部错误只进日志，避免把 GORM/SQL 细节回传给客户端
 		log.Printf("user account internal error: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "code": "ACCOUNT_UPDATE_FAILED"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "操作失败，请稍后重试", "code": "ACCOUNT_UPDATE_FAILED"})
 	}
+}
+
+// currentAccountID 从上下文取当前登录账户 ID；缺失时直接 401（fail-closed）。
+func currentAccountID(c *gin.Context) (string, bool) {
+	id := c.GetString(middleware.CtxKeyUserID)
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return "", false
+	}
+	return id, true
 }
 
 // GetUserAccountHandler GET /api/user/account
 func GetUserAccountHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accountID, _ := c.Get(middleware.CtxKeyUserID)
-		dto, err := service.GetAccountSecurity(c.Request.Context(), store, accountID.(string))
+		accountID, ok := currentAccountID(c)
+		if !ok {
+			return
+		}
+		dto, err := service.GetAccountSecurity(c.Request.Context(), store, accountID)
 		if err != nil {
 			respondAccountError(c, err)
 			return
@@ -58,7 +76,10 @@ func GetUserAccountHandler(store repository.Store) gin.HandlerFunc {
 // 已有密码需提供 currentPassword；Google 新账户可直接设置。
 func UpdateUserPasswordHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accountID, _ := c.Get(middleware.CtxKeyUserID)
+		accountID, ok := currentAccountID(c)
+		if !ok {
+			return
+		}
 		var body struct {
 			CurrentPassword string `json:"currentPassword"`
 			NewPassword     string `json:"newPassword" binding:"required"`
@@ -67,7 +88,7 @@ func UpdateUserPasswordHandler(store repository.Store) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误", "code": "INVALID_PARAMS"})
 			return
 		}
-		if err := service.SetAccountPassword(c.Request.Context(), store, accountID.(string), body.CurrentPassword, body.NewPassword); err != nil {
+		if err := service.SetAccountPassword(c.Request.Context(), store, accountID, body.CurrentPassword, body.NewPassword); err != nil {
 			respondAccountError(c, err)
 			return
 		}
@@ -79,7 +100,10 @@ func UpdateUserPasswordHandler(store repository.Store) gin.HandlerFunc {
 // 入参仅 sub：Google 身份已由 Next 侧用 OAuth code 换取并校验。
 func LinkUserGoogleHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accountID, _ := c.Get(middleware.CtxKeyUserID)
+		accountID, ok := currentAccountID(c)
+		if !ok {
+			return
+		}
 		var body struct {
 			Sub string `json:"sub" binding:"required"`
 		}
@@ -87,7 +111,7 @@ func LinkUserGoogleHandler(store repository.Store) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误", "code": "INVALID_PARAMS"})
 			return
 		}
-		if err := service.LinkGoogleAccount(c.Request.Context(), store, accountID.(string), body.Sub); err != nil {
+		if err := service.LinkGoogleAccount(c.Request.Context(), store, accountID, body.Sub); err != nil {
 			respondAccountError(c, err)
 			return
 		}
@@ -98,8 +122,11 @@ func LinkUserGoogleHandler(store repository.Store) gin.HandlerFunc {
 // UnlinkUserGoogleHandler DELETE /api/user/account/google
 func UnlinkUserGoogleHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accountID, _ := c.Get(middleware.CtxKeyUserID)
-		if err := service.UnlinkGoogleAccount(c.Request.Context(), store, accountID.(string)); err != nil {
+		accountID, ok := currentAccountID(c)
+		if !ok {
+			return
+		}
+		if err := service.UnlinkGoogleAccount(c.Request.Context(), store, accountID); err != nil {
 			respondAccountError(c, err)
 			return
 		}

@@ -27,9 +27,22 @@ func ListAllGuestbook(ctx context.Context, store repository.Store) ([]model.Gues
 	return store.ListGuestbook(ctx, false)
 }
 
-// GetGuestbook 查询单条留言
+// GetGuestbook 查询单条留言（管理端，包含未审核内容）
 func GetGuestbook(ctx context.Context, store repository.Store, id string) (*model.GuestbookEntry, error) {
 	return store.GetGuestbook(ctx, id)
+}
+
+// GetApprovedGuestbook 公开详情：仅返回已审核通过的留言。
+// 未通过审核的按不存在处理，避免匿名访客通过枚举 ID 读取未审核内容。
+func GetApprovedGuestbook(ctx context.Context, store repository.Store, id string) (*model.GuestbookEntry, error) {
+	e, err := store.GetGuestbook(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !e.IsApproved {
+		return nil, repository.ErrGuestbookNotFound
+	}
+	return e, nil
 }
 
 // CreateGuestbook 访客提交留言
@@ -45,13 +58,13 @@ func CreateGuestbook(ctx context.Context, store repository.Store, input model.Gu
 	}
 
 	e := model.GuestbookEntry{
-		ID:                        uuid.NewString(),
-		CreatedAt:                 time.Now(),
-		Nickname:                  strings.TrimSpace(input.Nickname),
-		BgColor:                   input.BgColor,
-		Contact:                   input.Contact,
-		Content:                   input.Content,
-		IsApproved:                false,
+		ID:                         uuid.NewString(),
+		CreatedAt:                  time.Now(),
+		Nickname:                   strings.TrimSpace(input.Nickname),
+		BgColor:                    input.BgColor,
+		Contact:                    input.Contact,
+		Content:                    input.Content,
+		IsApproved:                 false,
 		IsEmailNotificationEnabled: input.IsEmailNotificationEnabled,
 	}
 	if err := store.CreateGuestbook(ctx, &e); err != nil {

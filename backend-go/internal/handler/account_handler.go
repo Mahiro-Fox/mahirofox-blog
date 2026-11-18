@@ -13,6 +13,25 @@ import (
 	"mahirofox-blog/backend-go/internal/service"
 )
 
+// respondAccountWriteError 创建/更新类账户操作的统一错误映射。
+// 领域错误映射为稳定的 4xx 文案；未识别错误只进日志并返回 500，
+// 避免把 GORM/SQL 等内部细节回传给客户端。
+func respondAccountWriteError(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, repository.ErrAccountUsernameTaken):
+		c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
+	case errors.Is(err, repository.ErrAccountEmailTaken):
+		c.JSON(http.StatusConflict, gin.H{"error": "邮箱已被占用"})
+	case errors.Is(err, service.ErrPasswordTooShort):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "密码长度不能少于 6 位"})
+	case errors.Is(err, service.ErrInvalidAccountInput):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "输入内容不合法"})
+	default:
+		log.Printf("account write internal error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "操作失败，请稍后重试"})
+	}
+}
+
 // ListAccountsHandler GET /api/admin/accounts
 func ListAccountsHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -43,7 +62,8 @@ func GetAccountHandler(store repository.Store) gin.HandlerFunc {
 }
 
 // GetPublicAccountHandler GET /api/accounts/:id（公开只读端点）
-// 只返回 PublicAccountDTO：id / username / email / provider / createdAt
+// 只返回公开字段：id / username / provider / createdAt。
+// 不返回 email：该端点无需内部密钥即可匿名访问，邮箱属个人信息，避免被批量枚举。
 func GetPublicAccountHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -57,15 +77,15 @@ func GetPublicAccountHandler(store repository.Store) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "账户不存在"})
 				return
 			}
+			log.Printf("get public account internal error: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "获取账户失败"})
 			return
 		}
-		c.JSON(http.StatusOK, model.PublicAccountDTO{
-			ID:        a.ID,
-			Username:  a.Username,
-			Email:     a.Email,
-			Provider:  a.Provider,
-			CreatedAt: a.CreatedAt,
+		c.JSON(http.StatusOK, gin.H{
+			"id":        a.ID,
+			"username":  a.Username,
+			"provider":  a.Provider,
+			"createdAt": a.CreatedAt,
 		})
 	}
 }
@@ -99,22 +119,12 @@ func CreateAccountHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input model.AccountCreateInput
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "请求参数无效",
-				"details": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数无效"})
 			return
 		}
 		a, err := service.CreateAccount(c.Request.Context(), store, input)
 		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrAccountUsernameTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
-			case errors.Is(err, repository.ErrAccountEmailTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "邮箱已被占用"})
-			default:
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			}
+			respondAccountWriteError(c, err)
 			return
 		}
 		// 注册接口对外仍返回不含密码哈希的精简 DTO
@@ -134,10 +144,7 @@ func LoginAccountHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input model.AccountLoginInput
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "请求参数无效",
-				"details": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数无效"})
 			return
 		}
 		a, err := service.VerifyAccount(c.Request.Context(), store, input)
@@ -168,22 +175,12 @@ func CreateAccountAdminHandler(store repository.Store) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input model.AccountCreateInput
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "请求参数无效",
-				"details": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数无效"})
 			return
 		}
 		a, err := service.CreateAccount(c.Request.Context(), store, input)
 		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrAccountUsernameTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
-			case errors.Is(err, repository.ErrAccountEmailTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "邮箱已被占用"})
-			default:
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			}
+			respondAccountWriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusCreated, a)
@@ -197,24 +194,16 @@ func UpdateAccountHandler(store repository.Store) gin.HandlerFunc {
 		id := c.Param("id")
 		var input model.AccountUpdateInput
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "请求参数无效",
-				"details": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数无效"})
 			return
 		}
 		a, err := service.UpdateAccount(c.Request.Context(), store, id, input)
 		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrAccountNotFound):
+			if errors.Is(err, repository.ErrAccountNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": "账户不存在"})
-			case errors.Is(err, repository.ErrAccountUsernameTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
-			case errors.Is(err, repository.ErrAccountEmailTaken):
-				c.JSON(http.StatusConflict, gin.H{"error": "邮箱已被占用"})
-			default:
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
 			}
+			respondAccountWriteError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, a)
@@ -237,7 +226,12 @@ func UpdateAccountPasswordHandler(store repository.Store) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "账户不存在"})
 				return
 			}
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if errors.Is(err, service.ErrPasswordTooShort) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "密码长度不能少于 6 位"})
+				return
+			}
+			log.Printf("update account password internal error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "操作失败，请稍后重试"})
 			return
 		}
 		c.Status(http.StatusNoContent)

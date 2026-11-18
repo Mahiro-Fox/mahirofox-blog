@@ -18,26 +18,26 @@ import (
 
 // AdminLoginResult 登录返回（不含密码）
 type AdminLoginResult struct {
-	Token     string           `json:"token"`
-	SessionID string           `json:"sessionId"`
-	ExpiresIn int              `json:"expiresIn"`
-	User      model.AdminUser  `json:"user"`
+	Token      string          `json:"token"`
+	SessionID  string          `json:"sessionId"`
+	ExpiresIn  int             `json:"expiresIn"`
+	User       model.AdminUser `json:"user"`
 	LoggedInAt string          `json:"loggedInAt"`
 }
 
 // AdminVerifyResult 鉴权返回（形状对齐 Next lib/admin-auth.ts verifyAuth 返回）
 type AdminVerifyResult struct {
-	Success             bool              `json:"success"`
-	Error               string            `json:"error,omitempty"`
-	UserID              string            `json:"userId,omitempty"`
-	Username            string            `json:"username,omitempty"`
-	Avatar              string            `json:"avatar,omitempty"`
-	Role                string            `json:"role,omitempty"`
-	MustChangePassword  bool              `json:"mustChangePassword,omitempty"`
-	LoggedInAt          string            `json:"loggedInAt,omitempty"`
-	ExpiresAt           int64             `json:"expiresAt,omitempty"` // Unix 秒，兼容 Next admin-auth
-	SessionID           string            `json:"sessionId,omitempty"`
-	RecoveredSession    bool              `json:"recoveredSession,omitempty"` // 是否走「JWT 恢复会话」降级
+	Success            bool   `json:"success"`
+	Error              string `json:"error,omitempty"`
+	UserID             string `json:"userId,omitempty"`
+	Username           string `json:"username,omitempty"`
+	Avatar             string `json:"avatar,omitempty"`
+	Role               string `json:"role,omitempty"`
+	MustChangePassword bool   `json:"mustChangePassword,omitempty"`
+	LoggedInAt         string `json:"loggedInAt,omitempty"`
+	ExpiresAt          int64  `json:"expiresAt,omitempty"` // Unix 秒，兼容 Next admin-auth
+	SessionID          string `json:"sessionId,omitempty"`
+	RecoveredSession   bool   `json:"recoveredSession,omitempty"` // 是否走「JWT 恢复会话」降级
 }
 
 // AdminLogin 用户名密码 → 查 admin_users → bcrypt → 删旧会话（单设备）→ 签发 JWT → 写会话表

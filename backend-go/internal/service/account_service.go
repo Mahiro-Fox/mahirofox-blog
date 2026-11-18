@@ -29,23 +29,23 @@ func GetAccountByUsername(ctx context.Context, store repository.Store, username 
 	return store.GetAccountByUsername(ctx, username)
 }
 
-// GetAccountByEmail 按 email 查询（空 string 直接返回 NotFound）
+// GetAccountByEmail 按 email 查询（大小写不敏感；空 string 直接返回 NotFound）
 func GetAccountByEmail(ctx context.Context, store repository.Store, email string) (*model.Account, error) {
-	return store.GetAccountByEmail(ctx, email)
+	return store.GetAccountByEmail(ctx, strings.ToLower(strings.TrimSpace(email)))
 }
 
 // CreateAccount 创建前台账户（密码会被 bcrypt hash；username / email 均必填且全局唯一）
 func CreateAccount(ctx context.Context, store repository.Store, input model.AccountCreateInput) (*model.Account, error) {
 	username := strings.TrimSpace(input.Username)
-	email := strings.TrimSpace(input.Email)
+	email := strings.ToLower(strings.TrimSpace(input.Email))
 	if username == "" {
-		return nil, errors.New("用户名不能为空")
+		return nil, fmt.Errorf("%w: 用户名不能为空", ErrInvalidAccountInput)
 	}
 	if email == "" {
-		return nil, errors.New("邮箱不能为空")
+		return nil, fmt.Errorf("%w: 邮箱不能为空", ErrInvalidAccountInput)
 	}
 	if len(input.Password) < 6 {
-		return nil, errors.New("密码长度不能少于 6 位")
+		return nil, fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 
 	// 用户名唯一性检查
@@ -119,10 +119,10 @@ func UpdateAccount(ctx context.Context, store repository.Store, id string, input
 	if input.Username != nil {
 		trimmed := strings.TrimSpace(*input.Username)
 		if trimmed == "" {
-			return nil, errors.New("用户名不能为空")
+			return nil, fmt.Errorf("%w: 用户名不能为空", ErrInvalidAccountInput)
 		}
 		if a.Provider != model.AccountProviderCredentials {
-			return nil, errors.New("OAuth 账户不支持修改用户名")
+			return nil, fmt.Errorf("%w: OAuth 账户不支持修改用户名", ErrInvalidAccountInput)
 		}
 		if trimmed != a.Username {
 			existing, lookupErr := store.GetAccountByUsername(ctx, trimmed)
@@ -138,9 +138,9 @@ func UpdateAccount(ctx context.Context, store repository.Store, id string, input
 
 	// email 校验（必填，不允许清空；非空时需全局唯一，排除自身）
 	if input.Email != nil {
-		trimmed := strings.TrimSpace(*input.Email)
+		trimmed := strings.ToLower(strings.TrimSpace(*input.Email))
 		if trimmed == "" {
-			return nil, errors.New("邮箱不能为空")
+			return nil, fmt.Errorf("%w: 邮箱不能为空", ErrInvalidAccountInput)
 		}
 		if trimmed != a.Email {
 			existing, lookupErr := store.GetAccountByEmail(ctx, trimmed)
@@ -163,7 +163,7 @@ func UpdateAccount(ctx context.Context, store repository.Store, id string, input
 // UpdateAccountPassword 更新前台账户密码
 func UpdateAccountPassword(ctx context.Context, store repository.Store, id, newPassword string) error {
 	if len(newPassword) < 6 {
-		return errors.New("密码长度不能少于 6 位")
+		return fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -197,7 +197,7 @@ func GetAccountSecurity(ctx context.Context, store repository.Store, accountID s
 // - 未设置密码（Google 登录创建）：凭有效登录态直接设置，完成两种登录方式打通
 func SetAccountPassword(ctx context.Context, store repository.Store, accountID, currentPassword, newPassword string) error {
 	if len(newPassword) < 6 {
-		return errors.New("密码长度不能少于 6 位")
+		return fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 	a, err := store.GetAccountByID(ctx, accountID)
 	if err != nil {
@@ -222,7 +222,7 @@ func SetAccountPassword(ctx context.Context, store repository.Store, accountID, 
 // 重置成功后清理该账户全部会话，强制各端重新登录。
 func ResetAccountPasswordByEmail(ctx context.Context, store repository.Store, email, newPassword string) error {
 	if len(newPassword) < 6 {
-		return errors.New("密码长度不能少于 6 位")
+		return fmt.Errorf("%w: 密码长度不能少于 6 位", ErrPasswordTooShort)
 	}
 	a, err := store.GetAccountByEmail(ctx, email)
 	if err != nil {
@@ -272,10 +272,17 @@ func LinkGoogleAccount(ctx context.Context, store repository.Store, accountID, s
 	}
 	now := time.Now()
 	subCopy := sub
-	return store.UpdateAccount(ctx, accountID, &model.AccountPatch{
+	if err := store.UpdateAccount(ctx, accountID, &model.AccountPatch{
 		GoogleSub:   &subCopy,
 		LastUpdated: &now,
-	})
+	}); err != nil {
+		// 并发绑定同一 sub 时唯一索引会报错：重新查一次归属，给出可识别的业务错误
+		if owner, lookupErr := store.GetAccountByGoogleSub(ctx, sub); lookupErr == nil && owner.ID != accountID {
+			return ErrGoogleAlreadyLinked
+		}
+		return err
+	}
+	return nil
 }
 
 // UnlinkGoogleAccount 解绑 Google。必须已设置密码，否则账户会失去唯一登录方式。
