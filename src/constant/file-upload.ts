@@ -1,14 +1,14 @@
 // 文件上传限制常量
 
 /**
- * 单个文件最大大小 (20MB)
+ * 单个文件最大大小 (100MB)
  */
-export const MAX_FILE_SIZE = 20 * 1024 * 1024;
+export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 /**
- * 总文件大小最大限制 (100MB)
+ * 总文件大小最大限制 (1GB)
  */
-export const MAX_TOTAL_SIZE = 100 * 1024 * 1024;
+export const MAX_TOTAL_SIZE = 1024 * 1024 * 1024;
 
 /**
  * 最大文件数量
