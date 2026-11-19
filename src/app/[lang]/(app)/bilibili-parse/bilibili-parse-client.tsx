@@ -255,8 +255,21 @@ function HistoryPanel({
   );
 }
 
-function ResultCard({ result }: { result: VideoParseResult | null }) {
+function ResultCard({
+  result,
+  sourceUrl,
+}: {
+  result: VideoParseResult | null;
+  /** 解析时的原始 B 站链接，用于音频中转下载 */
+  sourceUrl: string;
+}) {
   const t = useT();
+  // 提前取出，便于在回调里保持类型收窄（历史记录里的旧数据可能没有 audio 字段）
+  const audio = result?.audio ?? null;
+  // DASH 音轨校验 Referer，浏览器直连会 403，必须走服务端中转
+  const audioDownloadHref = result
+    ? `/next-api/bilibili-parse?download=audio&url=${encodeURIComponent(sourceUrl)}&p=${result.page}`
+    : '';
   return (
     <AnimatePresence>
       {result && (
@@ -391,6 +404,65 @@ function ResultCard({ result }: { result: VideoParseResult | null }) {
                 </div>
               </div>
 
+              {/* Audio URL */}
+              <div>
+                <label
+                  htmlFor="audio-link"
+                  className="text-muted-foreground mb-2 block text-sm font-medium"
+                >
+                  {t('bilibili-parse.audio_link')}
+                </label>
+                {audio ? (
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        id="audio-link"
+                        value={audioDownloadHref}
+                        readOnly
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          // 页面上展示的是相对路径，复制时补全成可直接粘贴的绝对地址
+                          const absolute = new URL(
+                            audioDownloadHref,
+                            window.location.origin
+                          ).href;
+                          navigator.clipboard.writeText(absolute);
+                          toast.success(t('bilibili-parse.copy_to_clipboard'));
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" asChild>
+                        <a
+                          href={audioDownloadHref}
+                          download
+                          aria-label={t('bilibili-parse.download_audio')}
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      {audio.qualityLabel}
+                      {audio.codecs ? ` · ${audio.codecs}` : ''}
+                      {/* DASH 不返回体积，按码率×时长估算，故用 ≈ */}
+                      {audio.fileSize > 0
+                        ? ` · ≈${formatSize(audio.fileSize)}`
+                        : ''}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    {t('bilibili-parse.audio_unavailable')}
+                  </p>
+                )}
+              </div>
+
               {/* Video Preview */}
               <div id="video-preview">
                 <span className="text-muted-foreground mb-2 block text-sm font-medium">
@@ -431,6 +503,8 @@ export default function BilibiliParsePage() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VideoParseResult | null>(null);
+  /** 与 result 对应的原始链接（输入框可能被改写，下载要用解析时的那个） */
+  const [sourceUrl, setSourceUrl] = useState('');
   const [error, setError] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -474,6 +548,7 @@ export default function BilibiliParsePage() {
       }
 
       setResult(data.data);
+      setSourceUrl(url);
 
       // Add to history
       const historyItem: HistoryItem = {
@@ -534,6 +609,7 @@ export default function BilibiliParsePage() {
   const handleLoadFromHistory = (item: HistoryItem) => {
     setUrl(item.url);
     setResult(item);
+    setSourceUrl(item.url);
   };
 
   return (
@@ -555,7 +631,7 @@ export default function BilibiliParsePage() {
         onDelete={handleDeleteHistory}
         onClear={handleClearHistory}
       />
-      <ResultCard result={result} />
+      <ResultCard result={result} sourceUrl={sourceUrl} />
     </div>
   );
 }
