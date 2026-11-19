@@ -45,6 +45,11 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          # 构建期公开变量；可用仓库 Variables 覆盖，未设置时用生产默认值
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || 'https://mahirofox.com' }}
+            NEXT_PUBLIC_UPLOADS_ORIGIN=${{ vars.NEXT_PUBLIC_UPLOADS_ORIGIN || 'https://static.mahirofox.com' }}
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAGGfAzzz7DW3aGvC' }}
           cache-from: type=gha,scope=next
           cache-to: type=gha,mode=max,scope=next
 

@@ -66,6 +66,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # 公开变量必须在构建期注入（next.config.mjs 会校验）
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_UPLOADS_ORIGIN: ${NEXT_PUBLIC_UPLOADS_ORIGIN}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
     container_name: mahiro-next-frontend
     restart: unless-stopped
     environment:
@@ -82,8 +87,7 @@ services:
       GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI}
       GO_API_INTERNAL_URL: ${GO_API_INTERNAL_URL}
       GO_API_SHARED_SECRET: ${GO_API_SHARED_SECRET}
-      # Turnstile：站点密钥由 /next-api/turnstile/config 运行时下发（公开值）
-      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      # Turnstile：站点密钥为构建期内联（见上方 build.args），运行时只需 secret 与域名白名单
       TURNSTILE_SECRET: ${TURNSTILE_SECRET}
       TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES}
       # 人机验证票据的 HMAC 签名密钥（src/lib/cloudflare/captcha-ticket.ts）。

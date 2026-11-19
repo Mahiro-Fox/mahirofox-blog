@@ -5,6 +5,13 @@ RUN corepack enable && pnpm install --frozen-lockfile
 
 FROM node:24-alpine AS builder
 WORKDIR /app
+# NEXT_PUBLIC_* 会被字面量内联进客户端产物，必须在构建期注入
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_UPLOADS_ORIGIN
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_UPLOADS_ORIGIN=$NEXT_PUBLIC_UPLOADS_ORIGIN
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable && pnpm build
