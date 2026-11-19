@@ -32,6 +32,8 @@ services:
         max-file: '3'
 
   backend-go:
+    # CI 构建并推送的镜像；保留 build 便于本地开发直接构建
+    image: ghcr.io/mahiro-fox/mahirofox-blog-backend-go:latest
     build: ./backend-go
     container_name: mahiro-backend-go
     restart: unless-stopped
@@ -59,14 +61,11 @@ services:
         max-file: '3'
 
   next-frontend:
+    # CI 构建并推送的镜像；保留 build 便于本地开发直接构建
+    image: ghcr.io/mahiro-fox/mahirofox-blog-next-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        # 公开变量全部构建期注入：NEXT_PUBLIC_* 在 next build 时被写死进客户端产物
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-        NEXT_PUBLIC_UPLOADS_ORIGIN: ${NEXT_PUBLIC_UPLOADS_ORIGIN}
-        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
     container_name: mahiro-next-frontend
     restart: unless-stopped
     environment:
@@ -83,8 +82,8 @@ services:
       GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI}
       GO_API_INTERNAL_URL: ${GO_API_INTERNAL_URL}
       GO_API_SHARED_SECRET: ${GO_API_SHARED_SECRET}
-      # 站点密钥为公开值，构建期已注入；此处保留供服务端读取同名变量
-      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+      # Turnstile：站点密钥由 /next-api/turnstile/config 运行时下发（公开值）
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET}
       TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES}
       # 人机验证票据的 HMAC 签名密钥（src/lib/cloudflare/captcha-ticket.ts）。

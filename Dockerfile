@@ -7,15 +7,6 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_* 会被 next build 直接内联进客户端产物，必须在构建期注入。
-# .env 已在 .dockerignore 中排除，运行时 environment 传同名变量对浏览器端无效。
-# 缺少 NEXT_PUBLIC_APP_URL 会直接让 next.config.mjs 抛错终止构建。
-ARG NEXT_PUBLIC_APP_URL=""
-ARG NEXT_PUBLIC_UPLOADS_ORIGIN=""
-ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=""
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
-ENV NEXT_PUBLIC_UPLOADS_ORIGIN=$NEXT_PUBLIC_UPLOADS_ORIGIN
-ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 RUN corepack enable && pnpm build
 
 FROM node:24-alpine AS runner
