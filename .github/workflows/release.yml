@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  # PR 被关闭时触发（含未合并就关闭的情况，靠下方 if 过滤）
+  pull_request:
+    types: [closed]
+    branches:
+      - 'release-*'
 
 # 同一时间只允许一个部署，新提交会取消排队中的旧任务
 concurrency:
@@ -22,9 +27,14 @@ jobs:
   # 在 GitHub Runner 上构建镜像（4 核 / 16GB），服务器不再承担编译压力
   build:
     runs-on: ubuntu-latest
+    # 只在 push 或被合并的 PR 关闭时构建，避免 PR 直接关闭也触发部署
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # PR 关闭事件的默认 ref 是 refs/pull/N/merge，需显式切到目标分支
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref }}
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -45,11 +55,11 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          # 构建期公开变量；可用仓库 Variables 覆盖，未设置时用生产默认值
+          # 构建期公开变量；来源于仓库 Variables
           build-args: |
-            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || 'https://mahirofox.com' }}
-            NEXT_PUBLIC_UPLOADS_ORIGIN=${{ vars.NEXT_PUBLIC_UPLOADS_ORIGIN || 'https://static.mahirofox.com' }}
-            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAGGfAzzz7DW3aGvC' }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_UPLOADS_ORIGIN=${{ vars.NEXT_PUBLIC_UPLOADS_ORIGIN }}
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           cache-from: type=gha,scope=next
           cache-to: type=gha,mode=max,scope=next
 
@@ -68,6 +78,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # 计算本次要部署的分支：push 事件取推送分支，PR 关闭事件取目标分支
+      - name: Resolve deploy branch
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH="${{ github.event.pull_request.base.ref }}"
+          else
+            BRANCH="${GITHUB_REF_NAME}"
+          fi
+          # 分支名来自 PR 元数据，仅允许安全字符，避免拼进 shell 命令时被注入
+          if ! printf '%s' "$BRANCH" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
+            echo "非法分支名: $BRANCH" >&2
+            exit 1
+          fi
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+
       - name: Pull images & restart on server
         uses: nekiro/ssh-job@v1.1.0
         with:
@@ -75,7 +101,11 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           user: ${{ secrets.SERVER_USER }}
           command: |
+            set -e
             cd /home/ubuntu/mahirofox-blog/
-            git pull --rebase
+            BRANCH="${{ steps.branch.outputs.name }}"
+            git fetch origin "$BRANCH"
+            # 始终把服务器工作区对齐到本次部署分支；有本地改动时会直接失败而不是静默覆盖
+            git checkout -B deploy "origin/$BRANCH"
             docker compose pull next-frontend backend-go
             docker compose up -d next-frontend backend-go
