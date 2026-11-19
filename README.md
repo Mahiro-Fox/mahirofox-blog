@@ -2,10 +2,6 @@
 
 docker compose up -d postgres backend-go
 
-# 跑数据迁移
-
-docker compose run --rm backend-go ./migrator
-
 # 本地 dev 模式跑前端（已有 .env.local 配好）
 
 pnpm dev

@@ -39,8 +39,3 @@ export const ALLOWED_MIME_TYPES = [
   'application/zip',
   'application/x-rar-compressed',
 ];
-
-/**
- * WebP转换质量 (可通过环境变量配置, 默认50)
- */
-export const WEBP_QUALITY = Number(process.env.WEBP_QUALITY || 50);

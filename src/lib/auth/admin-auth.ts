@@ -172,13 +172,9 @@ function setCookie(
   value: string,
   maxAgeSec: number
 ): void {
-  const isSecure =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.COOKIE_SECURE !== 'false' &&
-      process.env.NODE_ENV === 'production');
   cookieStore.set(name, value, {
     httpOnly: true,
-    secure: isSecure,
+    secure: true,
     sameSite: 'strict',
     maxAge: maxAgeSec,
     path: '/',

@@ -1,15 +1,12 @@
 import { deepseek } from '@ai-sdk/deepseek';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel } from 'ai';
+import { requiredEnv } from '@/config/env.server';
 import {
   DEFAULT_PROVIDER,
   PROVIDERS,
   type ProviderValue,
 } from '@/config/providers';
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 // 从 src/app/next-api/chat/route.ts 抽出，供 API route 与标题 server action 复用。
 export function getModel(
@@ -22,9 +19,15 @@ export function getModel(
     : DEFAULT_PROVIDER;
 
   switch (selectedProvider) {
-    case 'openrouter':
+    case 'openrouter': {
+      const openrouter = createOpenRouter({
+        apiKey: requiredEnv('OPENROUTER_API_KEY'),
+      });
       return openrouter(model);
+    }
     case 'deepseek':
+      // 提前校验，避免请求打到上游才报一个含糊的鉴权错误
+      requiredEnv('DEEPSEEK_API_KEY');
       return deepseek(model);
   }
 }

@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
+import { requiredEnv } from '@/config/env.server';
 import { buildSiteGuideInstruction } from '../site-info';
 import { getStorage } from '../storage';
 import { calculator } from '../tools/calculator';
@@ -11,7 +12,7 @@ const createAssistant = () => {
   const deepseekModel = {
     url: 'https://api.deepseek.com/v1',
     id: 'deepseek/deepseek-chat',
-    apiKey: process.env.DEEPSEEK_API_KEY,
+    apiKey: requiredEnv('DEEPSEEK_API_KEY'),
   } as const;
 
   return new Agent({

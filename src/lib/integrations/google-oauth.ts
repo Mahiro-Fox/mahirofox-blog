@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { optionalEnv } from '@/config/env.server';
 import { APP_URL } from '@/config/env';
 import { i18nConfig } from '@/i18n/i18n.config';
 
@@ -45,8 +46,9 @@ export type GoogleIdentity = {
 
 /** 读取 Google OAuth 配置；缺少任一必要变量时返回 null（前端据此隐藏按钮） */
 export function getGoogleOAuthConfig(): GoogleOAuthConfig | null {
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  const clientId = optionalEnv('GOOGLE_CLIENT_ID');
+  const clientSecret = optionalEnv('GOOGLE_CLIENT_SECRET');
+  // 回调地址留空时由站点根地址推导（确定性拼接，不是固定兜底值）
   const redirectUri =
     process.env.GOOGLE_OAUTH_REDIRECT_URI?.trim() ||
     `${APP_URL}/next-api/auth/google/callback`;
@@ -129,13 +131,9 @@ export function redirectToPath(path: string): NextResponse {
 
 /** OAuth 临时 Cookie（回调来自 Google 的顶层跳转，必须 SameSite=Lax 才会携带） */
 export function temporaryCookieOptions() {
-  const isSecure =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.COOKIE_SECURE !== 'false' &&
-      process.env.NODE_ENV === 'production');
   return {
     httpOnly: true,
-    secure: isSecure,
+    secure: true,
     sameSite: 'lax' as const,
     path: '/',
     maxAge: TEMP_COOKIE_MAX_AGE,

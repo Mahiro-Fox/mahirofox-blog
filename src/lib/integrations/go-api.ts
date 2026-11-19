@@ -11,23 +11,19 @@
  * 调用方在 options.headers 里传 Authorization 即可被透传到底层 fetch。
  */
 
+import { requiredEnv } from '@/config/env.server';
+
 // 这两个守卫放在函数体内（运行时才执行），而不是模块顶层。
 // 原因：next build 会加载本模块；若在顶层 throw，构建阶段缺少
 // GO_API_SHARED_SECRET / GO_API_INTERNAL_URL 会直接构建失败。
 // 这两个变量只在运行时（Server Action / Route Handler）才真正使用，
 // 因此把检查惰性化，让构建不再依赖它们。
 function getInternalSecret(): string {
-  if (!process.env.GO_API_SHARED_SECRET) {
-    throw new Error('GO_API_SHARED_SECRET 环境变量未配置');
-  }
-  return process.env.GO_API_SHARED_SECRET;
+  return requiredEnv('GO_API_SHARED_SECRET');
 }
 
 function getBaseUrl(): string {
-  if (!process.env.GO_API_INTERNAL_URL) {
-    throw new Error('GO_API_INTERNAL_URL 环境变量未配置');
-  }
-  return process.env.GO_API_INTERNAL_URL;
+  return requiredEnv('GO_API_INTERNAL_URL');
 }
 
 export interface GoFetchOptions extends RequestInit {

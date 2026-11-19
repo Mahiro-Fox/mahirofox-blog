@@ -7,14 +7,12 @@ RUN go mod download || go mod tidy && go mod download
 COPY . .
 # go mod tidy：补齐 golang-jwt/jwt/v5 等新增依赖的 go.sum（本机无 Go 工具链时由构建容器代做）
 RUN go mod tidy \
-    && CGO_ENABLED=0 go build -o server ./cmd/server \
-    && CGO_ENABLED=0 go build -o migrator ./cmd/migrator
+    && CGO_ENABLED=0 go build -o server ./cmd/server
 
 # 运行阶段：极简镜像
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/server ./server
-COPY --from=builder /app/migrator ./migrator
 EXPOSE 8080
 CMD ["./server"]

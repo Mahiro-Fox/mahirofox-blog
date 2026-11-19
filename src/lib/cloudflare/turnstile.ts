@@ -2,6 +2,7 @@ import {
   issueCaptchaTicket,
   verifyCaptchaTicket,
 } from '@/lib/cloudflare/captcha-ticket';
+import { requiredEnv } from '@/config/env.server';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('Turnstile');
@@ -11,16 +12,12 @@ const SITEVERIFY_URL =
 
 // 允许的前端主机名（siteverify 返回值必须命中其一）
 function expectedHostnames(): Set<string> {
-  const configured = (process.env.TURNSTILE_HOSTNAMES ?? '')
-    .split(',')
-    .map((hostname) => hostname.trim().toLowerCase())
-    .filter(Boolean);
-  // 开发环境未显式配置时回退到本机，方便本地联调；
-  // 生产环境必须显式配置，缺失时 fail-closed（见下方日志）。
-  if (configured.length === 0 && process.env.NODE_ENV !== 'production') {
-    return new Set(['localhost', '127.0.0.1']);
-  }
-  return new Set(configured);
+  return new Set(
+    requiredEnv('TURNSTILE_HOSTNAMES')
+      .split(',')
+      .map((hostname) => hostname.trim().toLowerCase())
+      .filter(Boolean)
+  );
 }
 
 type SiteverifyResult = {
@@ -40,16 +37,22 @@ export async function verifyTurnstile(
   expectedAction: string,
   remoteIp?: string
 ): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET;
-  const hostnames = expectedHostnames();
-  if (!secret || hostnames.size === 0) {
-    logger.error(
-      'Turnstile 未配置：需要 TURNSTILE_SECRET 与 TURNSTILE_HOSTNAMES，已拒绝请求',
-      { hasSecret: Boolean(secret), hostnameCount: hostnames.size }
-    );
+  if (!token || token.length === 0 || token.length > 2048) {
     return false;
   }
-  if (!token || token.length === 0 || token.length > 2048) {
+
+  let secret: string;
+  let hostnames: Set<string>;
+  try {
+    secret = requiredEnv('TURNSTILE_SECRET');
+    hostnames = expectedHostnames();
+  } catch (error) {
+    // 配置缺失属于部署错误：这里记 error 并 fail-closed，避免把未配置当成“通过”
+    logger.error('Turnstile 配置缺失，已拒绝请求', error);
+    return false;
+  }
+  if (hostnames.size === 0) {
+    logger.error('TURNSTILE_HOSTNAMES 解析结果为空，已拒绝请求');
     return false;
   }
 
@@ -143,22 +146,9 @@ export async function passHumanCheck(
   }
 
   const ticket = proof.email ? issueCaptchaTicket(proof.email) : null;
-  // 签不出票不会放行任何东西，只会退回「每步都验」——但这个退化是静默的，
-  // 前端表现就是"明明改过一次验证、密码步骤还在弹"。这里必须喊出来。
-  if (proof.email && !ticket) {
-    warnMissingTicketSecret();
-  }
+  // 签不出票不会放行任何东西，只会退回「每步都验」——这个退化是静默的，
+  // 前端表现就是"明明改过一次验证、密码步骤还在弹"。
+  // JWT_SECRET 缺失时 issueCaptchaTicket 内部已通过 optionalEnv 告警。
 
   return { ok: true, ticket: ticket ?? undefined };
-}
-
-// 每个进程只警告一次，避免登录高峰期刷日志
-let warnedMissingTicketSecret = false;
-function warnMissingTicketSecret(): void {
-  if (warnedMissingTicketSecret) return;
-  warnedMissingTicketSecret = true;
-  logger.error(
-    'JWT_SECRET 未配置，无法签发人机验证票据：' +
-      '同一登录流程的后续步骤会重复要求验证。请在运行环境注入 JWT_SECRET。'
-  );
 }

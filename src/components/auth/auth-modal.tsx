@@ -26,11 +26,9 @@ import { Label } from '@/components/shadcn-ui/label';
 import { FadeCarousel } from '@/components/shared/fade-carousel';
 import { imageSizes } from '@/components/shared/image-sizes';
 import { OptimizedImage } from '@/components/shared/optimized-image';
-import {
-  TURNSTILE_SITE_KEY,
-  TurnstileWidget,
-} from '@/components/turnstile/turnstile-widget';
+import { TurnstileWidget } from '@/components/turnstile/turnstile-widget';
 import { siteConfig } from '@/config/common';
+import { TURNSTILE_SITE_KEY } from '@/config/env';
 import { useT } from '@/i18n/dictionary-provider';
 import type { PhotoItem } from '@/lib/content/photos';
 

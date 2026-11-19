@@ -1,4 +1,3 @@
-import { ADMIN_DEFAULT_PASSWORD } from '@/constant/auth';
 import { goFetch, withGoAuth } from '@/lib/integrations/go-api';
 
 /**
@@ -127,10 +126,8 @@ export const userStore = {
     }
   },
 
-  // 兼容旧接口：之前初始化默认 admin 账号
-  // Go 后端通过 migrator 从 data/users.json 迁移默认账号，无需在此初始化
+  // 兼容旧接口：默认 admin 账号由 Go 后端负责初始化
   async initialize(): Promise<void> {
-    // no-op：默认账号由数据迁移带入
-    void ADMIN_DEFAULT_PASSWORD;
+    // no-op
   },
 };

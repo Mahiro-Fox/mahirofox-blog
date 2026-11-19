@@ -1,7 +1,8 @@
 import path from 'path';
 import { imageSize } from 'image-size';
 import sharp from 'sharp';
-import { MAX_FILE_SIZE, WEBP_QUALITY } from '@/constant/file-upload';
+import { MAX_FILE_SIZE } from '@/constant/file-upload';
+import { optionalIntEnv } from '@/config/env.server';
 import {
   putUploadFile,
   resolveUploadKey,
@@ -15,6 +16,14 @@ import {
  * - 图片：非 WebP 转 WebP 并额外保留源文件；WebP 原样保存；
  * - 其他文件：原样保存。
  */
+
+/**
+ * WebP 转换质量（可选环境变量 WEBP_QUALITY）。
+ * 未配置或非法时告警并返回 undefined，由 sharp 使用自身默认质量。
+ */
+function webpQuality(): number | undefined {
+  return optionalIntEnv('WEBP_QUALITY');
+}
 
 const DANGEROUS_EXTENSIONS = new Set([
   'exe',
@@ -206,7 +215,7 @@ export async function uploadAssetFile(
     await saveBuffer(dir, fileName, buffer, mime);
 
     const processed = await sharp(buffer)
-      .webp({ quality: options.quality ?? WEBP_QUALITY })
+      .webp({ quality: options.quality ?? webpQuality() })
       .toBuffer({ resolveWithObject: true });
     const baseName = fileName.replace(/\.[^/.]+$/, '') || 'upload';
     const url = await saveBuffer(

@@ -1,10 +1,10 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { requiredEnv } from '@/config/env.server';
 
 const execFileAsync = promisify(execFile);
 
-const AGENT_PYTHON = process.env.AGENT_PYTHON ?? 'python';
 const TOOLS_RUNNER = path.join(process.cwd(), 'ai-tools', 'tools_runner.py');
 
 /**
@@ -17,7 +17,7 @@ export async function runPythonTool(
   let stdout: string;
   try {
     const result = await execFileAsync(
-      AGENT_PYTHON,
+      requiredEnv('AGENT_PYTHON'),
       [TOOLS_RUNNER, '--exec', name, JSON.stringify(args)],
       { encoding: 'utf8', timeout: 15_000 }
     );

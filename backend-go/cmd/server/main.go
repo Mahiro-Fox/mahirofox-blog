@@ -26,9 +26,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
-	if cfg.InternalSecret == "" {
-		log.Fatal("GO_API_SHARED_SECRET 未配置，拒绝启动")
-	}
 
 	gormDB, err := db.NewGormDB(cfg)
 	if err != nil {

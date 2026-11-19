@@ -1,6 +1,6 @@
 import { render } from '@react-email/components';
 import { ReactElement } from 'react';
-import { EMAIL_FROM, getResendClient } from './resend-client';
+import { getEmailFrom, getResendClient } from './resend-client';
 
 interface SendEmailParams {
   to: string;
@@ -48,6 +48,7 @@ export async function sendEmailWithRetry(
   params: SendEmailParams
 ): Promise<SendResult> {
   const resend = getResendClient();
+  const from = getEmailFrom();
   let lastError = '';
 
   // 提前渲染好 html 和纯文本版本，避免每次重试都重复渲染
@@ -60,7 +61,7 @@ export async function sendEmailWithRetry(
     try {
       const result = await withTimeout(
         resend.emails.send({
-          from: EMAIL_FROM,
+          from,
           to: params.to,
           subject: params.subject,
           html,

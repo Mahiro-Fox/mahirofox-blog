@@ -46,6 +46,13 @@ services:
       DB_NAME: ${DB_NAME}
       GO_API_SHARED_SECRET: ${GO_API_SHARED_SECRET}
       JWT_SECRET: ${JWT_SECRET}
+      # 运行时必填项（缺失时后端拒绝启动）
+      DATA_DIR: ${DATA_DIR}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS}
+      ADMIN_ISSUER: ${ADMIN_ISSUER}
+      USER_ISSUER: ${USER_ISSUER}
+      # 可选：缺失时按 false 处理并输出告警
+      SESSION_AUTO_RECOVER: ${SESSION_AUTO_RECOVER}
     # 绑定到 127.0.0.1，仅宿主机 nginx 可访问，不对外暴露
     ports:
       - '127.0.0.1:8080:8080'
@@ -79,7 +86,6 @@ services:
       NEXT_PUBLIC_UPLOADS_ORIGIN: ${NEXT_PUBLIC_UPLOADS_ORIGIN}
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM}
-      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
@@ -90,6 +96,8 @@ services:
       # Turnstile：站点密钥为构建期内联（见上方 build.args），运行时只需 secret 与域名白名单
       TURNSTILE_SECRET: ${TURNSTILE_SECRET}
       TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES}
+      # 可选：WebP 转换质量；留空时使用 sharp 默认质量并告警
+      WEBP_QUALITY: ${WEBP_QUALITY}
       # 人机验证票据的 HMAC 签名密钥（src/lib/cloudflare/captcha-ticket.ts）。
       # 缺失时票据恒为空，登录流程会退回「每一步都验证」——不报错，只是白改。
       JWT_SECRET: ${JWT_SECRET}

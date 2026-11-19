@@ -9,7 +9,9 @@ import {
 } from '../../../lib/settings/triggerSettings';
 import type { NeteaseSong } from '../../../types';
 
-export const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH || '/';
+// 站点部署在根路径（next.config.mjs 未设置 basePath），静态演示资源直接从根路径取。
+// 历史上的 NEXT_PUBLIC_BASE_PATH 从未参与构建配置，已移除。
+export const baseUrl = '/';
 
 export function songIdentity(song: Pick<NeteaseSong, 'id' | 'provider'>) {
   return `${song.provider || 'netease'}:${String(song.id)}`;

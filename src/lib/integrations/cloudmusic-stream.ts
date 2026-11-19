@@ -6,19 +6,14 @@
  * 原样透传状态码与头部，并把 Go 返回的响应体作为流返回浏览器。
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { requiredEnv } from '@/config/env.server';
 
 function baseUrl(): string {
-  if (!process.env.GO_API_INTERNAL_URL) {
-    throw new Error('GO_API_INTERNAL_URL 环境变量未配置');
-  }
-  return process.env.GO_API_INTERNAL_URL;
+  return requiredEnv('GO_API_INTERNAL_URL');
 }
 
 function internalSecret(): string {
-  if (!process.env.GO_API_SHARED_SECRET) {
-    throw new Error('GO_API_SHARED_SECRET 环境变量未配置');
-  }
-  return process.env.GO_API_SHARED_SECRET;
+  return requiredEnv('GO_API_SHARED_SECRET');
 }
 
 export async function proxyGoStream(

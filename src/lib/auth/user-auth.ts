@@ -64,13 +64,9 @@ export function userSessionCookieOptions(
   maxAgeSec: number,
   sameSite: 'strict' | 'lax' = 'strict'
 ) {
-  const isSecure =
-    process.env.COOKIE_SECURE === 'true' ||
-    (process.env.COOKIE_SECURE !== 'false' &&
-      process.env.NODE_ENV === 'production');
   return {
     httpOnly: true,
-    secure: isSecure,
+    secure: true,
     sameSite,
     maxAge: maxAgeSec,
     path: '/',

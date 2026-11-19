@@ -47,3 +47,25 @@ export const APP_URL = requiredUrl(
 export const UPLOADS_ORIGIN = normalize(
   process.env.NEXT_PUBLIC_UPLOADS_ORIGIN
 );
+
+/**
+ * Cloudflare Turnstile 站点密钥（公开值）。
+ * 为空时小部件不渲染、服务端校验一律失败，但不应让整站崩掉，
+ * 因此这里只在首次使用时告警一次，而不是像 APP_URL 那样构建期抛错。
+ */
+export const TURNSTILE_SITE_KEY = normalize(
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+);
+
+let warnedMissingTurnstileKey = false;
+
+/** 缺少 Turnstile 站点密钥时告警一次，复用 missingError 的统一提示文案 */
+export function warnMissingTurnstileKey(): void {
+  if (warnedMissingTurnstileKey || TURNSTILE_SITE_KEY) return;
+  warnedMissingTurnstileKey = true;
+  console.error(
+    `[turnstile] 验证小部件不会渲染，服务端将判定人机验证失败：${
+      missingError('NEXT_PUBLIC_TURNSTILE_SITE_KEY').message
+    }`
+  );
+}

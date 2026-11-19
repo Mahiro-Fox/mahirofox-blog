@@ -16,10 +16,8 @@ import {
 } from '@/components/shadcn-ui/dialog';
 import { Input } from '@/components/shadcn-ui/input';
 import { Toggle } from '@/components/shadcn-ui/toggle';
-import {
-  TURNSTILE_SITE_KEY,
-  TurnstileWidget,
-} from '@/components/turnstile/turnstile-widget';
+import { TurnstileWidget } from '@/components/turnstile/turnstile-widget';
+import { TURNSTILE_SITE_KEY } from '@/config/env';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
 import { isEmail } from '@/utils/utils';

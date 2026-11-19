@@ -15,6 +15,7 @@
  */
 
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { optionalEnv } from '@/config/env.server';
 
 const TICKET_TTL_MS = 5 * 60 * 1000;
 /** 场景：前台账户流程（登录 / 注册 / 重置密码共用一张票） */
@@ -32,8 +33,7 @@ interface TicketPayload {
 }
 
 function signingKey(): string | null {
-  const value = process.env.JWT_SECRET?.trim();
-  return value || null;
+  return optionalEnv('JWT_SECRET') ?? null;
 }
 
 function sign(data: string, key: string): string {

@@ -7,6 +7,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { optionalEnv } from '@/config/env.server';
 
 /**
  * Cloudflare R2（S3 兼容）最小 CRUD 封装。
@@ -33,10 +34,10 @@ interface R2Config {
 export const R2_UPLOADS_PREFIX = 'uploads/';
 
 function readConfig(): R2Config | null {
-  const accountId = process.env.R2_ACCOUNT_ID?.trim();
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
-  const secretAccessKey = process.env.R2_ACCESS_KEY?.trim();
-  const bucket = process.env.R2_BUCKET?.trim();
+  const accountId = optionalEnv('R2_ACCOUNT_ID');
+  const accessKeyId = optionalEnv('R2_ACCESS_KEY_ID');
+  const secretAccessKey = optionalEnv('R2_ACCESS_KEY');
+  const bucket = optionalEnv('R2_BUCKET');
 
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
     return null;
