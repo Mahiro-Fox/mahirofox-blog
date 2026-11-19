@@ -12,6 +12,7 @@ interface MasonryProps<T> {
   className?: string;
   itemRender: (props: { data: T; index: number }) => React.ReactNode;
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Masonry = <T extends { [key: string]: any }>({
   items = [],
   columns = 4,
@@ -88,7 +89,8 @@ const Masonry = <T extends { [key: string]: any }>({
       {columnData.map((colItems, colIndex) => (
         <div
           key={`col-${colIndex}`}
-          className="flex flex-1 flex-col"
+          // min-w-0：允许列被压缩到内容最小宽度以下，否则单列时会被图片原始宽度撑破
+          className="flex min-w-0 flex-1 flex-col"
           style={{ gap: `${gutter}px` }}
         >
           {colItems.map(({ item, index, height }) => (
