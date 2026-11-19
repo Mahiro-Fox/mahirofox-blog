@@ -241,6 +241,15 @@
   }
 }
 
+/**
+ * 渲染隔离：屏幕外的卡片跳过布局与绘制。
+ * 仅用于「高度可预先确定」的元素（固定行高 / aspect-ratio），
+ * 配合内联 contain-intrinsic-size 使用，避免尺寸塌陷导致滚动条跳动。
+ */
+@utility cv-auto {
+  content-visibility: auto;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;

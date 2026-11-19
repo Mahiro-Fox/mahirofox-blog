@@ -1,4 +1,4 @@
-import AnalyticsCharts from '@/app/[lang]/(admin)/admin/analytics/analytics-charts';
+import AnalyticsCharts from '@/app/[lang]/(admin)/admin/analytics/analytics-charts-lazy';
 import { adminGetAnalyticsLogs } from '@/actions/admin/analytics-actions';
 import { DeviceDetector } from '@/components/admin/device-detector';
 

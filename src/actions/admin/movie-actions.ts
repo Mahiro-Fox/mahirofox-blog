@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cache } from 'react';
 import { buildQuery, goFetch, withGoAuth } from '@/lib/integrations/go-api';
 import {
   withActionPermission,
@@ -12,18 +13,28 @@ const logger = createLogger('MovieActions');
 
 // GET - 获取公开电影列表（前端展示）
 // 数据源已迁移至 Go 后端，Go 侧按 created_at DESC 排序并支持 search/tag 过滤
+//
+// 用 React.cache 做「同一请求内去重」（server-cache-react）：
+// 电影详情页会经由 movies/layout、[id]/page、[id]/generateMetadata 各调一次，
+// 不缓存就是 3 次完全相同的全量列表 HTTP 请求，且布局那一次会阻塞 children 渲染。
+const getPublicMoviesCached = cache(
+  async (search?: string, tag?: string): Promise<ActionResponse<Movie[]>> => {
+    try {
+      const query = buildQuery({ search, tag });
+      const movies = await goFetch<Movie[]>(`/api/movies${query}`);
+      return { success: true, data: movies };
+    } catch (error) {
+      logger.error('获取电影列表失败', error);
+      return { success: false, error: '获取电影列表失败' };
+    }
+  }
+);
+
 export async function getPublicMovies(
   search?: string,
   tag?: string
 ): Promise<ActionResponse<Movie[]>> {
-  try {
-    const query = buildQuery({ search, tag });
-    const movies = await goFetch<Movie[]>(`/api/movies${query}`);
-    return { success: true, data: movies };
-  } catch (error) {
-    logger.error('获取电影列表失败', error);
-    return { success: false, error: '获取电影列表失败' };
-  }
+  return getPublicMoviesCached(search, tag);
 }
 
 // GET - 获取所有电影（管理后台）

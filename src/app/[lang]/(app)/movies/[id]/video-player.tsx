@@ -1,274 +1,44 @@
 'use client';
 
-import ArtPlayer from 'artplayer';
-import Hls from 'hls.js';
-import { toast } from 'sonner';
-import { useEffect, useRef, useState } from 'react';
-import { throttle } from '@/utils/utils';
+import dynamic from 'next/dynamic';
 
-export interface MovieSource {
-  name: string;
-  url: string;
+// ArtPlayer(≈35KB gzip) + hls.js(≈163KB gzip) 合计约 200KB，只在播放器真正挂载后
+// 才需要。静态 import 会把它们打进电影详情页的首屏 chunk，拖慢 TTI / LCP；
+// 这里拆成异步 chunk（bundle-dynamic-imports）。
+// ssr: false —— 播放器依赖 DOM 与 window，SSR 阶段渲染出来也无法播放。
+const VideoPlayerCore = dynamic(
+  () => import('./video-player-core').then((m) => m.VideoPlayerCore),
+  { ssr: false, loading: () => <PlayerPlaceholder /> }
+);
+
+function PlayerPlaceholder() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="flex flex-col items-center">
+        <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />
+        <span className="text-sm text-white/80">正在加载播放器...</span>
+      </div>
+    </div>
+  );
 }
 
-interface VideoPlayerProps {
+export interface VideoPlayerProps {
   movieId: string;
   sources: MovieSource[];
   currentSourceIndex: number;
   changeSource: (index: number) => void;
 }
 
-interface SourceStatus {
-  name: string;
-  url: string;
-  available: boolean;
-}
-
-export function VideoPlayer({
-  movieId,
-  sources,
-  currentSourceIndex,
-  changeSource,
-}: VideoPlayerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const artRef = useRef<ArtPlayer | null>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const [sourcesStatus, setSourcesStatus] = useState<SourceStatus[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const PROGRESS_KEY = `movie_progress_${movieId}`;
-
-  // const getProxyUrl = useCallback((url: string) => {
-  //   return `/api/proxy?url=${encodeURIComponent(url)}`;
-  // }, []);
-
-  useEffect(() => {
-    // 取消标记：effect 重跑或组件卸载后丢弃过期结果（竞态防护）
-    let cancelled = false;
-    const checkAllSources = async () => {
-      const checkSourceAvailability = async (url: string) => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          const response = await fetch(url, {
-            method: 'HEAD',
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-          return response.ok;
-        } catch {
-          return false;
-        }
-      };
-      const statuses: SourceStatus[] = await Promise.all(
-        sources.map(async (source) => ({
-          ...source,
-          available: await checkSourceAvailability(source.url),
-        }))
-      );
-      if (!cancelled) {
-        setSourcesStatus(statuses);
-      }
-    };
-
-    checkAllSources();
-    return () => {
-      cancelled = true;
-    };
-  }, [sources]);
-
-  useEffect(() => {
-    if (!containerRef.current || sources.length === 0) return;
-
-    const currentSource = sources[currentSourceIndex];
-    const proxyUrl = currentSource.url;
-
-    const art = new ArtPlayer(
-      {
-        container: containerRef.current,
-        url: proxyUrl,
-        type: 'm3u8',
-        loop: false,
-        volume: 0.8,
-        muted: false,
-        theme: '#ff6b35',
-        lang: 'zh-CN',
-        flip: true,
-        setting: true,
-        aspectRatio: true,
-        fullscreen: true,
-        subtitleOffset: true,
-        miniProgressBar: true,
-        playsInline: true,
-        playbackRate: true,
-        controls: [
-          {
-            position: 'right',
-            html: `<div class="artplayer-video-source-btn" style="color: #fff; cursor: pointer; padding: 0 10px; font-size: 12px;">
-            ${currentSource.name}
-          </div>`,
-            click: () => {
-              const menu = document.createElement('div');
-              menu.style.cssText = `
-              position: absolute;
-              bottom: 100%;
-              right: 20%;
-              background: rgba(0, 0, 0, 0.9);
-              border-radius: 8px;
-              padding: 8px;
-              margin-bottom: 8px;
-              z-index: 100;
-              min-width: 150px;
-            `;
-
-              sourcesStatus.forEach((source, index) => {
-                const item = document.createElement('div');
-                item.style.cssText = `
-                padding: 8px 12px;
-                color: ${source.available ? '#fff' : '#666'};
-                font-size: 12px;
-                cursor: ${source.available ? 'pointer' : 'not-allowed'};
-                border-radius: 4px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              `;
-                item.innerHTML = `
-                <span>${source.name}${index === currentSourceIndex ? ' ✓' : ''}</span>
-                ${!source.available ? '<span>[不可用]</span>' : ''}
-              `;
-
-                if (source.available) {
-                  item.onmouseenter = () => {
-                    item.style.background = 'rgba(255, 107, 53, 0.3)';
-                  };
-                  item.onmouseleave = () => {
-                    item.style.background = 'transparent';
-                  };
-                  item.onclick = () => {
-                    changeSource(index);
-                    menu.remove();
-                  };
-                }
-
-                menu.appendChild(item);
-              });
-              if (art.controls.$parent) {
-                art.controls.$parent.appendChild(menu);
-              }
-              const closeMenu = (e: MouseEvent) => {
-                if (!menu.contains(e.target as Node)) {
-                  menu.remove();
-                  document.removeEventListener('click', closeMenu);
-                }
-              };
-
-              setTimeout(() => {
-                document.addEventListener('click', closeMenu);
-              }, 0);
-            },
-          },
-          {
-            position: 'right',
-            html: `<div class="artplayer-video-source-btn" style="color: #fff; cursor: pointer; padding: 0 10px; font-size: 12px;">
-            复制当前线路m3u8链接
-            </div>`,
-            click: () => {
-              navigator.clipboard.writeText(proxyUrl);
-              toast.success('已复制链接');
-            },
-          },
-        ],
-        icons: {
-          loading: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle class="artplayer-loading-circle" cx="12" cy="12" r="10" stroke-dasharray="62.8318" stroke-dashoffset="62.8318" style="animation: artplayer-loading 1s linear infinite;"/></svg>`,
-        },
-      },
-      function onReady(art) {
-        const savedProgress = localStorage.getItem(PROGRESS_KEY);
-        if (savedProgress) {
-          const progress = parseFloat(savedProgress);
-          if (progress > 0 && progress < art.duration) {
-            const minutes = Math.floor(progress / 60);
-            const seconds = Math.floor(progress % 60);
-            art.seek = progress; // ArtPlayer 方法
-            toast.info(
-              `已为你自动跳转至上次看到 ${minutes}:${seconds.toString().padStart(2, '0')}`
-            );
-          }
-        }
-      }
-    );
-
-    artRef.current = art;
-
-    let hls: Hls;
-
-    if (Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: true,
-      });
-
-      hls.loadSource(proxyUrl);
-      hls.attachMedia(art.video);
-      hlsRef.current = hls;
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsLoading(false);
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.warn('HLS Warn:', data);
-
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              if (currentSourceIndex < sources.length - 1) {
-                const nextIndex = currentSourceIndex + 1;
-                toast.warning(
-                  `当前线路不稳定，已自动为你切换至备用线路：${sources[nextIndex].name}`
-                );
-                changeSource(nextIndex);
-              } else {
-                toast.error('所有线路均无法播放，请稍后重试');
-              }
-              break;
-            default:
-              break;
-          }
-        }
-      });
-    }
-
-    // 节流保存进度
-    const saveProgress = throttle(() => {
-      console.log('saveProgress', art.currentTime);
-      const currentTime = art.currentTime;
-      localStorage.setItem(PROGRESS_KEY, currentTime.toString());
-    }, 3000);
-    art.on('video:timeupdate', saveProgress);
-
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-      art.destroy();
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movieId, sources, currentSourceIndex, sourcesStatus]);
-
+/**
+ * 电影播放器外壳。
+ *
+ * 只负责版式容器，真正的播放逻辑（ArtPlayer / hls.js）在 video-player-core 里，
+ * 由 next/dynamic 按需加载，避免重依赖进入首屏 bundle。
+ */
+export function VideoPlayer(props: VideoPlayerProps) {
   return (
-    <div className="bg-card relative aspect-video w-full overflow-hidden rounded-lg border border-border shadow-2xl">
-      {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
-          <div className="flex flex-col items-center">
-            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />
-            <span className="text-sm text-white/80">正在加载视频资源...</span>
-          </div>
-        </div>
-      )}
-      <div ref={containerRef} className="h-full w-full" />
+    <div className="bg-card border-border relative aspect-video w-full overflow-hidden rounded-lg border shadow-2xl">
+      <VideoPlayerCore {...props} />
     </div>
   );
 }

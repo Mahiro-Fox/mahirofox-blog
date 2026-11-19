@@ -46,10 +46,8 @@ const Masonry = <T extends { [key: string]: any }>({
 
   // 2. 瀑布流分列计算
   const columnData = useMemo(() => {
-    const result: Array<Array<{ item: T; index: number }>> = Array.from(
-      { length: currentColumns },
-      () => []
-    );
+    const result: Array<Array<{ item: T; index: number; height: number }>> =
+      Array.from({ length: currentColumns }, () => []);
     const columnHeights = new Array(currentColumns).fill(0);
 
     // 获取当前容器的大致宽度，用于更准地预估高度
@@ -66,13 +64,14 @@ const Masonry = <T extends { [key: string]: any }>({
         }
       }
 
-      // 连同原始下标一起入列，避免回调拿到的是「列内下标」
-      result[minHeightIndex].push({ item, index });
-
       // 高度计算逻辑：(1 / 宽高比) * 实际渲染宽度
       const itemRatio = item.ratio || 1;
       // 如果 item 包含非图片高度（如文字），建议在这里加一个固定偏移量，例如 + 60
       const estimatedHeight = (1 / itemRatio) * approxColWidth;
+
+      // 连同原始下标一起入列，避免回调拿到的是「列内下标」
+      // estimatedHeight 同时作为 content-visibility 的占位高度
+      result[minHeightIndex].push({ item, index, height: estimatedHeight });
 
       columnHeights[minHeightIndex] += estimatedHeight + gutter;
     });
@@ -92,8 +91,14 @@ const Masonry = <T extends { [key: string]: any }>({
           className="flex flex-1 flex-col"
           style={{ gap: `${gutter}px` }}
         >
-          {colItems.map(({ item, index }) => (
-            <div key={item.template_id || item.src} className="w-full">
+          {colItems.map(({ item, index, height }) => (
+            <div
+              key={item.template_id || item.src}
+              // content-visibility 跳过屏外绘制；占位高度沿用上面的预估，
+              // 渲染过后浏览器会记住真实高度（auto 关键字），不会来回跳。
+              className="cv-auto w-full"
+              style={{ containIntrinsicSize: `auto ${Math.round(height)}px` }}
+            >
               {itemRender({ data: item, index })}
             </div>
           ))}

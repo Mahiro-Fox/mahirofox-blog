@@ -1,12 +1,11 @@
 import { ShaderBackground } from '@/app/[lang]/(app)/_components/shader-background';
-import { MusicProvider } from '@/context/music-provider';
-import { getPublicMusic } from '@/actions/admin/music-actions';
 import { getAllPhotos } from '@/actions/app/photos';
 import { AuthModalProvider } from '@/components/auth/auth-modal-provider';
 import { FloatActions } from '@/components/layout/float-actions';
-import { GlobalMusicPlayer } from '@/components/layout/global-music-player';
+import { MusicShell } from '@/components/layout/music-shell';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
+import { Suspense } from 'react';
 // import { ScrollProgress } from '@/components/shared/scroll-progress';
 import { PageTracker } from '@/components/shared/tracker';
 import { siteConfig } from '@/config/common';
@@ -88,7 +87,6 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
     loginDictionary,
     authPhotos,
     frontendUser,
-    musicRes,
   ] = await Promise.all([
     getDictionary(lang, 'header'),
     getDictionary(lang, 'footer'),
@@ -97,10 +95,7 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
     // 登录弹窗左侧写真轮播（竖构图）
     getAllPhotos({ ratio: 'portrait' }),
     getCurrentUser(),
-    getPublicMusic(),
   ]);
-  const songs = musicRes.success ? musicRes.data : [];
-  const randomIndex = Math.floor(Math.random() * songs.length); // 随机音乐索引
   return (
     <div className="bg-background relative z-10 flex min-h-svh flex-col">
       {/* 全屏着色器背景 — 作为首个子元素，负 z-index 落在根 div 背景之上、内容之下 */}
@@ -113,25 +108,25 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
           ...loginDictionary,
         }}
       >
-        <MusicProvider playlist={songs} initialIndex={randomIndex}>
-          {/* 全局登录/注册弹窗：header、chat 等就地打开 */}
-          <AuthModalProvider
-            photos={authPhotos}
-            googleEnabled={isGoogleOAuthEnabled()}
-          >
-            {/* ── 顶部滚动进度条 ── */}
-            {/* <ScrollProgress /> */}
-            <SiteHeader initialUserAuth={frontendUser} />
-            <main className="flex flex-1 flex-col">{children}</main>
-            <SiteFooter />
-            {/* 自动埋点组件 */}
-            <PageTracker />
-            {/* 浮动操作组件 */}
-            <FloatActions />
-            {/* 全局音乐播放器组件 */}
-            <GlobalMusicPlayer />
-          </AuthModalProvider>
-        </MusicProvider>
+        {/* 全局登录/注册弹窗：header、chat 等就地打开 */}
+        <AuthModalProvider
+          photos={authPhotos}
+          googleEnabled={isGoogleOAuthEnabled()}
+        >
+          {/* ── 顶部滚动进度条 ── */}
+          {/* <ScrollProgress /> */}
+          <SiteHeader initialUserAuth={frontendUser} />
+          <main className="flex flex-1 flex-col">{children}</main>
+          <SiteFooter />
+          {/* 自动埋点组件 */}
+          <PageTracker />
+          {/* 浮动操作组件 */}
+          <FloatActions />
+          {/* 全局音乐播放器：数据依赖 Go 后端，单独流式补齐，不阻塞页面主体 */}
+          <Suspense fallback={null}>
+            <MusicShell />
+          </Suspense>
+        </AuthModalProvider>
       </DictionaryProvider>
     </div>
   );

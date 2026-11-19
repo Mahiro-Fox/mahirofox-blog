@@ -122,7 +122,9 @@ export function VideosWall({ initialVideos, initialHasMore }: VideosWallProps) {
                   video={video}
                   index={index}
                   featured={index === 0}
-                  className={spanClass(index)}
+                  // 行高由 auto-rows-[72px] 决定，与内容无关，
+                  // 因此可以直接跳过屏外卡片的布局与绘制
+                  className={`cv-auto ${spanClass(index)}`}
                   onOpen={() => setActiveIndex(index)}
                 />
               ))}
