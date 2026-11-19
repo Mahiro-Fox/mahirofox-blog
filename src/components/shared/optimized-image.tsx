@@ -78,7 +78,12 @@ export function OptimizedImage({
     else open([{ src, alt }]);
   }, [previewable, onPreview, src, alt, open]);
 
-  const imageProps = fill ? { fill, sizes } : { width, height, sizes };
+  // 指定了 aspectRatio 时，容器已经有确定高度，图片必须按 fill 铺满容器，
+  // 否则 <img> 会按 width/height 属性的原始像素渲染，撑破父容器
+  const useFill = fill || Boolean(aspectRatio);
+  const imageProps = useFill
+    ? { fill: true, sizes }
+    : { width, height, sizes };
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true });
   // 错误回退
