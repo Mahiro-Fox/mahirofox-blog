@@ -1,24 +1,37 @@
-/** 博客详情页骨架：标题 + 元信息 + 正文段落，贴近文章页版式以减少跳变。 */
+import { Skeleton, SkeletonLines } from '@/components/shared/skeleton';
+
+/**
+ * 博客详情骨架。
+ *
+ * 对应 `blog/[slug]/page.tsx` 的真实版式：面包屑 → 16:9 大图 → 标题/元信息 → 正文。
+ * 大图位置必须占住，否则图片载入时正文会整体下移。
+ */
 export default function BlogDetailLoading() {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex animate-pulse flex-1 flex-col">
+      <div className="container-wrapper">
+        <div className="container">
+          <div className="py-4">
+            <Skeleton className="h-3.5 w-64 max-w-full" />
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <div className="mx-auto max-w-5xl px-4 md:px-0">
+            <Skeleton className="aspect-video w-full rounded-lg shadow-lg" />
+          </div>
+        </div>
+      </div>
+
       <div className="container-wrapper py-8">
-        <div className="container animate-pulse">
+        <div className="container flex flex-col gap-8">
           <article className="max-w-3xl">
             <header className="mb-10 space-y-3">
-              <div className="bg-muted/40 h-3 w-40 rounded" />
-              <div className="bg-muted/60 h-7 w-4/5 rounded md:h-9" />
-              <div className="bg-muted/40 h-3 w-2/3 rounded" />
+              <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-7 w-4/5 md:h-9" />
+              <Skeleton className="h-3 w-2/3" />
             </header>
-            <div className="space-y-3">
-              {Array.from({ length: 10 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-muted/40 h-3.5 rounded"
-                  style={{ width: `${70 + ((index * 13) % 30)}%` }}
-                />
-              ))}
-            </div>
+            <SkeletonLines count={10} />
           </article>
         </div>
       </div>

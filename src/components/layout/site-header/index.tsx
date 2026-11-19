@@ -1,7 +1,7 @@
 'use client';
 
 import { LogOut, Menu, Settings, User } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { userLogout } from '@/actions/app/user-auth';
@@ -41,6 +41,7 @@ import { SiteLogo } from '@/components/shared/site-logo';
 import { ThemeSwitcher } from '@/components/shared/theme-switcher';
 import { groupedNavRoutes, siteConfig } from '@/config/common';
 import { useT } from '@/i18n/dictionary-provider';
+import { usePathnameWithoutLocale } from '@/i18n/use-pathname-without-locale';
 
 interface SiteHeaderUser {
   id: string;
@@ -53,10 +54,10 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
   const t = useT();
-  const pathname = usePathname();
+  const pathname = usePathnameWithoutLocale();
   const router = useRouter();
   const authModal = useAuthModal();
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href?: string) => pathname === href;
   const [currentUser, setCurrentUser] = useState<SiteHeaderUser | null>(
     initialUserAuth
   );

@@ -2,6 +2,11 @@
 # 开发时暴露额外端口用 docker-compose.override.yml（自动加载）
 # 生产部署时只用本文件，端口仅对内暴露由 nginx 反代
 
+# 固定 compose 项目名。默认取目录名，仓库目录一改名就会变成新项目：
+# 数据卷跟着换名字（变成空库），而 container_name 是写死的，
+# 新项目去创建同名容器就会报 "container name is already in use"。
+name: mahirofox-blog
+
 services:
   postgres:
     image: postgres:16-alpine
