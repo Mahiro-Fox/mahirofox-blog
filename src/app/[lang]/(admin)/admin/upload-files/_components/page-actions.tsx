@@ -1,24 +1,19 @@
 'use client';
 
-import { FolderPlus, ImageDown, Loader2, Trash2, Upload } from 'lucide-react';
+import { FolderPlus, Loader2, Trash2, Upload } from 'lucide-react';
 import type { PageAction } from '@/components/admin/admin-page-layout-actions';
 
 interface PageActionsConfig {
-  isConverting: boolean;
   isUploading: boolean;
   selectedFolderCount: number;
   selectedFileCount: number;
   onNewFolder: () => void;
-  onConvert: () => void;
   onUpload: () => void;
   onBulkDelete: () => void;
 }
 
 /** 根据选中项拼装批量删除文案，如 Delete 1 folder and 2 files */
-const buildBulkDeleteLabel = (
-  folderCount: number,
-  fileCount: number
-): string =>
+const buildBulkDeleteLabel = (folderCount: number, fileCount: number): string =>
   [
     folderCount > 0
       ? `${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`
@@ -30,12 +25,10 @@ const buildBulkDeleteLabel = (
 
 /** AdminPageLayout 顶部操作 */
 export const buildPageActions = ({
-  isConverting,
   isUploading,
   selectedFolderCount,
   selectedFileCount,
   onNewFolder,
-  onConvert,
   onUpload,
   onBulkDelete,
 }: PageActionsConfig): PageAction[] => {
@@ -57,17 +50,6 @@ export const buildPageActions = ({
       icon: <FolderPlus className="mr-2 h-4 w-4" />,
       onClick: onNewFolder,
       variant: 'outline',
-    },
-    {
-      label: 'PNG 转 WebP',
-      icon: isConverting ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <ImageDown className="mr-2 h-4 w-4" />
-      ),
-      onClick: onConvert,
-      variant: 'outline',
-      disabled: isConverting,
     },
     {
       label: '上传文件',

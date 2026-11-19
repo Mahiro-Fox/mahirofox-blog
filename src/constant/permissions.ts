@@ -77,7 +77,6 @@ export type Permission =
   | 'music:delete'
   // 系统权限
   | 'system:revalidate'
-  | 'system:convertImages'
   | '*'; // 所有权限（超级管理员）
 
 /**

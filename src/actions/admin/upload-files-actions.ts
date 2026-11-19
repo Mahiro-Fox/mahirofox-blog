@@ -19,7 +19,6 @@ import {
   type ActionResponse,
 } from '@/utils/action-response';
 import { createLogger } from '@/utils/logger';
-import { convertImagesWebp } from '../../../scripts/convert-to-webp';
 
 const logger = createLogger('UploadFilesActions');
 
@@ -340,35 +339,6 @@ export async function renameFile(
         error: error instanceof Error ? error.message : '重命名失败',
       };
     }
-  });
-}
-
-// 批量转换图片为 WebP
-export async function convertImages(): Promise<
-  ActionResponse<{
-    message: string;
-    convertedFiles: string[];
-    errorFiles: string[];
-  }>
-> {
-  return withActionPermission('system:convertImages', async () => {
-    const result = await convertImagesWebp();
-    if (result.success) {
-      return {
-        success: true,
-        message: '转换成功',
-        data: {
-          message: '转换成功',
-          convertedFiles: result.data.success,
-          errorFiles: result.data.failed,
-        },
-      };
-    }
-
-    return {
-      success: false,
-      error: '批量转换失败',
-    };
   });
 }
 

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminGetUploadFiles,
   cacheUploadPath,
-  convertImages,
   createFolder,
   deleteFile,
   deleteFiles,
@@ -15,15 +14,22 @@ import { AdminPageLayout } from '@/components/admin/admin-page-layout';
 import { Input } from '@/components/shadcn-ui/input';
 import { BreadcrumbNav } from './_components/breadcrumb-nav';
 import { BulkDeleteDialog } from './_components/bulk-delete-dialog';
-import { FileTable } from './_components/file-table';
 import {
   DeleteFileDialog,
   NewFolderDialog,
   RenameDialog,
 } from './_components/file-dialogs';
+import { FileTable } from './_components/file-table';
 import { buildPageActions } from './_components/page-actions';
-import { uploadFiles, validateUploadSelection } from './_components/upload-utils';
-import type { FileItem, FileListResponse, UploadFilesClientProps } from './_components/types';
+import type {
+  FileItem,
+  FileListResponse,
+  UploadFilesClientProps,
+} from './_components/types';
+import {
+  uploadFiles,
+  validateUploadSelection,
+} from './_components/upload-utils';
 
 export default function UploadFilesClient({
   initialData,
@@ -41,7 +47,6 @@ export default function UploadFilesClient({
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [isRenaming, setIsRenaming] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -219,29 +224,12 @@ export default function UploadFilesClient({
     setIsRenameDialogOpen(true);
   };
 
-  // PNG 转 WebP
-  const handleConvert = async () => {
-    setIsConverting(true);
-    try {
-      const result = await convertImages();
-
-      if (result.success) {
-        toast.success(result.data.message || '转换完成');
-        fetchFiles(currentPath);
-      } else {
-        toast.error(result.error || '转换失败');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : '转换失败');
-    } finally {
-      setIsConverting(false);
-    }
-  };
-
   // 多选
   const toggleSelect = (path: string) => {
     setSelectedPaths((prev) =>
-      prev.includes(path) ? prev.filter((item) => item !== path) : [...prev, path]
+      prev.includes(path)
+        ? prev.filter((item) => item !== path)
+        : [...prev, path]
     );
   };
 
@@ -264,7 +252,9 @@ export default function UploadFilesClient({
         if (failed.length === 0) {
           toast.success(`已删除 ${deleted.length} 项`);
         } else {
-          toast.warning(`${deleted.length} 项删除成功, ${failed.length} 项失败`);
+          toast.warning(
+            `${deleted.length} 项删除成功, ${failed.length} 项失败`
+          );
           failed.forEach((item) => toast.error(`${item.path}: ${item.error}`));
         }
         setIsBulkDeleteOpen(false);
@@ -290,12 +280,10 @@ export default function UploadFilesClient({
   const selectedFileCount = selectedItems.length - selectedFolderCount;
 
   const actions = buildPageActions({
-    isConverting,
     isUploading,
     selectedFolderCount,
     selectedFileCount,
     onNewFolder: () => setIsNewFolderDialogOpen(true),
-    onConvert: handleConvert,
     onUpload: () => document.getElementById('file-upload')?.click(),
     onBulkDelete: () => setIsBulkDeleteOpen(true),
   });
