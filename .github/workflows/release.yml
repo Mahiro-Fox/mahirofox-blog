@@ -95,17 +95,17 @@ jobs:
           echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Pull images & restart on server
-        uses: nekiro/ssh-job@v1.1.0
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          user: ${{ secrets.SERVER_USER }}
-          command: |
-            set -e
+          # 任一命令失败即中止，等价于 set -e
+          script_stop: true
+          script: |
             cd /home/ubuntu/mahirofox-blog/
-            BRANCH="${{ steps.branch.outputs.name }}"
+            BRANCH='${{ steps.branch.outputs.name }}'
             git fetch origin "$BRANCH"
-            # 始终把服务器工作区对齐到本次部署分支；有本地改动时会直接失败而不是静默覆盖
             git checkout -B deploy "origin/$BRANCH"
             docker compose pull next-frontend backend-go
             docker compose up -d next-frontend backend-go
