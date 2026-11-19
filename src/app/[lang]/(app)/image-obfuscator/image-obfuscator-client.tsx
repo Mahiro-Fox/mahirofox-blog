@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/shadcn-ui/button';
-import {
-  // MAX_FILE_SIZE,
-  // MAX_FILES_COUNT,
-  MAX_TOTAL_SIZE,
-} from '@/constant/file-upload';
+import { MAX_TOTAL_SIZE } from '@/constant/file-upload';
 import { useT } from '@/i18n/dictionary-provider';
 import {
   LARGE_IMAGE_PIXELS,

@@ -1,6 +1,7 @@
 import path from 'path';
 import { imageSize } from 'image-size';
 import sharp from 'sharp';
+import { MAX_FILE_SIZE, WEBP_QUALITY } from '@/constant/file-upload';
 import {
   putUploadFile,
   resolveUploadKey,
@@ -14,9 +15,6 @@ import {
  * - 图片：非 WebP 转 WebP 并额外保留源文件；WebP 原样保存；
  * - 其他文件：原样保存。
  */
-
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
-const DEFAULT_QUALITY = 50;
 
 const DANGEROUS_EXTENSIONS = new Set([
   'exe',
@@ -180,8 +178,8 @@ export async function uploadAssetFile(
   file: File,
   options: UploadAssetOptions
 ): Promise<UploadAssetResult> {
-  if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error('文件大小不能超过 20MB');
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`);
   }
 
   const dir = normalizeDir(options.dir);
@@ -208,7 +206,7 @@ export async function uploadAssetFile(
     await saveBuffer(dir, fileName, buffer, mime);
 
     const processed = await sharp(buffer)
-      .webp({ quality: options.quality ?? DEFAULT_QUALITY })
+      .webp({ quality: options.quality ?? WEBP_QUALITY })
       .toBuffer({ resolveWithObject: true });
     const baseName = fileName.replace(/\.[^/.]+$/, '') || 'upload';
     const url = await saveBuffer(

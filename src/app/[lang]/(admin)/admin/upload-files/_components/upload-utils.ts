@@ -9,7 +9,16 @@ import {
 import type { FileItem } from './types';
 
 // 图片扩展名（不含点，与 FileItem.extension 的格式保持一致）
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'ico'];
+const IMAGE_EXTENSIONS = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'svg',
+  'avif',
+  'ico',
+];
 
 // 是否是图片文件
 export const isImage = (item: FileItem) => {
@@ -37,7 +46,7 @@ export const validateFiles = (
 
     if (file.size > MAX_FILE_SIZE) {
       errors.push(
-        `文件 ${file.name} 超过单文件限制 (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
+        `文件 ${file.name} 超过单文件限制 (${MAX_FILE_SIZE / 1024 / 1024}MB)`
       );
     }
 
@@ -60,7 +69,7 @@ export const validateUploadSelection = (files: FileList): boolean => {
 
   if (totalSize > MAX_TOTAL_SIZE) {
     toast.error(
-      `文件总大小超过限制，最多允许 ${MAX_TOTAL_SIZE / (1024 * 1024)}MB`
+      `文件总大小超过限制，最多允许 ${MAX_TOTAL_SIZE / 1024 / 1024}MB`
     );
     return false;
   }

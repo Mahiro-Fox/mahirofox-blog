@@ -1,4 +1,5 @@
 import sharp, { Metadata, Sharp } from 'sharp';
+import { MAX_FILE_SIZE } from '@/constant/file-upload';
 
 /**
  * 支持的目标图片格式
@@ -98,8 +99,11 @@ export async function processImageBuffer(
       throw new ImageProcessError('输入的图片 Buffer 无效', 'INVALID_BUFFER');
     }
 
-    if (imageBuffer.length > 20 * 1024 * 1024) {
-      throw new ImageProcessError('图片大小超过 20MB 限制', 'FILE_TOO_LARGE');
+    if (imageBuffer.length > MAX_FILE_SIZE) {
+      throw new ImageProcessError(
+        `图片大小超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+        'FILE_TOO_LARGE'
+      );
     }
 
     // 验证质量参数范围
@@ -259,7 +263,6 @@ export async function processImageBuffer(
     throw new ImageProcessError('图片处理时发生未知错误', 'UNKNOWN_ERROR');
   }
 }
-
 
 /**
  * 批量处理多张图片（生成器模式，支持实时返回结果）
