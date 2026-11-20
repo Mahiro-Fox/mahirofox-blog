@@ -1,5 +1,5 @@
+import type { ProviderValue } from '@/config';
 import { generateText, type UIMessage } from 'ai';
-import type { ProviderValue } from '@/config/providers';
 import { getModel } from './model';
 
 // === 标题生成 ===

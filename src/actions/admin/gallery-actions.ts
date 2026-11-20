@@ -1,6 +1,6 @@
 'use server';
 
-import { DEFAULT_GALLERY_LIST_LIMIT } from '@/config/limit';
+import { DEFAULT_GALLERY_LIST_LIMIT } from '@/config';
 import { paginateItems, PaginationResult } from '@/lib/shared/pagination';
 import {
   createGalleryFile,

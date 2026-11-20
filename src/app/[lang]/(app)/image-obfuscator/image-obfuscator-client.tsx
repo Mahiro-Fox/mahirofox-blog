@@ -1,11 +1,11 @@
 'use client';
 
+import { MAX_TOTAL_SIZE } from '@/constant';
 import { Images, Shuffle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/shadcn-ui/button';
-import { MAX_TOTAL_SIZE } from '@/constant/file-upload';
 import { useT } from '@/i18n/dictionary-provider';
 import {
   LARGE_IMAGE_PIXELS,

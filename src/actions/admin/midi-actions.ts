@@ -1,6 +1,6 @@
 'use server';
 
-import { MIDI_DIR } from '@/constant/dir';
+import { MIDI_DIR } from '@/constant';
 import { getMidis, readMidiFile } from '@/lib/content/midi';
 import { createUploadAction } from '@/lib/storage/create-upload-action';
 import {

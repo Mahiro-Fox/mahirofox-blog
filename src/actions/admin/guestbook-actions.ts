@@ -1,7 +1,7 @@
 'use server';
 
+import { siteConfig } from '@/config';
 import { headers } from 'next/headers';
-import { siteConfig } from '@/config/common';
 import { serverActionRateLimiter } from '@/lib/auth/rate-limit';
 import { verifyTurnstile } from '@/lib/cloudflare/turnstile';
 import { goFetch, withGoAuth } from '@/lib/integrations/go-api';

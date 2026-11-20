@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_PROVIDER, PROVIDERS } from '@/config';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { redirect, useRouter } from 'next/navigation';
@@ -14,7 +15,6 @@ import {
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { useAuthModal } from '@/components/auth/auth-modal-provider';
-import { DEFAULT_PROVIDER, PROVIDERS } from '@/config/providers';
 import { useT } from '@/i18n/dictionary-provider';
 import { useLocale } from '@/i18n/use-locale';
 import { conversationLocalStorage } from '@/lib/ai/conversation-local-storage';

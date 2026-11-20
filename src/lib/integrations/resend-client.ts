@@ -1,5 +1,5 @@
+import { requiredEnv } from '@/config';
 import { Resend } from 'resend';
-import { requiredEnv } from '@/config/env.server';
 
 // 单例模式，避免每次请求都 new 一个新的 client
 let resendInstance: Resend | null = null;

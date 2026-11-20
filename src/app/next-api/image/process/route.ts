@@ -1,5 +1,5 @@
+import { MAX_FILE_SIZE } from '@/constant';
 import { NextRequest, NextResponse } from 'next/server';
-import { MAX_FILE_SIZE } from '@/constant/file-upload';
 import {
   bufferToBase64,
   getMimeType,

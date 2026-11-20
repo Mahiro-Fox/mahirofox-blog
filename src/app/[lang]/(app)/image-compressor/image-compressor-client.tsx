@@ -158,7 +158,7 @@ function useImageCompressor() {
    * 添加文件
    */
   const handleFilesAdd = async (newFiles: UploadedFile[]) => {
-    const { MAX_TOTAL_SIZE } = await import('@/constant/file-upload');
+    const { MAX_TOTAL_SIZE } = await import('@/constant');
     const currentTotalSize = uploadedFiles.reduce((sum, f) => sum + f.size, 0);
 
     let totalSize = currentTotalSize;

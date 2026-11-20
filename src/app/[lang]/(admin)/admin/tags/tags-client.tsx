@@ -1,5 +1,6 @@
 'use client';
 
+import { getTagTypeConfig } from '@/config';
 import { Tag, TAG_TYPES, TagsData, TagType, TagTypeConfig } from '@/constant';
 import { Tag as LucideTag, RefreshCwIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,7 +31,6 @@ import {
 import { BrandIcons } from '@/components/shared/brand-icons';
 import { IconPicker } from '@/components/shared/icon-picker';
 import { Link } from '@/components/shared/link';
-import { getTagTypeConfig } from '@/config/tag';
 import { useCrud } from '@/hooks/use-crud';
 import { formatDate } from '@/utils/utils';
 

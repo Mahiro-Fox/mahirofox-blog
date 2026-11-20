@@ -1,6 +1,6 @@
 'use server';
 
-import { VRCHAT_VIDEO_DIR } from '@/constant/dir';
+import { VRCHAT_VIDEO_DIR } from '@/constant';
 import { getVideosPage, type VideoItem } from '@/lib/content/videos';
 
 export interface VideosResponse {

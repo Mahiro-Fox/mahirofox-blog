@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { UPLOADS_DIR } from '@/constant/dir';
+import { UPLOADS_DIR } from '@/constant';
 import {
   copyR2Object,
   deleteR2Object,

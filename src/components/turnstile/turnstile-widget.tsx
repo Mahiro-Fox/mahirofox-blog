@@ -1,7 +1,7 @@
 'use client';
 
+import { TURNSTILE_SITE_KEY, warnMissingTurnstileKey } from '@/config';
 import { useEffect, useRef } from 'react';
-import { TURNSTILE_SITE_KEY, warnMissingTurnstileKey } from '@/config/env';
 
 type TurnstileApi = {
   render: (el: HTMLElement, options: Record<string, unknown>) => string;

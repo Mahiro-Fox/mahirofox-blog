@@ -1,11 +1,11 @@
-import { toast } from 'sonner';
-import { adminUploadFiles } from '@/actions/admin/upload-files-actions';
 import {
   ALLOWED_MIME_TYPES,
   MAX_FILE_SIZE,
   MAX_FILES_COUNT,
   MAX_TOTAL_SIZE,
-} from '@/constant/file-upload';
+} from '@/constant';
+import { toast } from 'sonner';
+import { adminUploadFiles } from '@/actions/admin/upload-files-actions';
 import type { FileItem } from './types';
 
 // 图片扩展名（不含点，与 FileItem.extension 的格式保持一致）

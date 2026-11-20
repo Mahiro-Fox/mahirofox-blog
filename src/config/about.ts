@@ -1,3 +1,4 @@
+import { siteConfig, UpperCamelCaseName } from '@/config';
 import {
   Camera,
   Cloud,
@@ -16,7 +17,6 @@ import {
   Utensils,
   Video,
 } from 'lucide-react';
-import { author } from '@/lib/shared/author';
 
 // 卡片内容类型定义
 export interface ProfileContent {
@@ -113,8 +113,8 @@ export interface AboutConfig {
 
 // 导出配置
 export const aboutConfig: AboutConfig = {
-  name: author.name,
-  avatar: author.image,
+  name: UpperCamelCaseName,
+  avatar: siteConfig.ogImage,
   bio: 'about.bio',
   cards: [
     {
@@ -123,7 +123,7 @@ export const aboutConfig: AboutConfig = {
       size: 'md:col-span-3',
       content: {
         greeting: 'about.profile.greeting',
-        name: 'MahiroFox',
+        name: UpperCamelCaseName,
         title: 'about.profile.title',
       },
     },

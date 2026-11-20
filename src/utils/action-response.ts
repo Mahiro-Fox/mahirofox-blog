@@ -1,6 +1,6 @@
+import { ADMIN_SESSION_COOKIE } from '@/constant';
+import type { Permission } from '@/constant';
 import { cookies } from 'next/headers';
-import { ADMIN_SESSION_COOKIE } from '@/constant/auth';
-import type { Permission } from '@/constant/permissions';
 import { requirePermission } from '@/lib/auth/permissions';
 import { serverActionRateLimiter } from '@/lib/auth/rate-limit';
 import { GoApiError } from '@/lib/integrations/go-api';

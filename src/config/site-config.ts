@@ -1,4 +1,11 @@
 import {
+  APP_URL,
+  LowerCaseName,
+  ProjectName,
+  UPLOADS_ORIGIN,
+  UpperCamelCaseName,
+} from '@/config';
+import {
   Activity,
   AudioWaveform,
   Bot,
@@ -24,24 +31,19 @@ import {
   User,
   Video,
 } from 'lucide-react';
-import { APP_URL, UPLOADS_ORIGIN } from '@/config/env';
-
-// 站点域名必填（缺失会在构建期抛错）；静态资源域名可为空
-const siteUrl = APP_URL;
-const uploadsOrigin = UPLOADS_ORIGIN;
 
 export const siteConfig = {
-  name: 'MahiroFox Blog',
-  description: "this is mahirofox's blog, welcome to visit!",
-  url: siteUrl,
-  ogImage: `${uploadsOrigin}/uploads/images/avatar/mahirofox.webp`,
+  name: `${UpperCamelCaseName}'s Blog`,
+  description: `this is ${LowerCaseName}'s blog, welcome to visit!`,
+  url: APP_URL,
+  ogImage: `${UPLOADS_ORIGIN}/uploads/images/avatar/mahirofox.webp`,
+  twitterId: UpperCamelCaseName,
   links: {
-    twitter: 'https://x.com/MahiroFox',
-    github: 'https://github.com/Mahiro-Fox/mahirofox-blog',
+    github: `https://github.com/Mahiro-Fox/${ProjectName}`,
     vrchat:
       'https://vrchat.com/home/user/usr_f938bc37-4d62-48d8-98eb-955f10f464e0',
   },
-  copyRight: 'mahirofox',
+  copyRight: LowerCaseName,
   email: 'why510902@163.com',
 };
 

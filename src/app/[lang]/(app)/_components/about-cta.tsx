@@ -1,6 +1,6 @@
 'use client';
 
-import { siteConfig } from '@/config/common';
+import { siteConfig } from '@/config';
 import { useT } from '@/i18n/dictionary-provider';
 import { Trans } from '@/i18n/Trans';
 

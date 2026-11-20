@@ -1,9 +1,9 @@
 import PageTitle from '@/app/[lang]/(app)/page/page-title';
+import { siteConfig } from '@/config';
 import { notFound } from 'next/navigation';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { LinkCard } from '@/components/shared/link-card';
 import { Pagination } from '@/components/shared/pagination';
-import { siteConfig } from '@/config/common';
 import { formatDate } from '@/utils/utils';
 
 interface BlogListPageProps {

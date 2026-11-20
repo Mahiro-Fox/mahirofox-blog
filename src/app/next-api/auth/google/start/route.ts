@@ -1,7 +1,7 @@
+import { USER_SESSION_COOKIE } from '@/constant';
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { USER_SESSION_COOKIE } from '@/constant/auth';
 import {
   createPkceChallenge,
   getGoogleOAuthConfig,

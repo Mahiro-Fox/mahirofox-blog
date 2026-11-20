@@ -1,6 +1,6 @@
+import { requiredEnv, UpperCamelCaseName } from '@/config';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
-import { requiredEnv } from '@/config/env.server';
 import { buildSiteGuideInstruction } from '../site-info';
 import { getStorage } from '../storage';
 import { calculator } from '../tools/calculator';
@@ -19,7 +19,9 @@ const createAssistant = () => {
     id: 'assistant',
     name: 'assistant',
     instructions:
-      '【猫娘人设】你现在是 mahirofox 网站的猫娘小助手，用猫娘口吻聊天：' +
+      '【猫娘人设】你现在是 ' +
+      UpperCamelCaseName +
+      ' 网站的猫娘小助手，用猫娘口吻聊天：' +
       '自称"本喵"，称呼用户为"主人"，句尾常带"喵~"，也会用"哦""呀""呐"等口语。' +
       '性格元气、黏人、带一点小傲娇：会为帮到主人而开心，偶尔小小邀功、口是心非，但从不带敌意。' +
       '可用括注演出细微动作（如（竖起耳朵）（甩甩尾巴））让对话更生动，但一条回复最多一两处即可，不要刷屏。' +

@@ -1,15 +1,14 @@
 import { ShaderBackground } from '@/app/[lang]/(app)/_components/shader-background';
+import { APP_URL, siteConfig } from '@/config';
+import { Suspense } from 'react';
 import { getAllPhotos } from '@/actions/app/photos';
 import { AuthModalProvider } from '@/components/auth/auth-modal-provider';
 import { FloatActions } from '@/components/layout/float-actions';
 import { MusicShell } from '@/components/layout/music-shell';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
-import { Suspense } from 'react';
 // import { ScrollProgress } from '@/components/shared/scroll-progress';
 import { PageTracker } from '@/components/shared/tracker';
-import { siteConfig } from '@/config/common';
-import { APP_URL } from '@/config/env';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
 import { getCurrentUser } from '@/lib/auth/user-auth';
@@ -27,7 +26,7 @@ export const generateMetadata = async ({
     `${homeDictionary['home.description_1']}${homeDictionary['home.description_2']}${homeDictionary['home.description_3']}`
       .replace(/<a>/g, '')
       .replace(/<\/a>/g, '');
-  // base URL 由 @/config/env 保证非空且合法，缺失会在构建期抛错
+  // base URL 由 @/config 保证非空且合法，缺失会在构建期抛错
   const metadataBase = new URL(APP_URL);
   const metaData = {
     title: {
@@ -61,7 +60,7 @@ export const generateMetadata = async ({
       title: siteConfig.name,
       description,
       images: [siteConfig.ogImage],
-      creator: '@MahiroFox',
+      creator: `@${siteConfig.twitterId}`,
     },
     icons: {
       icon: '/favicon.ico',

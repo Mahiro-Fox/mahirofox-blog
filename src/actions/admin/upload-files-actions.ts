@@ -1,8 +1,8 @@
 'use server';
 
 import path from 'path';
+import { UPLOADS_DIR } from '@/constant';
 import { pathCacheStore } from '@/store/path-cache-store';
-import { UPLOADS_DIR } from '@/constant/dir';
 import { uploadAssetFile } from '@/lib/storage/upload-file';
 import {
   createUploadDirectory,

@@ -1,5 +1,5 @@
+import { optionalEnv, requiredEnv } from '@/config';
 import { PostgresStore } from '@mastra/pg';
-import { optionalEnv, requiredEnv } from '@/config/env.server';
 
 // Mastra 记忆存储：PostgreSQL（取代原 LibSQL 文件，避免 /app/data 只读挂载问题）。
 // 连接串解析策略：优先读 MASTRA_PG_URL，否则用 DB_* 组装。
@@ -26,7 +26,9 @@ const getStorage = (): PostgresStore => {
   if (storageInstance) return storageInstance;
   const connectionString = resolveConnectionString();
   if (!/^postgres(ql)?:\/\//.test(connectionString)) {
-    throw new Error('缺少 Mastra 存储的 PostgreSQL 连接配置：请设置 MASTRA_PG_URL 或 DB_* 环境变量');
+    throw new Error(
+      '缺少 Mastra 存储的 PostgreSQL 连接配置：请设置 MASTRA_PG_URL 或 DB_* 环境变量'
+    );
   }
   storageInstance = new PostgresStore({
     id: 'mastra-pg-storage',

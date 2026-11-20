@@ -1,7 +1,7 @@
 'use server';
 
+import { PROVIDERS, type ProviderValue } from '@/config';
 import { conversationStore } from '@/store/conversation-store';
-import { PROVIDERS, type ProviderValue } from '@/config/providers';
 import { generateTitle } from '@/lib/ai/ai-title';
 import { verifyUserAuth } from '@/lib/auth/user-auth';
 

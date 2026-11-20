@@ -16,7 +16,7 @@
     "theme.sakura_ink": "Sakura Ink",
     "bug_report.button_title": "Report Bug",
     "bug_report.dialog_title": "Submit Bug Report",
-    "bug_report.description": "Found a bug? Please describe the issue below, mahiro will fix it as soon as possible meow!",
+    "bug_report.description": "Found a bug? Please describe the issue below, mahirofox will fix it as soon as possible meow!",
     "bug_report.content_label": "Issue Description",
     "bug_report.content_placeholder": "Please describe the problem in detail...",
     "bug_report.contact_label": "Contact (Optional)",
@@ -24,7 +24,7 @@
     "bug_report.submit": "Submit Report",
     "bug_report.submitting": "Submitting...",
     "bug_report.error_empty": "Please enter the bug description",
-    "bug_report.success": "Thanks for the feedback! mahiro will handle it soon meow!",
+    "bug_report.success": "Thanks for the feedback! mahirofox will handle it soon meow!",
     "bug_report.error_failed": "Submission failed",
     "bug_report.error_network": "Network error, please try again later"
   },

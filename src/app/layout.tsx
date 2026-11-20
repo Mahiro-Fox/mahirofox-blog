@@ -7,9 +7,9 @@ import { fontVariables } from '@/lib/shared/fonts';
 import { cn } from '@/utils/utils';
 import '@/styles/globals.css';
 import '@/styles/theme.css';
+import { defaultTheme, THEME_STORAGE_KEY, themes } from '@/config';
 import Script from 'next/script';
 import { WebVitals } from '@/components/shared/web-vitals';
-import { defaultTheme, THEME_STORAGE_KEY, themes } from '@/config/themes';
 
 interface RootLayoutProps {
   children: React.ReactNode;

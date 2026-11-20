@@ -1,9 +1,11 @@
+import {
+  CONTENT_SECURITY_POLICY,
+  pageRoutesConfig,
+  UPLOADS_ORIGIN as UPLOADS_ORIGIN_ENV,
+} from '@/config';
+import { USER_SESSION_COOKIE } from '@/constant';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { pageRoutesConfig } from '@/config/common';
-import { CONTENT_SECURITY_POLICY } from '@/config/csp';
-import { UPLOADS_ORIGIN as UPLOADS_ORIGIN_ENV } from '@/config/env';
-import { USER_SESSION_COOKIE } from '@/constant/auth';
 import { i18nConfig } from '@/i18n/i18n.config';
 
 /**

@@ -1,5 +1,5 @@
+import { siteConfig } from '@/config';
 import VerificationCodeEmail from '@/components/email/verification-code';
-import { siteConfig } from '@/config/common';
 import { sendEmailWithRetry } from './send-with-retry';
 
 interface SendVerificationCodeParams {

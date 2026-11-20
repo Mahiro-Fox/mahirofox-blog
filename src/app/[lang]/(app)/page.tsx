@@ -3,6 +3,7 @@ import Galleries from '@/app/[lang]/(app)/_components/galleries';
 import { HomeBanner } from '@/app/[lang]/(app)/_components/home-banner';
 import Posts from '@/app/[lang]/(app)/_components/posts';
 import Tags from '@/app/[lang]/(app)/_components/tags';
+import { ProjectName, siteConfig } from '@/config';
 import { tagStore } from '@/store/tag-store';
 import { ChevronDown } from 'lucide-react';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
@@ -11,7 +12,6 @@ import { getAllPhotos } from '@/actions/app/photos';
 import { BlurFade } from '@/components/magicui/blur-fade';
 import { PartialViewCarousel } from '@/components/shared/partial-view-carousel';
 import { VermilionThread } from '@/components/shared/vermilion-thread';
-import { siteConfig } from '@/config/common';
 
 // 首页各区块的固定展示条数（与各子组件内部 slice 保持一致）
 const HOME_POST_COUNT = 6;
@@ -98,7 +98,7 @@ export default async function IndexPage() {
             '@context': 'https://schema.org',
             '@type': 'Blog',
             '@id': siteConfig.url,
-            name: 'mahirofox-blog',
+            name: ProjectName,
             url: siteConfig.url,
           }),
         }}

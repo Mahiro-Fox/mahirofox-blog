@@ -1,8 +1,5 @@
 'use client';
 
-import { m } from 'motion/react';
-import { TextAnimate } from '@/components/magicui/text-animate';
-import { OptimizedImage } from '@/components/shared/optimized-image';
 import {
   aboutConfig,
   type BadgeContent,
@@ -13,7 +10,10 @@ import {
   type ProfileContent,
   type PursuitContent,
   type SkillsContent,
-} from '@/config/about';
+} from '@/config';
+import { m } from 'motion/react';
+import { TextAnimate } from '@/components/magicui/text-animate';
+import { OptimizedImage } from '@/components/shared/optimized-image';
 import { useT } from '@/i18n/dictionary-provider';
 import { BadgeCard } from './_components/badge-card';
 import { MapCard } from './_components/map-card';

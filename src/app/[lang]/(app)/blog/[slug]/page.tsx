@@ -1,3 +1,4 @@
+import { siteConfig, UpperCamelCaseName } from '@/config';
 import { tagStore } from '@/store/tag-store';
 import { notFound } from 'next/navigation';
 import React from 'react';
@@ -14,8 +15,6 @@ import {
 } from '@/components/shadcn-ui/breadcrumb';
 import { BlurredHeroImage } from '@/components/shared/blurred-hero-image';
 import { LinkBadge } from '@/components/shared/link-badge';
-import { siteConfig } from '@/config/common';
-import { author } from '@/lib/shared/author';
 import { formatDate, generateAbsoluteUrl } from '@/utils/utils';
 
 interface BlogPostPageProps {
@@ -175,9 +174,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                 <div className="py-4">
                   <Author
-                    name={author.name}
-                    twitterId={author.twitter}
-                    imageUrl={author.image}
+                    name={UpperCamelCaseName}
+                    twitterId={siteConfig.twitterId}
+                    imageUrl={siteConfig.ogImage}
                   />
                 </div>
               </header>

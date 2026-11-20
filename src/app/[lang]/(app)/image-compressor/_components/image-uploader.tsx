@@ -324,7 +324,7 @@ export default function ImageUploader({
    */
   const handleFiles = useCallback(
     async (fileList: FileList | File[] | null) => {
-      const { MAX_FILE_SIZE } = await import('@/constant/file-upload');
+      const { MAX_FILE_SIZE } = await import('@/constant');
       if (!fileList || disabled) return;
 
       const newFiles: UploadedFile[] = [];

@@ -5,8 +5,8 @@
  * 统一由 Next 的 route handler 转发：浏览器请求 Next → Next 带内部密钥请求 Go →
  * 原样透传状态码与头部，并把 Go 返回的响应体作为流返回浏览器。
  */
+import { requiredEnv } from '@/config';
 import { NextRequest, NextResponse } from 'next/server';
-import { requiredEnv } from '@/config/env.server';
 
 function baseUrl(): string {
   return requiredEnv('GO_API_INTERNAL_URL');

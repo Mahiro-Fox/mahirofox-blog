@@ -1,11 +1,11 @@
 'use client';
 
+import { siteConfig } from '@/config';
 import React from 'react';
 import { AuroraText } from '@/components/magicui/aurora-text';
 import { FadeCarousel } from '@/components/shared/fade-carousel';
 import { imageSizes } from '@/components/shared/image-sizes';
 import { OptimizedImage } from '@/components/shared/optimized-image';
-import { siteConfig } from '@/config/common';
 import { Trans } from '@/i18n/Trans';
 import { PhotoItem } from '@/lib/content/photos';
 

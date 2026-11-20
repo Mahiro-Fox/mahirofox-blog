@@ -1,4 +1,5 @@
 import { AboutCta } from '@/app/[lang]/(app)/_components/about-cta';
+import { siteConfig } from '@/config';
 import { tagStore } from '@/store/tag-store';
 import { notFound } from 'next/navigation';
 import React from 'react';
@@ -15,7 +16,6 @@ import {
 } from '@/components/shadcn-ui/breadcrumb';
 import { BrandIcons } from '@/components/shared/brand-icons';
 import { LinkCard } from '@/components/shared/link-card';
-import { siteConfig } from '@/config/common';
 import { formatDate, generateAbsoluteUrl } from '@/utils/utils';
 
 interface BlogTagPageProps {

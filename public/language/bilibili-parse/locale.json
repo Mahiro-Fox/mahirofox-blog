@@ -2,7 +2,7 @@
   "en": {
     "bilibili-parse.title": "Bilibili Video Parser",
     "bilibili-parse.description": "Input bilibili video url, get mp4 direct link with sound and the highest-quality audio track",
-    "bilibili-parse.keywords": "mahiro, mahirofox, bilibili, video, parser, mp4, audio, m4a, direct link",
+    "bilibili-parse.keywords": "mahirofox, bilibili, video, parser, mp4, audio, m4a, direct link",
     "bilibili-parse.enter_url_placeholder": "Enter Bilibili video link, e.g.: https://www.bilibili.com/video/BV1xxx/",
     "bilibili-parse.parse": "Parse",
     "bilibili-parse.paste_failed": "Paste failed",
@@ -35,7 +35,7 @@
   "cn": {
     "bilibili-parse.title": "Bilibili视频解析",
     "bilibili-parse.description": "输入 B 站视频链接，获取带声音的 MP4 直链，同时解析最高质量音频",
-    "bilibili-parse.keywords": "mahiro, mahirofox, bilibili, 视频解析, mp4, 音频, m4a, 直链",
+    "bilibili-parse.keywords": "mahirofox, bilibili, B站, 视频解析, mp4, 音频, m4a, 直链",
     "bilibili-parse.enter_url_placeholder": "请输入 B 站视频链接，例如：https://www.bilibili.com/video/BV1xxx/",
     "bilibili-parse.parse": "解析",
     "bilibili-parse.paste_failed": "粘贴失败",

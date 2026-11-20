@@ -1,6 +1,6 @@
 'use client';
 
-import { MOOD_OPTIONS } from '@/config';
+import { MOOD_OPTIONS, ProjectName } from '@/config';
 import { Edit, Image as ImageIcon, MapPin, Smile, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
@@ -398,7 +398,7 @@ export default function MomentsClient({
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=zh-CN`,
         {
           headers: {
-            'User-Agent': 'mahirofox-blog',
+            'User-Agent': ProjectName,
           },
         }
       );

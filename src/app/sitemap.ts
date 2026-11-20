@@ -1,10 +1,10 @@
+import { APP_URL } from '@/config';
 import { tagStore } from '@/store/tag-store';
 import type { MetadataRoute } from 'next';
 import { unstable_cache } from 'next/cache';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
 import { getPublicMovies } from '@/actions/admin/movie-actions';
-import { APP_URL } from '@/config/env';
 
 // 路由本身声明为动态,保证构建时绝不执行
 export const dynamic = 'force-dynamic';

@@ -6,9 +6,8 @@
  * → userinfo 取已验证身份 → 交给 Go 后端签发 user-session。
  */
 
+import { APP_URL, optionalEnv } from '@/config';
 import { NextResponse } from 'next/server';
-import { optionalEnv } from '@/config/env.server';
-import { APP_URL } from '@/config/env';
 import { i18nConfig } from '@/i18n/i18n.config';
 
 export const GOOGLE_AUTH_ENDPOINT =
@@ -103,7 +102,10 @@ export function signinPathFor(target: string, errorCode?: string): string {
 }
 
 /** 在站内相对路径后追加查询参数（已有查询串时用 &） */
-export function appendQuery(path: string, params: Record<string, string>): string {
+export function appendQuery(
+  path: string,
+  params: Record<string, string>
+): string {
   const query = new URLSearchParams(params).toString();
   if (!query) return path;
   return `${path}${path.includes('?') ? '&' : '?'}${query}`;

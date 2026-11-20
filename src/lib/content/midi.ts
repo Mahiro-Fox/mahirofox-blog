@@ -1,5 +1,5 @@
 import path from 'path';
-import { MIDI_DIR } from '@/constant/dir';
+import { MIDI_DIR } from '@/constant';
 import {
   listUploadFiles,
   readUploadFile,

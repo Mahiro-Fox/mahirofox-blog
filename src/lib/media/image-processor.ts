@@ -1,5 +1,5 @@
+import { MAX_FILE_SIZE } from '@/constant';
 import sharp, { Metadata, Sharp } from 'sharp';
-import { MAX_FILE_SIZE } from '@/constant/file-upload';
 
 /**
  * 支持的目标图片格式

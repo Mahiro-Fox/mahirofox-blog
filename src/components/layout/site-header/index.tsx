@@ -1,5 +1,6 @@
 'use client';
 
+import { groupedNavRoutes, siteConfig } from '@/config';
 import { LogOut, Menu, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -39,7 +40,6 @@ import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { Link } from '@/components/shared/link';
 import { SiteLogo } from '@/components/shared/site-logo';
 import { ThemeSwitcher } from '@/components/shared/theme-switcher';
-import { groupedNavRoutes, siteConfig } from '@/config/common';
 import { useT } from '@/i18n/dictionary-provider';
 import { usePathnameWithoutLocale } from '@/i18n/use-pathname-without-locale';
 

@@ -1,8 +1,7 @@
+import { APP_URL, siteConfig } from '@/config';
 import { NextResponse } from 'next/server';
 import { getPublicBlogs } from '@/actions/admin/blog-actions';
 import { getPublicGalleries } from '@/actions/admin/gallery-actions';
-import { siteConfig } from '@/config/common';
-import { APP_URL } from '@/config/env';
 
 export async function GET() {
   const blogResult = await getPublicBlogs({ all: true });

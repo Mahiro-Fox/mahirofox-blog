@@ -1,7 +1,7 @@
 'use server';
 
+import { DEFAULT_BLOG_LIST_LIMIT } from '@/config';
 import matter from 'gray-matter';
-import { DEFAULT_BLOG_LIST_LIMIT } from '@/config/limit';
 import { paginateItems, PaginationResult } from '@/lib/shared/pagination';
 import {
   createBlogFile,

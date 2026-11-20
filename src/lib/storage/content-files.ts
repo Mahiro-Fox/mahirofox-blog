@@ -1,5 +1,5 @@
+import { BLOG_DIR, GALLERY_DIR } from '@/constant';
 import matter from 'gray-matter';
-import { BLOG_DIR, GALLERY_DIR } from '@/constant/dir';
 import {
   deleteUploadFile,
   listUploadFiles,
@@ -54,10 +54,7 @@ function sortByLastUpdatedDesc<T extends { lastUpdated: string }>(
  */
 const LIST_CACHE_TTL_MS = 60_000;
 type ListBucket = 'blog' | 'gallery';
-const listCache = new Map<
-  ListBucket,
-  { value: unknown; expiresAt: number }
->();
+const listCache = new Map<ListBucket, { value: unknown; expiresAt: number }>();
 
 function invalidateListCache(bucket: ListBucket): void {
   listCache.delete(bucket);
@@ -238,9 +235,7 @@ export async function readGalleryFile(slug: string): Promise<string> {
 }
 
 /** 读取图库 JSON 并解析，附带文件元信息 */
-export async function readGalleryDetail(
-  slug: string
-): Promise<AdminGallery> {
+export async function readGalleryDetail(slug: string): Promise<AdminGallery> {
   const content = await readGalleryFile(slug);
   const data = parseGalleryJson(content);
   return {

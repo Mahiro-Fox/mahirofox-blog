@@ -1,8 +1,8 @@
 'use server';
 
 import path from 'path';
+import { OBUSCATOR_PHOTO_DIR, PHOTO_DIR, R18_PHOTO_DIR } from '@/constant';
 import { cache } from 'react';
-import { OBUSCATOR_PHOTO_DIR, PHOTO_DIR, R18_PHOTO_DIR } from '@/constant/dir';
 import { verifyUserAuth } from '@/lib/auth/user-auth';
 import {
   getPhotoCollections,

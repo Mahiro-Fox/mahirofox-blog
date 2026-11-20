@@ -1,10 +1,10 @@
 'use client';
 
-import { COLOR_OPTIONS } from '@/config';
+import { COLOR_OPTIONS, TURNSTILE_SITE_KEY } from '@/config';
 // 莫兰迪色系颜色选项
 import { CheckIcon, Send, Sticker, X, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { submitGuestbook } from '@/actions/admin/guestbook-actions';
 import { Button } from '@/components/shadcn-ui/button';
 import {
@@ -17,7 +17,6 @@ import {
 import { Input } from '@/components/shadcn-ui/input';
 import { Toggle } from '@/components/shadcn-ui/toggle';
 import { TurnstileWidget } from '@/components/turnstile/turnstile-widget';
-import { TURNSTILE_SITE_KEY } from '@/config/env';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
 import { isEmail } from '@/utils/utils';
@@ -115,7 +114,10 @@ export function GuestbookWallDialog() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="guestbook-nickname" className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="guestbook-nickname"
+                className="mb-2 block text-sm font-medium"
+              >
                 {t('guestbook.form.label.nickname')}
               </label>
               <Input
@@ -150,7 +152,10 @@ export function GuestbookWallDialog() {
             </div>
 
             <div>
-              <label htmlFor="guestbook-contact" className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="guestbook-contact"
+                className="mb-2 block text-sm font-medium"
+              >
                 {t('guestbook.form.label.contact')}
               </label>
               <div className="flex flex-col gap-2">
@@ -193,7 +198,10 @@ export function GuestbookWallDialog() {
             </div>
 
             <div>
-              <label htmlFor="guestbook-content" className="mb-2 block text-sm font-medium">
+              <label
+                htmlFor="guestbook-content"
+                className="mb-2 block text-sm font-medium"
+              >
                 {t('guestbook.form.label.content')}
               </label>
               <textarea

@@ -11,7 +11,7 @@
  * 调用方在 options.headers 里传 Authorization 即可被透传到底层 fetch。
  */
 
-import { requiredEnv } from '@/config/env.server';
+import { requiredEnv } from '@/config';
 
 // 这两个守卫放在函数体内（运行时才执行），而不是模块顶层。
 // 原因：next build 会加载本模块；若在顶层 throw，构建阶段缺少

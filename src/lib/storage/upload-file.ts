@@ -1,8 +1,8 @@
 import path from 'path';
+import { optionalIntEnv } from '@/config';
+import { MAX_FILE_SIZE } from '@/constant';
 import { imageSize } from 'image-size';
 import sharp from 'sharp';
-import { MAX_FILE_SIZE } from '@/constant/file-upload';
-import { optionalIntEnv } from '@/config/env.server';
 import {
   putUploadFile,
   resolveUploadKey,

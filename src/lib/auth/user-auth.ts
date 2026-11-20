@@ -1,6 +1,6 @@
+import { USER_SESSION_COOKIE } from '@/constant';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import { USER_SESSION_COOKIE } from '@/constant/auth';
 import { goFetch } from '@/lib/integrations/go-api';
 import type { GoogleIdentity } from '@/lib/integrations/google-oauth';
 

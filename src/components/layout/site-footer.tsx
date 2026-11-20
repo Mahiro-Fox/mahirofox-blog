@@ -1,10 +1,10 @@
+import { ProjectName, siteConfig, UpperCamelCaseName } from '@/config';
 import { MailIcon, RssIcon } from 'lucide-react';
 import NextLink from 'next/link';
 import { buttonVariants } from '@/components/shadcn-ui/button-variants';
 import { BrandIcons } from '@/components/shared/brand-icons';
 import { Link } from '@/components/shared/link';
 import { MagneticButton } from '@/components/shared/magnetic-button';
-import { siteConfig } from '@/config/common';
 import { cn } from '@/utils/utils';
 
 export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
@@ -25,7 +25,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 rel="noreferrer"
                 className={buttonVariants({ variant: 'outline', size: 'icon' })}
                 aria-label="VRChat"
-                title="VRChat (mahirofox)"
+                title={`VRChat (${UpperCamelCaseName})`}
               >
                 <BrandIcons.vrchat className="size-4" />
               </Link>
@@ -39,7 +39,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Email"
-                title="Email (mahirofox)"
+                title={`Email (${UpperCamelCaseName})`}
               >
                 <MailIcon className="size-4" />
               </Link>
@@ -53,21 +53,21 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="GitHub"
-                title="GitHub (mahirofox-blog github repository)"
+                title={`GitHub (${ProjectName} github repository)`}
               >
                 <BrandIcons.gitHub className="size-4" />
               </Link>
             </MagneticButton>
           )}
-          {siteConfig.links.twitter && (
+          {siteConfig.twitterId && (
             <MagneticButton>
               <Link
-                href={siteConfig.links.twitter}
+                href={`https://x.com/${siteConfig.twitterId}`}
                 target="_blank"
                 rel="noreferrer"
                 className={buttonVariants({ variant: 'outline', size: 'icon' })}
                 aria-label="Twitter"
-                title="Twitter (MahiroFox)"
+                title={`Twitter (@${siteConfig.twitterId})`}
               >
                 <BrandIcons.x className="size-4" />
               </Link>
@@ -78,7 +78,7 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
               href="/rss.xml"
               className={buttonVariants({ variant: 'outline', size: 'icon' })}
               aria-label="RSS"
-              title="RSS Feed (mahirofox-blog)"
+              title={`RSS Feed (${ProjectName})`}
             >
               <RssIcon className="size-4" />
             </NextLink>

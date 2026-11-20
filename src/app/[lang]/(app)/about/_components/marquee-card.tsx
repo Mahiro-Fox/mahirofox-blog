@@ -1,7 +1,7 @@
 'use client';
 
+import { MarqueeContent } from '@/config';
 import { m } from 'motion/react';
-import { MarqueeContent } from '@/config/about';
 import { useT } from '@/i18n/dictionary-provider';
 
 interface MarqueeCardProps {

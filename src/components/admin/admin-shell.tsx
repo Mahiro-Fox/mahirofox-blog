@@ -1,5 +1,7 @@
 'use client';
 
+import { adminRoutesConfig } from '@/config';
+import { MAX_FILE_SIZE } from '@/constant';
 import { Loader2, LogOut, Menu, RefreshCw, Shield, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -35,8 +37,6 @@ import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { Link } from '@/components/shared/link';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { ThemeSwitcher } from '@/components/shared/theme-switcher';
-import { adminRoutesConfig } from '@/config/common';
-import { MAX_FILE_SIZE } from '@/constant/file-upload';
 import { useT } from '@/i18n/dictionary-provider';
 import { usePathnameWithoutLocale } from '@/i18n/use-pathname-without-locale';
 

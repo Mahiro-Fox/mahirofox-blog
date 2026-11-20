@@ -1,8 +1,8 @@
+import { requiredEnv } from '@/config';
 import {
   issueCaptchaTicket,
   verifyCaptchaTicket,
 } from '@/lib/cloudflare/captcha-ticket';
-import { requiredEnv } from '@/config/env.server';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('Turnstile');

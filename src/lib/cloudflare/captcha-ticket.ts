@@ -15,7 +15,7 @@
  */
 
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
-import { optionalEnv } from '@/config/env.server';
+import { optionalEnv } from '@/config';
 
 const TICKET_TTL_MS = 5 * 60 * 1000;
 /** 场景：前台账户流程（登录 / 注册 / 重置密码共用一张票） */
@@ -54,7 +54,9 @@ export function issueCaptchaTicket(email: string): string | null {
     i: Date.now(),
     n: randomUUID(),
   };
-  const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload), 'utf8').toString(
+    'base64url'
+  );
   return `${body}.${sign(body, key)}`;
 }
 

@@ -2,7 +2,7 @@
 // 来源：src/config/common.ts 的功能/路由清单 + public/language/header/locale.json(cn) 功能描述 + home 定位文案。
 // 维护：新增/调整本站对外功能时，同步更新 features/extras 数组即可（纯静态、无运行时依赖）。
 
-import { siteConfig } from "@/config";
+import { ProjectName, siteConfig, UpperCamelCaseName } from '@/config';
 
 interface SiteFeature {
   name: string;
@@ -20,24 +20,23 @@ interface SiteInfo {
 
 // 对外功能清单（排除纯后台管理路由，如 音乐管理/用户管理/上传文件/访问日志等）
 const siteInfo: SiteInfo = {
-  name: 'MahiroFox Blog',
+  name: siteConfig.name,
   url: siteConfig.url,
-  position:
-    'MahiroFox的个人网站。主要内容是分享照片，尤其是和朋友在 VRChat 里拍的照片；' +
-    '次要内容是编程笔记与技术分享；此外还集成了一批即开即用的小工具。' +
-    '源代码开源在 GitHub（github.com/Mahiro-Fox/mahirofox-blog）。',
+  position: `${UpperCamelCaseName}的个人网站。主要内容是分享照片，尤其是和朋友在 VRChat 里拍的照片；
+    次要内容是编程笔记与技术分享；此外还集成了一批即开即用的小工具。
+    源代码开源在 GitHub（github.com/Mahiro-Fox/${ProjectName}）。`,
   features: [
     {
       name: '帖子（博客）',
       route: '/page/blog/1',
-      summary: '浏览 mahiro 写的博客文章，支持 mdx/md。',
+      summary: `浏览 ${UpperCamelCaseName} 写的博客文章，支持 mdx/md。`,
     },
     { name: '相册', route: '/page/gallery/1', summary: '浏览图片相册。' },
     { name: '照片', route: '/photos', summary: '瀑布流形式的图片展示。' },
     {
       name: '碎碎念',
       route: '/moments',
-      summary: 'mahiro 的日常动态，支持文字、图片、心情与位置。',
+      summary: `${UpperCamelCaseName} 的日常动态，支持文字、图片、心情与位置。`,
     },
     {
       name: '影视收藏',

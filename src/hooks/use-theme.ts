@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import {
-  THEME_STORAGE_KEY,
   defaultTheme,
+  THEME_STORAGE_KEY,
   themes,
   type ThemeId,
-} from '@/config/themes';
+} from '@/config';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * 主题状态管理 Hook

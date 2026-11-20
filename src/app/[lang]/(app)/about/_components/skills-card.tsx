@@ -1,8 +1,8 @@
 'use client';
 
+import { SkillsContent } from '@/config';
 import { m } from 'motion/react';
 import { Marquee } from '@/components/magicui/marquee';
-import { SkillsContent } from '@/config/about';
 import { useT } from '@/i18n/dictionary-provider';
 
 interface SkillsCardProps {

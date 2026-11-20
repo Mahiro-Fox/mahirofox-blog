@@ -1,6 +1,6 @@
+import { APP_URL } from '@/config';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { APP_URL } from '@/config/env';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

@@ -1,7 +1,7 @@
 'use client';
 
+import { BadgeContent } from '@/config';
 import { m } from 'motion/react';
-import { BadgeContent } from '@/config/about';
 import { useT } from '@/i18n/dictionary-provider';
 
 interface BadgeCardProps {
