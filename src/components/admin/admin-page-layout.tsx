@@ -37,7 +37,7 @@ export function AdminPageLayout({
   loading = false,
 }: AdminPageLayoutProps) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function AdminPageLayout({
 
       {/* Primary Actions Area */}
 
-      <CardContent className="max-h-[70vh] overflow-auto">
+      <CardContent className="overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
