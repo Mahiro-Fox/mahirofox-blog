@@ -6,6 +6,7 @@ import {
   deleteR2Object,
   getR2ObjectBuffer,
   getR2ObjectRange,
+  headR2Object,
   isR2Configured,
   listR2Directories,
   listR2DirectoryContents,
@@ -289,6 +290,24 @@ export async function uploadFileExists(key: string): Promise<boolean> {
     }
   }
   return r2ObjectExists(toUploadsKey(key));
+}
+
+/** 读取文件元信息（大小 / 内容类型），不存在时返回 null */
+export async function getUploadFileMeta(
+  key: string
+): Promise<{ size: number; contentType?: string } | null> {
+  if (!isR2Configured() || isLocalAbsolutePath(key)) {
+    try {
+      const stats = await fs.promises.stat(
+        /*turbopackIgnore: true*/ keyToLocalPath(key)
+      );
+      if (!stats.isFile()) return null;
+      return { size: stats.size };
+    } catch {
+      return null;
+    }
+  }
+  return headR2Object(toUploadsKey(key));
 }
 
 /** 是否是目录（R2 通过前缀判断） */

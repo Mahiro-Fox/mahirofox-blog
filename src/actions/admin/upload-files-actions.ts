@@ -1,15 +1,28 @@
 'use server';
 
 import path from 'path';
-import { UPLOADS_DIR } from '@/constant';
+import {
+  MAX_FILE_SIZE,
+  MAX_FILES_COUNT,
+  MAX_TOTAL_SIZE,
+  UPLOADS_DIR,
+} from '@/constant';
 import { pathCacheStore } from '@/store/path-cache-store';
-import { uploadAssetFile } from '@/lib/storage/upload-file';
+import { isR2Configured, presignR2PutUrl } from '@/lib/cloudflare/r2';
+import {
+  isUploadMimeAllowed,
+  sanitizeFileName,
+  uploadAssetBuffer,
+  uploadAssetFile,
+} from '@/lib/storage/upload-file';
 import {
   createUploadDirectory,
   deleteUploadDirectory,
   deleteUploadFile,
+  getUploadFileMeta,
   isUploadDirectory,
   listUploadEntries,
+  readUploadFile,
   renameUploadEntry,
   resolveUploadKey,
   uploadFileExists,
@@ -147,6 +160,275 @@ export async function adminUploadFiles(formData: FormData): Promise<
     } catch (error) {
       logger.error('上传文件失败', error);
       return { success: false, error: '上传失败' };
+    }
+  });
+}
+
+export interface PresignUploadInput {
+  /** 浏览器端原始文件名 */
+  name: string;
+  size: number;
+  type: string;
+}
+
+export interface PresignUploadItem {
+  /** 原始文件名，用于结果提示 */
+  name: string;
+  /** 安全化后的文件名（与签名里的 key 一致） */
+  fileName?: string;
+  /** R2 key */
+  key?: string;
+  /** 预签名 PUT 地址 */
+  uploadUrl?: string;
+  contentType?: string;
+  target?: 'image' | 'raw';
+  error?: string;
+}
+
+export interface UploadFileResultItem {
+  name: string;
+  path: string;
+  success: boolean;
+  converted?: boolean;
+  error?: string;
+}
+
+/** 按文件名 / MIME 判断走图片处理还是原样保存（与原上传逻辑保持一致） */
+function deriveUploadTarget(name: string, type: string): 'image' | 'raw' {
+  return type.startsWith('image/') || /\.(webp|png|jpe?g|gif)$/i.test(name)
+    ? 'image'
+    : 'raw';
+}
+
+/**
+ * 生成浏览器直传 R2 的预签名 PUT 地址。
+ * 由服务端校验目录、文件名、大小、类型与重名，签名只允许写入指定 key。
+ * R2 未配置（本地开发）时返回 configured=false，由前端回退到服务端上传。
+ */
+export async function createUploadPresigns(input: {
+  dir: string;
+  files: PresignUploadInput[];
+}): Promise<
+  ActionResponse<{ configured: boolean; items: PresignUploadItem[] }>
+> {
+  return withActionPermission('files:upload', async (user) => {
+    try {
+      const relativePath = normalizeRelativePath(input.dir ?? '');
+      const files = input.files ?? [];
+
+      if (files.length === 0) {
+        return { success: false, error: '没有提供文件' };
+      }
+      if (files.length > MAX_FILES_COUNT) {
+        return {
+          success: false,
+          error: `文件数量超过限制，最多允许 ${MAX_FILES_COUNT} 个文件`,
+        };
+      }
+
+      const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
+      if (totalSize > MAX_TOTAL_SIZE) {
+        return {
+          success: false,
+          error: `文件总大小超过限制，最多允许 ${MAX_TOTAL_SIZE / 1024 / 1024}MB`,
+        };
+      }
+
+      const configured = isR2Configured();
+      const usedKeys = new Set<string>();
+      const items: PresignUploadItem[] = [];
+
+      for (const file of files) {
+        const name = file.name ?? '';
+        try {
+          if (!name) throw new Error('文件名不能为空');
+          if (!Number.isFinite(file.size) || file.size <= 0) {
+            throw new Error('文件内容为空');
+          }
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error(
+              `文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`
+            );
+          }
+
+          const fileName = sanitizeFileName(name);
+          const target = deriveUploadTarget(name, file.type);
+          const contentType = file.type || 'application/octet-stream';
+          if (!isUploadMimeAllowed(contentType, fileName, target)) {
+            throw new Error('不支持的文件类型');
+          }
+
+          const prefix = `uploads/${relativePath ? `${relativePath}/` : ''}`;
+          const key = resolveUploadKey(`${prefix}${fileName}`);
+          if (usedKeys.has(key)) {
+            throw new Error(`文件名重复: ${fileName}`);
+          }
+          usedKeys.add(key);
+
+          if (await uploadFileExists(key)) {
+            throw new Error(`文件 ${fileName} 已存在`);
+          }
+          // 图片会额外生成同名 .webp，提前拦截冲突
+          if (target === 'image' && !fileName.toLowerCase().endsWith('.webp')) {
+            const webpName = `${fileName.replace(/\.[^/.]+$/, '') || 'upload'}.webp`;
+            const webpKey = resolveUploadKey(`${prefix}${webpName}`);
+            if (webpKey !== key && (await uploadFileExists(webpKey))) {
+              throw new Error(`文件 ${webpName} 已存在`);
+            }
+          }
+
+          if (!configured) {
+            items.push({ name });
+            continue;
+          }
+
+          const uploadUrl = await presignR2PutUrl(key, contentType);
+          items.push({
+            name,
+            fileName,
+            key,
+            uploadUrl,
+            contentType,
+            target,
+          });
+        } catch (error) {
+          items.push({
+            name,
+            error: error instanceof Error ? error.message : '预签名失败',
+          });
+        }
+      }
+
+      logger.info('生成直传预签名', {
+        count: files.length,
+        relativePath,
+        configured,
+        userId: user.id,
+      });
+
+      return { success: true, data: { configured, items } };
+    } catch (error) {
+      logger.error('生成直传预签名失败', error);
+      return { success: false, error: '获取上传地址失败' };
+    }
+  });
+}
+
+export interface FinalizeUploadInput {
+  /** 安全化后的文件名（createUploadPresigns 返回） */
+  fileName: string;
+  /** 原始文件名，用于结果提示 */
+  displayName?: string;
+  target: 'image' | 'raw';
+}
+
+/**
+ * 直传完成后收尾：校验对象、图片转 WebP，并返回与原上传接口一致的结果结构。
+ */
+export async function finalizeUploadPresigns(input: {
+  dir: string;
+  files: FinalizeUploadInput[];
+}): Promise<
+  ActionResponse<{ message: string; results: UploadFileResultItem[] }>
+> {
+  return withActionPermission('files:upload', async (user) => {
+    try {
+      if (!isR2Configured()) {
+        return { success: false, error: 'R2 未配置，无法完成直传' };
+      }
+
+      const relativePath = normalizeRelativePath(input.dir ?? '');
+      const files = input.files ?? [];
+      if (files.length === 0) {
+        return { success: false, error: '没有待处理文件' };
+      }
+
+      const prefix = `uploads/${relativePath ? `${relativePath}/` : ''}`;
+      const results: UploadFileResultItem[] = [];
+
+      for (const file of files) {
+        const displayName = file.displayName || file.fileName;
+        let key = '';
+        try {
+          if (file.target !== 'image' && file.target !== 'raw') {
+            throw new Error('非法的上传类型');
+          }
+
+          const fileName = sanitizeFileName(file.fileName);
+          key = resolveUploadKey(`${prefix}${fileName}`);
+
+          const meta = await getUploadFileMeta(key);
+          if (!meta) {
+            throw new Error(`文件 ${fileName} 上传未完成`);
+          }
+          if (meta.size > MAX_FILE_SIZE) {
+            throw new Error(
+              `文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`
+            );
+          }
+
+          let data: { url: string; converted: boolean };
+
+          if (file.target === 'image') {
+            const buffer = await readUploadFile(key);
+            const processed = await uploadAssetBuffer(fileName, buffer, {
+              dir: relativePath,
+              target: 'image',
+              originalStored: true,
+              declaredMime: meta.contentType,
+            });
+            data = { url: processed.url, converted: processed.converted };
+          } else {
+            if (!isUploadMimeAllowed(meta.contentType ?? '', fileName, 'raw')) {
+              throw new Error(`不支持的文件类型: ${fileName}`);
+            }
+            data = {
+              url: `/uploads/${prefix.replace(/^uploads\//, '')}${fileName}`,
+              converted: false,
+            };
+          }
+
+          results.push({
+            name: displayName,
+            path: data.url,
+            success: true,
+            converted: data.converted,
+          });
+        } catch (error) {
+          // 收尾失败时清掉直传对象，避免留下半成品并让用户可以直接重试
+          if (key) {
+            await deleteUploadFile(key).catch(() => {});
+          }
+          results.push({
+            name: displayName,
+            path: '',
+            success: false,
+            error: error instanceof Error ? error.message : '处理失败',
+          });
+        }
+      }
+
+      const successCount = results.filter((item) => item.success).length;
+      const failCount = results.length - successCount;
+
+      logger.info('直传收尾完成', {
+        count: files.length,
+        relativePath,
+        successCount,
+        failCount,
+        userId: user.id,
+      });
+
+      return {
+        success: true,
+        data: {
+          message: `上传完成: ${successCount} 成功, ${failCount} 失败`,
+          results,
+        },
+      };
+    } catch (error) {
+      logger.error('直传收尾失败', error);
+      return { success: false, error: '上传收尾失败' };
     }
   });
 }

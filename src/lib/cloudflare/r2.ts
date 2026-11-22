@@ -8,6 +8,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 /**
  * Cloudflare R2（S3 兼容）最小 CRUD 封装。
@@ -66,6 +67,10 @@ function getClient(config: R2Config): S3Client {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
       },
+      // 关闭自动校验和：新版 SDK 会给预签名 PUT 带上空 body 的 CRC32，
+      // 浏览器上传真实内容时校验和必然不匹配。R2 不强制要求该参数。
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
   return cachedClient;
@@ -289,4 +294,48 @@ export async function r2ObjectExists(key: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export interface R2ObjectMeta {
+  size: number;
+  contentType?: string;
+}
+
+/** 读取对象元信息（不存在返回 null） */
+export async function headR2Object(key: string): Promise<R2ObjectMeta | null> {
+  const config = requireConfig();
+  const client = getClient(config);
+  try {
+    const result = await client.send(
+      new HeadObjectCommand({ Bucket: config.bucket, Key: key })
+    );
+    return {
+      size: result.ContentLength ?? 0,
+      contentType: result.ContentType,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 生成浏览器直传 R2 的预签名 PUT URL（默认 1 小时有效）。
+ * key / Content-Type 已写入签名，浏览器只能往这个 key 传指定类型的内容。
+ */
+export async function presignR2PutUrl(
+  key: string,
+  contentType: string,
+  expiresIn = 3600
+): Promise<string> {
+  const config = requireConfig();
+  const client = getClient(config);
+  return getSignedUrl(
+    client,
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      ContentType: contentType,
+    }),
+    { expiresIn }
+  );
 }

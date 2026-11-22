@@ -76,6 +76,13 @@ export interface UploadAssetOptions {
   quality?: number;
 }
 
+interface UploadAssetBufferOptions extends UploadAssetOptions {
+  /** 源文件已由浏览器直传到 R2（finalize 场景），不再重复写入 */
+  originalStored?: boolean;
+  /** 浏览器声明的 MIME，内容无法识别时兜底使用 */
+  declaredMime?: string;
+}
+
 export interface UploadAssetResult {
   url: string;
   width: number;
@@ -83,7 +90,7 @@ export interface UploadAssetResult {
   converted: boolean;
 }
 
-function normalizeDir(dir: string): string {
+export function normalizeDir(dir: string): string {
   const normalized = dir.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
   if (normalized.split('/').some((segment) => segment === '..')) {
     throw new Error('非法的上传目录');
@@ -91,7 +98,7 @@ function normalizeDir(dir: string): string {
   return normalized;
 }
 
-function sanitizeFileName(name: string): string {
+export function sanitizeFileName(name: string): string {
   const sanitized = name
     .replace(/[^\w\u4e00-\u9fa5.-]/g, '-')
     .replace(/-+/g, '-')
@@ -168,34 +175,51 @@ function isAllowedUpload(
   return RAW_EXTENSIONS.has(ext);
 }
 
+export function isUploadMimeAllowed(
+  mime: string,
+  fileName: string,
+  target: 'image' | 'raw'
+): boolean {
+  return isAllowedUpload(mime, fileName, target);
+}
+
 async function saveBuffer(
   dir: string,
   fileName: string,
   buffer: Buffer,
-  contentType: string
+  contentType: string,
+  stored = false
 ): Promise<string> {
   const key = resolveUploadKey(`${dir}/${fileName}`);
-  if (await uploadFileExists(key)) {
-    throw new Error(`文件 ${fileName} 已存在`);
+  if (!stored) {
+    if (await uploadFileExists(key)) {
+      throw new Error(`文件 ${fileName} 已存在`);
+    }
+    await putUploadFile(key, buffer, contentType);
   }
-  await putUploadFile(key, buffer, contentType);
-  return `/uploads/${dir}/${fileName}`;
+  return `/uploads/${dir ? `${dir}/` : ''}${fileName}`;
 }
 
-/** 上传单个文件到 uploads 存储 */
-export async function uploadAssetFile(
-  file: File,
-  options: UploadAssetOptions
+/**
+ * 处理一个已在内存中的文件：校验 → 写源文件 → 图片转 WebP。
+ * originalStored = true 时认为源文件已在存储中（浏览器直传场景）。
+ */
+export async function uploadAssetBuffer(
+  rawFileName: string,
+  buffer: Buffer,
+  options: UploadAssetBufferOptions
 ): Promise<UploadAssetResult> {
-  if (file.size > MAX_FILE_SIZE) {
+  if (buffer.length > MAX_FILE_SIZE) {
     throw new Error(`文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`);
   }
 
   const dir = normalizeDir(options.dir);
-  const fileName = sanitizeFileName(file.name);
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = sanitizeFileName(rawFileName);
   const detected = detectMime(buffer);
-  const mime = detected === 'application/octet-stream' ? file.type : detected;
+  const mime =
+    detected === 'application/octet-stream'
+      ? (options.declaredMime ?? detected)
+      : detected;
 
   if (!isAllowedUpload(mime, fileName, options.target)) {
     throw new Error(`不支持的文件类型: ${fileName}`);
@@ -207,12 +231,18 @@ export async function uploadAssetFile(
 
     if (isWebp) {
       const { width = 0, height = 0 } = imageSize(buffer);
-      const url = await saveBuffer(dir, fileName, buffer, 'image/webp');
+      const url = await saveBuffer(
+        dir,
+        fileName,
+        buffer,
+        'image/webp',
+        options.originalStored
+      );
       return { url, width, height, converted: false };
     }
 
     // 先保留源文件，再保存转换后的 WebP
-    await saveBuffer(dir, fileName, buffer, mime);
+    await saveBuffer(dir, fileName, buffer, mime, options.originalStored);
 
     const processed = await sharp(buffer)
       .webp({ quality: options.quality ?? webpQuality() })
@@ -233,6 +263,28 @@ export async function uploadAssetFile(
     };
   }
 
-  const url = await saveBuffer(dir, fileName, buffer, mime);
+  const url = await saveBuffer(
+    dir,
+    fileName,
+    buffer,
+    mime,
+    options.originalStored
+  );
   return { url, width: 0, height: 0, converted: false };
+}
+
+/** 上传单个文件到 uploads 存储 */
+export async function uploadAssetFile(
+  file: File,
+  options: UploadAssetOptions
+): Promise<UploadAssetResult> {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`文件大小不能超过 ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return uploadAssetBuffer(file.name, buffer, {
+    ...options,
+    declaredMime: file.type,
+  });
 }
