@@ -92,12 +92,9 @@ export function HomeHero({ photos, initialIndex = 0 }: HomeHeroProps) {
               {t('home.hero.eyebrow')}
             </m.p>
 
-            <m.h1
-              variants={itemVariants}
-              className="mt-6 text-[clamp(2rem,4.8vw,4.2rem)] leading-[1.14] font-medium tracking-[-0.03em]"
-            >
+            <h1 className="mt-6 text-[clamp(2rem,4.8vw,4.2rem)] leading-[1.14] font-medium tracking-[-0.03em]">
               <Trans i18nKey="home.hero.title" components={{ AuroraText }} />
-            </m.h1>
+            </h1>
 
             <m.p
               variants={itemVariants}
