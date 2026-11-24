@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 // import { SecretClient } from './secret-client';
 
 export const metadata: Metadata = {
-  title: 'Secret - mahiro',
+  title: 'Secret - mahirofox',
   description: '一些不为人知的秘密',
   robots: {
     index: false,

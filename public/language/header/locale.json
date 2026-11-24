@@ -7,6 +7,9 @@
     "tools": "Tools",
     "admin": "Admin",
     "other": "Other",
+    "journal_nav_label": "Journal",
+    "tool_nav_label": "Tool",
+    "more_nav_label": "More",
 
     "admin_title": "Admin Management System",
 
@@ -79,7 +82,7 @@
     "image_obfuscator_nav_description": "Password-based pixel permutation, computed locally",
 
     "ai_chat_nav_label": "AI Chat",
-    "ai_chat_nav_description": "Chat with AI models",
+    "ai_chat_nav_description": "Chat with My AI Assistant",
 
     "about_nav_label": "About Me",
     "about_nav_description": "Personal introduction about me",
@@ -132,6 +135,9 @@
     "tools": "工具",
     "admin": "后台",
     "other": "其他",
+    "journal_nav_label": "随记",
+    "tool_nav_label": "小工具",
+    "more_nav_label": "更多",
 
     "admin_title": "后台管理系统",
 
@@ -204,7 +210,7 @@
     "image_obfuscator_nav_description": "基于密码的像素置换，全程本地处理",
 
     "ai_chat_nav_label": "AI 聊天",
-    "ai_chat_nav_description": "与 AI 模型聊天",
+    "ai_chat_nav_description": "与我的 AI 助手进行聊天",
 
     "about_nav_label": "关于我",
     "about_nav_description": "关于我的个人介绍",

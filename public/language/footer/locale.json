@@ -1,3 +1,22 @@
 {
-  "en": {}
+  "en": {
+    "footer.signature": "Making small worlds with photos, code and a little imagination.",
+    "footer.explore": "Explore",
+    "footer.connect": "Connect",
+    "footer.about": "About",
+    "footer.guestbook": "Guestbook",
+    "footer.journal": "Journal",
+    "footer.gallery": "Gallery",
+    "footer.rss": "RSS Feed"
+  },
+  "cn": {
+    "footer.signature": "用照片、代码和一点点想象力，造一个属于自己的小世界。",
+    "footer.explore": "探索",
+    "footer.connect": "连接",
+    "footer.about": "关于",
+    "footer.guestbook": "留言板",
+    "footer.journal": "随记",
+    "footer.gallery": "相册",
+    "footer.rss": "RSS 订阅"
+  }
 }

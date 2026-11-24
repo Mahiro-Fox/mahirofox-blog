@@ -48,7 +48,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Languages className="h-8" />
+        <Languages className="h-4 w-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-20" align="start">
         <DropdownMenuGroup>

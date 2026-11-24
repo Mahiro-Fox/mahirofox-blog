@@ -1,9 +1,10 @@
 // src/components/shared/link.tsx
 'use client';
 
-import NextLink, { useLinkStatus } from 'next/link';
-import { useEffect, useId, type ComponentProps } from 'react';
 import { useRouteLoading } from '@/context/route-loading-provider';
+import NextLink, { useLinkStatus } from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useId, type ComponentProps, type MouseEvent } from 'react';
 import { i18nConfig } from '@/i18n/i18n.config';
 import { useLocale } from '@/i18n/use-locale';
 
@@ -43,16 +44,72 @@ function localizeHref(href: string, locale: string): string {
 interface WithLocaleLinkProps extends LinkProps {
   href: string;
 }
+
+/** 去掉末尾斜杠，便于比较路径是否相同 */
+function normalizePath(path: string): string {
+  if (path.length > 1 && path.endsWith('/')) return path.slice(0, -1);
+  return path;
+}
+
 /**
  * 自动根据当前语言添加前缀的链接组件
  */
-export const Link = ({ href, children, ...props }: WithLocaleLinkProps) => {
+export const Link = ({
+  href,
+  children,
+  onClick,
+  ...props
+}: WithLocaleLinkProps) => {
   const locale = useLocale();
+  const pathname = usePathname();
   const localizedHref =
     typeof href === 'string' ? localizeHref(href, locale) : href; // href 是 UrlObject 的情况暂不处理，按需扩展
 
+  /**
+   * 同页锚点手动滚动：
+   * 当 URL 已经带有同一个 hash 时，Next 会把这次点击当成“导航到当前地址”而触发整页刷新，
+   * 这里拦截后自行平滑滚动，保证重复点击也能回到目标位置。
+   */
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(event);
+
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      typeof localizedHref !== 'string'
+    ) {
+      return;
+    }
+
+    const hashIndex = localizedHref.indexOf('#');
+    if (hashIndex === -1) return;
+
+    const hash = localizedHref.slice(hashIndex + 1);
+    if (!hash) return;
+
+    const targetPath = localizedHref.slice(0, hashIndex) || pathname;
+    if (normalizePath(targetPath) !== normalizePath(pathname)) return;
+
+    const target = document.getElementById(decodeURIComponent(hash));
+    if (!target) return;
+
+    event.preventDefault();
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    target.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    window.history.replaceState(null, '', `#${hash}`);
+  };
+
   return (
-    <NextLink href={localizedHref} {...props}>
+    <NextLink href={localizedHref} onClick={handleClick} {...props}>
       {children}
       <LinkStatusBridge />
     </NextLink>

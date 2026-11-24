@@ -8,6 +8,9 @@ import {
 } from '@/config';
 import { useCallback, useEffect, useState } from 'react';
 
+// 主题切换时临时开启颜色过渡，结束后移除，避免影响日常悬浮动画
+let themeTransitionTimer: number | undefined;
+
 /**
  * 主题状态管理 Hook
  *
@@ -41,7 +44,13 @@ export function useTheme() {
    */
   const setTheme = useCallback((themeId: ThemeId) => {
     try {
-      document.documentElement.setAttribute('data-theme', themeId);
+      const root = document.documentElement;
+      root.classList.add('theme-transition');
+      window.clearTimeout(themeTransitionTimer);
+      themeTransitionTimer = window.setTimeout(() => {
+        root.classList.remove('theme-transition');
+      }, 360);
+      root.setAttribute('data-theme', themeId);
       localStorage.setItem(THEME_STORAGE_KEY, themeId);
     } catch {
       // localStorage 不可用（隐私模式等）时，仅更新 DOM 属性，切换仍生效
