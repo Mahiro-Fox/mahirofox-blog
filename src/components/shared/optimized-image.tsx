@@ -81,11 +81,12 @@ export function OptimizedImage({
   // 指定了 aspectRatio 时，容器已经有确定高度，图片必须按 fill 铺满容器，
   // 否则 <img> 会按 width/height 属性的原始像素渲染，撑破父容器
   const useFill = fill || Boolean(aspectRatio);
-  const imageProps = useFill
-    ? { fill: true, sizes }
-    : { width, height, sizes };
+  const imageProps = useFill ? { fill: true, sizes } : { width, height, sizes };
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true });
+  // 首屏关键图（priority）必须随 SSR 直接输出、由 HTML 发起请求并生成 preload；
+  // 如果也等 useInView 的回调，LCP 图片要等到水合后才被发现。
+  const shouldRenderImage = priority || isInView;
   // 错误回退
   if (hasError || !src) {
     return (
@@ -154,7 +155,7 @@ export function OptimizedImage({
         />
       )}
 
-      {isInView && (
+      {shouldRenderImage && (
         <NextImage
           key={isRetrying ? `retry-${retryCount}` : alt}
           src={src}
@@ -167,7 +168,8 @@ export function OptimizedImage({
             'transition-all duration-300',
             isPortrait ? 'object-contain' : 'object-cover',
             hoverScale && 'hover:scale-105',
-            !isLoaded && !blurDataURL && 'opacity-0',
+            // priority 图不做淡入，避免透明度过渡把 LCP 的绘制时间再往后推
+            !isLoaded && !blurDataURL && !priority && 'opacity-0',
             isLoaded && 'opacity-100',
             className
           )}

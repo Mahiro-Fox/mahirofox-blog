@@ -8,6 +8,7 @@
 import './index.css';
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useState } from 'react';
+import { WebGLGuard } from '@/components/shared/webgl-guard';
 import { AudioDebugger } from './components/AudioDebugger/AudioDebugger';
 import { MapScene } from './components/AudioVisualizer/MapScene';
 import { UI } from './components/UI';
@@ -230,19 +231,21 @@ export default function App() {
         onResetCamera={() => setResetCameraTrigger((prev) => prev + 1)}
       />
       <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: DEFAULT_CAMERA_POSITION, fov: 45 }}>
-          <MapScene
-            themeColors={resolvedTheme}
-            groundEqSettings={groundEqSettings}
-            rotationSpeed={sceneRotationSpeed}
-            coverUrl={coverVisible ? currentSong?.cover || '' : ''}
-            lyricsText={currentLyricsText || null}
-            lyricsSettings={lyricsSettings}
-            lyricsVisible={lyricsVisible}
-            isPerspectiveEditMode={isPerspectiveEditMode}
-            resetCameraTrigger={resetCameraTrigger}
-          />
-        </Canvas>
+        <WebGLGuard>
+          <Canvas camera={{ position: DEFAULT_CAMERA_POSITION, fov: 45 }}>
+            <MapScene
+              themeColors={resolvedTheme}
+              groundEqSettings={groundEqSettings}
+              rotationSpeed={sceneRotationSpeed}
+              coverUrl={coverVisible ? currentSong?.cover || '' : ''}
+              lyricsText={currentLyricsText || null}
+              lyricsSettings={lyricsSettings}
+              lyricsVisible={lyricsVisible}
+              isPerspectiveEditMode={isPerspectiveEditMode}
+              resetCameraTrigger={resetCameraTrigger}
+            />
+          </Canvas>
+        </WebGLGuard>
       </div>
       {showDebugger && <AudioDebugger onClose={() => setShowDebugger(false)} />}
     </div>
