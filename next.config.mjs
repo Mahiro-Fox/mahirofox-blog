@@ -168,9 +168,9 @@ const nextConfig = {
     ];
   },
   experimental: {
-    proxyClientMaxBodySize: '100mb', // 增加请求头大小限制
+    proxyClientMaxBodySize: '1024mb', // 增加请求头大小限制
     serverActions: {
-      bodySizeLimit: '100mb',
+      bodySizeLimit: '1024mb',
     },
   },
 };
