@@ -115,7 +115,7 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
           {/* ── 顶部滚动进度条 ── */}
           {/* <ScrollProgress /> */}
           <SiteHeader initialUserAuth={frontendUser} />
-          <main className="flex flex-1 flex-col pt-14 lg:pt-16">
+          <main className="flex min-h-[calc(100vh-56px)] flex-1 flex-col pt-14 lg:pt-16">
             {children}
           </main>
           <SiteFooter />

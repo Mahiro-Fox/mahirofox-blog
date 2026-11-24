@@ -611,7 +611,7 @@ export default function AdminShell({
             <LanguageSwitcher />
           </div>
         </header>
-        <main className="h-[calc(100vh - 65px)] p-4 lg:p-6">{children}</main>
+        <main className="h-[calc(100vh-65px)] p-4 lg:p-6">{children}</main>
       </div>
 
       {/* 首次登录强制修改密码 */}
