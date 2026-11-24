@@ -41,10 +41,6 @@ function localizeHref(href: string, locale: string): string {
   return `/${locale}${href === '/' ? '' : href}`;
 }
 
-interface WithLocaleLinkProps extends LinkProps {
-  href: string;
-}
-
 /** 去掉末尾斜杠，便于比较路径是否相同 */
 function normalizePath(path: string): string {
   if (path.length > 1 && path.endsWith('/')) return path.slice(0, -1);
@@ -54,12 +50,7 @@ function normalizePath(path: string): string {
 /**
  * 自动根据当前语言添加前缀的链接组件
  */
-export const Link = ({
-  href,
-  children,
-  onClick,
-  ...props
-}: WithLocaleLinkProps) => {
+export const Link = ({ href, children, onClick, ...props }: LinkProps) => {
   const locale = useLocale();
   const pathname = usePathname();
   const localizedHref =
