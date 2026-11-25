@@ -13,6 +13,7 @@ import { OptimizedImage } from '@/components/shared/optimized-image';
 import { usePhotos } from '@/hooks/use-photos';
 import { useT } from '@/i18n/dictionary-provider';
 import type { PhotoCollection } from '@/lib/content/photos';
+import { trackEvent } from '@/utils/tracker';
 
 /**
  * R18 图库：顶部横向排列作者，下方以瀑布流展示当前作者的作品。
@@ -46,6 +47,11 @@ export function R18Gallery() {
     return () => {
       active = false;
     };
+  }, []);
+
+  const handleSelect = useCallback((collectionId: string) => {
+    trackEvent('author-select', { collectionId });
+    setActiveId(collectionId);
   }, []);
 
   if (isLoading) {
@@ -99,7 +105,7 @@ export function R18Gallery() {
               key={collection.id}
               collection={collection}
               active={collection.id === active.id}
-              onSelect={() => setActiveId(collection.id)}
+              onSelect={handleSelect}
             />
           ))}
         </div>
@@ -117,7 +123,7 @@ function AuthorChip({
 }: {
   collection: PhotoCollection;
   active: boolean;
-  onSelect: () => void;
+  onSelect: (collectionId: string) => void;
 }) {
   const t = useT();
 
@@ -125,7 +131,7 @@ function AuthorChip({
     <button
       type="button"
       aria-pressed={active}
-      onClick={onSelect}
+      onClick={() => onSelect(collection.id)}
       className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1 transition-colors focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none ${
         active
           ? 'border-[var(--primary)] bg-[var(--primary)]/10'

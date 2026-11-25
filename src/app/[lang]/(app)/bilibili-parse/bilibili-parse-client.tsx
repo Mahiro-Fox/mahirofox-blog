@@ -24,6 +24,7 @@ import {
 } from '@/components/shadcn-ui/card';
 import { Input } from '@/components/shadcn-ui/input';
 import { useT } from '@/i18n/dictionary-provider';
+import { trackEvent } from '@/utils/tracker';
 import { formatSize } from '@/utils/utils';
 
 type HistoryItem = VideoParseResult & {
@@ -528,6 +529,7 @@ export default function BilibiliParsePage() {
 
   const handleParse = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackEvent('bilibili-parse', { url });
     const urlRegex = /^https?:\/\//;
     if (!url.trim() || !urlRegex.test(url)) {
       toast.error(t('bilibili-parse.invalid_url'));
@@ -591,6 +593,7 @@ export default function BilibiliParsePage() {
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      trackEvent('bilibili-parse-paste', { url: text });
       setUrl(text);
     } catch (e) {
       console.error('Failed to paste text:', e);

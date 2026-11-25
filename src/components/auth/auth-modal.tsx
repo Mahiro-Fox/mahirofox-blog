@@ -30,6 +30,7 @@ import { OptimizedImage } from '@/components/shared/optimized-image';
 import { TurnstileWidget } from '@/components/turnstile/turnstile-widget';
 import { useT } from '@/i18n/dictionary-provider';
 import type { PhotoItem } from '@/lib/content/photos';
+import { trackEvent } from '@/utils/tracker';
 
 /** 弹窗步骤：邮箱 → （已注册）密码 | （未注册）验证码 → 设置密码 */
 type AuthStep =
@@ -48,7 +49,7 @@ interface AuthModalProps {
   /** 登录/注册成功后的跳转地址；不传则仅刷新当前页数据 */
   redirectTo?: string;
   /** 成功回调（在关闭弹窗之前调用），供父级做额外处理 */
-  onSuccess?: () => void;
+  onSuccess?: ({ email }: { email: string }) => void;
   /** 左侧写真轮播的竖构图图片；为空时隐藏左侧面板、表单占满整宽 */
   photos?: PhotoItem[] | null;
   /** 是否展示「使用 Google 继续」（由服务端根据 Google OAuth 配置决定） */
@@ -211,7 +212,7 @@ export function AuthModal({
   const finish = () => {
     toast.success(t('auth.success'));
     // 先回调再关闭：让调用方能在关闭前标记"已成功"，避免关闭动作触发额外跳转
-    onSuccess?.();
+    onSuccess?.({ email });
     onOpenChange(false);
     if (redirectTo) {
       router.replace(redirectTo);
@@ -365,6 +366,7 @@ export function AuthModal({
 
   // Google 账户 / 忘记密码：发送验证码后进入重置步骤
   const handleStartReset = async () => {
+    trackEvent('password-reset-start', { email });
     setError('');
     setLoading(true);
     try {
@@ -440,6 +442,7 @@ export function AuthModal({
         setError(errorText(res.error));
         return;
       }
+      trackEvent('password-reset-success', { email });
       finish();
     } finally {
       setLoading(false);

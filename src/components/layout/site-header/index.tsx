@@ -32,6 +32,7 @@ import { SiteLogo } from '@/components/shared/site-logo';
 import { ThemeSwitcher } from '@/components/shared/theme-switcher';
 import { useT } from '@/i18n/dictionary-provider';
 import { usePathnameWithoutLocale } from '@/i18n/use-pathname-without-locale';
+import { trackEvent } from '@/utils/tracker';
 import { cn } from '@/utils/utils';
 
 interface SiteHeaderUser {
@@ -123,6 +124,7 @@ export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
   };
 
   const handleOpenAuth = (): void => {
+    trackEvent('open-auth-modal');
     if (authModal) {
       authModal.openAuthModal();
     } else {

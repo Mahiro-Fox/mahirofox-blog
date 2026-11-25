@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import type { PhotoItem } from '@/lib/content/photos';
+import { trackEvent } from '@/utils/tracker';
 
 interface SignInModalProps {
   redirectTo: string;
@@ -33,11 +34,13 @@ export function SignInModal({
       photos={photos}
       googleEnabled={googleEnabled}
       initialErrorCode={initialErrorCode}
-      onSuccess={() => {
+      onSuccess={({ email }) => {
         succeeded.current = true;
+        trackEvent('signin-success', { email });
       }}
       onOpenChange={(next) => {
         setOpen(next);
+        trackEvent('close-auth-modal');
         // 用户主动关闭且未登录成功：回首页
         if (!next && !succeeded.current) {
           router.replace('/');

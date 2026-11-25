@@ -31,7 +31,7 @@ export function ChatHeader({
   conversationId?: string;
   onSelectConversation: (id: string, convMessages: UIMessage[]) => void;
   onListChanged: () => void;
-  onDeletedCurrent: () => void;
+  onDeletedCurrent: (id: string) => void;
   onNewConversation: () => void;
   t: ReturnType<typeof useT>;
 }) {

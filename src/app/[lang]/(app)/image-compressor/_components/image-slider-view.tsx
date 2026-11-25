@@ -4,28 +4,8 @@ import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { AnimatePresence, m } from 'motion/react';
 import React, { useEffect, useEffectEvent } from 'react';
 import { useT } from '@/i18n/dictionary-provider';
+import { ProcessedImageResult } from '../_hooks/useImageCompressor';
 import ImageCompare from './image-compare';
-
-/**
- * ProcessedImageResult 类型（从 ProcessStatus 导入）
- */
-export interface ProcessedImageResult {
-  id: string;
-  originalName: string;
-  originalSize: number;
-  originalPreview: string;
-  success: boolean;
-  error?: string;
-  errorCode?: string;
-  metadata?: {
-    width: number;
-    height: number;
-    format: string;
-    size: number;
-    isAnimated: boolean;
-  };
-  base64?: string;
-}
 
 /**
  * ImageSliderView 组件属性

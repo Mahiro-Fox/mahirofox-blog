@@ -14,7 +14,7 @@ interface AuthModalOpenOptions {
   /** 登录/注册成功后的跳转地址；不传则仅刷新当前页数据 */
   redirectTo?: string;
   /** 成功回调（在关闭弹窗之前调用） */
-  onSuccess?: () => void;
+  onSuccess?: ({ email }: { email: string }) => void;
 }
 
 interface AuthModalContextValue {
@@ -61,7 +61,7 @@ export function AuthModalProvider({
         open={open}
         onOpenChange={setOpen}
         redirectTo={options.redirectTo}
-        onSuccess={options.onSuccess}
+        onSuccess={({ email }) => options.onSuccess?.({ email })}
         photos={photos}
         googleEnabled={googleEnabled}
       />

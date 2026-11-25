@@ -19,6 +19,7 @@ import { useT } from '@/i18n/dictionary-provider';
 import { useLocale } from '@/i18n/use-locale';
 import { conversationLocalStorage } from '@/lib/ai/conversation-local-storage';
 import { estimateTokens, MAX_CONTEXT_TOKENS } from '@/lib/ai/tokens';
+import { trackEvent } from '@/utils/tracker';
 import { ChatHeader } from './chat-header';
 import { MessagesPanel } from './message-panel';
 import { ModeSwitch, type ChatMode } from './mode-switch';
@@ -220,6 +221,13 @@ export function ChatClient({
     event.preventDefault();
     if (!message.text.trim() || isBusy) return;
 
+    trackEvent('chat-submit', {
+      message: message.text,
+      mode,
+      provider,
+      thinking,
+    });
+
     const pendingMessages = [
       ...messages,
       {
@@ -249,17 +257,20 @@ export function ChatClient({
 
   // 新建对话
   const handleNewConversation = useCallback(() => {
+    trackEvent('chat-new-conversation', { mode, provider, thinking });
     setMessages([]);
     setConversationId(undefined);
     setInput('');
 
     // 登录态：跳到新对话页 /chat；未登录：本地清空会话
     if (isUserAuth) router.push('/chat');
-  }, [isUserAuth, router, setMessages]);
+  }, [isUserAuth, mode, provider, router, setMessages, thinking]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
+      trackEvent('chat-select-conversation', { id, mode, provider, thinking });
       // 登录态：导航到 /chat/[id]，历史由 SSR 加载。
+      // 未登录：同样导航到 /chat/[id]，历史由 SSR 加载。
       // 未登录：同样导航到 /chat/[id]，数据由 hydration effect 从 localStorage 恢复，
       // 保证登录/未登录路由行为一致。
       if (conversationId === id) return;
@@ -267,18 +278,31 @@ export function ChatClient({
       setConversationId(id);
       setSidebarOpen(false);
     },
-    [router]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mode, provider, router, thinking]
   );
 
   const handleListChanged = useCallback(() => {
     setListKey((k) => k + 1);
   }, []);
 
-  const handleDeletedCurrent = useCallback(() => {
-    setMessages([]);
-    setConversationId(undefined);
-    if (isUserAuth) router.push('/chat');
-  }, [isUserAuth, router, setMessages, setConversationId]);
+  const handleDeletedCurrent = useCallback(
+    (id: string) => {
+      trackEvent('chat-delete-current', { id, mode, provider, thinking });
+      setMessages([]);
+      setConversationId(undefined);
+      if (isUserAuth) router.push('/chat');
+    },
+    [
+      isUserAuth,
+      mode,
+      provider,
+      router,
+      setMessages,
+      setConversationId,
+      thinking,
+    ]
+  );
 
   return (
     <div className="container flex max-h-[calc(100vh-50px)] flex-1 gap-4 p-4 md:max-h-[calc(100vh-160px)] md:p-0">

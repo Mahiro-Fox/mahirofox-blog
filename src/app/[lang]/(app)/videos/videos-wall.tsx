@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVideosAction } from '@/actions/app/videos';
 import { useT } from '@/i18n/dictionary-provider';
 import type { VideoItem } from '@/lib/content/videos';
+import { trackEvent } from '@/utils/tracker';
 import { formatDate } from '@/utils/utils';
 import { VideoCard } from './video-card';
 import { VideoLightbox } from './video-lightbox';
@@ -74,6 +75,11 @@ export function VideosWall({ initialVideos, initialHasMore }: VideosWallProps) {
       : '--';
   const activeVideo = activeIndex === null ? null : videos[activeIndex];
 
+  const handleOpen = (index: number) => {
+    trackEvent('video-open', { videoSrc: videos[index].src });
+    setActiveIndex(index);
+  };
+
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
       {/* 左侧竖排标识：桌面端吸顶，移动端压成一行 */}
@@ -125,7 +131,7 @@ export function VideosWall({ initialVideos, initialHasMore }: VideosWallProps) {
                   // 行高由 auto-rows-[72px] 决定，与内容无关，
                   // 因此可以直接跳过屏外卡片的布局与绘制
                   className={`cv-auto ${spanClass(index)}`}
-                  onOpen={() => setActiveIndex(index)}
+                  onOpen={() => handleOpen(index)}
                 />
               ))}
             </div>

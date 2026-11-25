@@ -19,6 +19,7 @@ import { Input } from '@/components/shadcn-ui/input';
 import { Label } from '@/components/shadcn-ui/label';
 import { useT } from '@/i18n/dictionary-provider';
 import type { UserAccountInfo } from '@/lib/auth/user-auth';
+import { trackEvent } from '@/utils/tracker';
 
 interface AccountSettingsProps {
   account: UserAccountInfo;
@@ -78,6 +79,7 @@ export function AccountSettings({
         }
         return;
       }
+      trackEvent('password-set', { account });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -107,6 +109,7 @@ export function AccountSettings({
         }
         return;
       }
+      trackEvent('google-unlink', { account });
       toast.success(t('settings.google_unlinked_success'));
       router.refresh();
     } finally {

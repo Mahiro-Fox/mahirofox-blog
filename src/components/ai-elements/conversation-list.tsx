@@ -34,7 +34,7 @@ interface ConversationListProps {
     messages: import('ai').UIMessage[]
   ) => void;
   onDeleted?: () => void;
-  onDeletedCurrent?: () => void;
+  onDeletedCurrent?: (id: string) => void;
   className?: string;
 }
 
@@ -344,7 +344,7 @@ export function ConversationList({
           if (res.success) {
             toast.success(t('chat.conversation_deleted'));
             onDeleted?.();
-            if (isCurrent) onDeletedCurrent?.();
+            if (isCurrent) onDeletedCurrent?.(id);
             await fetchList();
           } else {
             toast.error(res.error ?? t('chat.delete_conversation_failed'));
@@ -353,7 +353,7 @@ export function ConversationList({
           conversationLocalStorage.delete(id);
           toast.success(t('chat.conversation_deleted'));
           onDeleted?.();
-          if (isCurrent) onDeletedCurrent?.();
+          if (isCurrent) onDeletedCurrent?.(id);
           setSummaries((prev) => prev.filter((s) => s.id !== id));
         }
       } catch {

@@ -73,7 +73,7 @@ export function GuestbookWallDialog() {
 
       if (result.success) {
         toast.success(t('guestbook.form.submit.success'));
-        trackEvent('submit_guestbook_success', { nickname });
+        trackEvent('submit-guestbook-success', { nickname });
         setIsDialogOpen(false);
         // 重置表单
         setNickname('');
@@ -90,6 +90,12 @@ export function GuestbookWallDialog() {
       resetCaptcha();
     }
   };
+
+  const handleOpenChange = useCallback((next: boolean) => {
+    setIsDialogOpen(next);
+    trackEvent('close-guestbook-dialog');
+  }, []);
+
   return (
     <div className="mb-8 flex justify-center">
       <Button
@@ -97,14 +103,14 @@ export function GuestbookWallDialog() {
         className="gap-2"
         onClick={() => {
           setIsDialogOpen(true);
-          trackEvent('open_guestbook_dialog');
+          trackEvent('open-guestbook-dialog');
         }}
       >
         <Sticker className="h-5 w-5" />
         {t('guestbook.button.write')}
       </Button>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="relative m-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('guestbook.dialog.title')}</DialogTitle>

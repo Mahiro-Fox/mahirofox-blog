@@ -60,7 +60,7 @@ export default async function MidiLayout({
             <p className="text-muted-foreground">
               {midiDictionary['midi.browser_notice']}
               <a
-                href="/uploads/midi.exe"
+                href="/uploads/midi-client_0.0.3_x64-setup.exe"
                 download
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
