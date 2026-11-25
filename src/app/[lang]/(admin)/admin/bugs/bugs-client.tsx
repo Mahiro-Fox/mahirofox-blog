@@ -65,7 +65,6 @@ export default function BugsClient({
     {
       key: 'createdAt',
       header: '提交时间',
-      width: '180px',
       render: (bug) => (
         <span className="whitespace-nowrap">{formatDate(bug.createdAt)}</span>
       ),
@@ -98,13 +97,12 @@ export default function BugsClient({
     {
       key: 'contact',
       header: '联系方式',
-      width: '150px',
+      width: 'max-w-20',
       render: (bug) => bug.contact || '-',
     },
     {
       key: 'status',
       header: '状态',
-      width: '120px',
       render: (bug) =>
         bug.status === 'pending' ? (
           <Badge variant="secondary" className="gap-1.5">

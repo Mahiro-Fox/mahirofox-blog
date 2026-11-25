@@ -13,6 +13,7 @@ import {
   AdminPageLayout,
   createRefreshAction,
 } from '@/components/admin/admin-page-layout';
+import { DataTable, type Column } from '@/components/admin/data-table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,14 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shadcn-ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/shadcn-ui/table';
+import { SelectionCheckbox } from '@/components/shared/selection-check-box';
 import { formatDateWithHMS } from '@/utils/utils';
 
 const PAGE_SIZE = 20;
@@ -205,6 +199,7 @@ export default function ErrorLogsClient({
   const pageIds = data.items.map((item) => item.id);
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   const toggleSelectPage = () => {
     if (allPageSelected) {
@@ -215,6 +210,93 @@ export default function ErrorLogsClient({
   };
 
   const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
+
+  const columns: Column<ErrorLogItem>[] = [
+    {
+      key: 'select',
+      width: 'w-10',
+      header: (
+        <SelectionCheckbox
+          checked={allPageSelected}
+          indeterminate={somePageSelected && !allPageSelected}
+          label="全选当前页"
+          onChange={toggleSelectPage}
+        />
+      ),
+      render: (item) => (
+        <SelectionCheckbox
+          checked={selectedIds.includes(item.id)}
+          label={`选择 ${item.id}`}
+          onChange={() => toggleSelect(item.id)}
+        />
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: '时间',
+      render: (item) => (
+        <span className="text-sm">{formatDateWithHMS(item.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'level',
+      header: '级别',
+      render: (item) => <LevelBadge level={item.level} />,
+    },
+    {
+      key: 'message',
+      header: '错误信息',
+      width: 'max-w-[200px]',
+      render: (item) => (
+        <>
+          <p className="truncate text-sm font-medium" title={item.message}>
+            {item.message}
+          </p>
+          <p className="text-muted-foreground truncate text-xs">
+            {item.code || '-'}
+            {item.status > 0 ? ` · ${item.status}` : ''}
+          </p>
+        </>
+      ),
+    },
+    {
+      key: 'path',
+      header: '接口',
+      width: 'max-w-[200px]',
+      render: (item) => (
+        <span
+          className="text-muted-foreground block truncate font-mono text-xs"
+          title={`${item.method} ${item.path}`}
+        >
+          {item.method} {item.path}
+        </span>
+      ),
+    },
+    {
+      key: 'operator',
+      header: '操作人',
+      width: 'max-w-20',
+      render: (item) => (
+        <div className="flex flex-col">
+          <span className="text-sm">{item.operatorName || '匿名'}</span>
+          <span className="text-muted-foreground text-xs">
+            {item.operatorRole || '-'}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'ip',
+      header: 'IP',
+      width: 'max-w-20',
+      render: (item) => <span className="text-sm">{item.ip || '-'}</span>,
+    },
+    {
+      key: 'count',
+      header: '次数',
+      render: (item) => <span className="text-sm">{item.count}</span>,
+    },
+  ];
 
   return (
     <AdminPageLayout
@@ -280,115 +362,34 @@ export default function ErrorLogsClient({
       </div>
 
       <div className="bg-card overflow-hidden rounded-md border">
-        {loading && data.items.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            <span className="text-muted-foreground">加载错误日志...</span>
-          </div>
-        ) : data.items.length === 0 ? (
-          <div className="text-muted-foreground py-12 text-center">
-            暂无错误日志
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input
-                    type="checkbox"
-                    aria-label="全选当前页"
-                    checked={allPageSelected}
-                    onChange={toggleSelectPage}
-                    className="text-primary h-4 w-4 rounded"
-                  />
-                </TableHead>
-                <TableHead className="w-[170px]">时间</TableHead>
-                <TableHead className="w-[90px]">级别</TableHead>
-                <TableHead>错误信息</TableHead>
-                <TableHead className="w-[220px]">接口</TableHead>
-                <TableHead className="w-[150px]">操作人</TableHead>
-                <TableHead className="w-[130px]">IP</TableHead>
-                <TableHead className="w-[70px]">次数</TableHead>
-                <TableHead className="w-[100px]">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <input
-                      type="checkbox"
-                      aria-label={`选择 ${item.id}`}
-                      checked={selectedIds.includes(item.id)}
-                      onChange={() => toggleSelect(item.id)}
-                      className="text-primary h-4 w-4 rounded"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm whitespace-nowrap">
-                    {formatDateWithHMS(item.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <LevelBadge level={item.level} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-[420px]">
-                      <p
-                        className="truncate text-sm font-medium"
-                        title={item.message}
-                      >
-                        {item.message}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {item.code || '-'}
-                        {item.status > 0 ? ` · ${item.status}` : ''}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className="text-muted-foreground block truncate font-mono text-xs"
-                      title={`${item.method} ${item.path}`}
-                    >
-                      {item.method} {item.path}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">
-                        {item.operatorName || '匿名'}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {item.operatorRole || '-'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{item.ip || '-'}</TableCell>
-                  <TableCell>
-                    <span className="text-sm">{item.count}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void openDetail(item)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPendingDelete(item)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        <DataTable
+          data={data.items}
+          columns={columns}
+          isLoading={loading && data.items.length === 0}
+          loadingText="加载错误日志..."
+          emptyText="暂无错误日志"
+          keyExtractor={(item) => item.id}
+          actions={{
+            custom: (item) => (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void openDetail(item)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPendingDelete(item)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            ),
+          }}
+        />
       </div>
 
       <div className="flex items-center justify-between py-3">

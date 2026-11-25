@@ -140,6 +140,7 @@ function UsersList({
     {
       key: 'username',
       header: '用户名',
+      width: 'max-w-20',
       render: (user) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{user.username}</span>

@@ -11,6 +11,8 @@ export interface FileListResponse {
   items: FileItem[];
   currentPath: string;
   breadcrumb: string[];
+  /** 下一页游标，undefined 表示已到末页 */
+  nextCursor?: string;
 }
 
 export interface UploadFilesClientProps {

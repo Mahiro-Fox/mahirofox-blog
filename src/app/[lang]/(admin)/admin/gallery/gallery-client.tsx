@@ -69,6 +69,7 @@ const columns: Column<AdminGallery>[] = [
   {
     key: 'src',
     header: '图片路径',
+    width: 'max-w-[200px]',
     render: (file) => (
       <span
         className="text-muted-foreground max-w-[200px] truncate"

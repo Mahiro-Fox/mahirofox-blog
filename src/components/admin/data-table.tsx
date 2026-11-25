@@ -16,7 +16,8 @@ import { cn } from '@/utils/utils';
 
 export interface Column<T> {
   key: string;
-  header: string;
+  // 表头支持自定义节点（如全选复选框），纯文本仍可直接传字符串
+  header: ReactNode;
   width?: string;
   align?: 'left' | 'center' | 'right';
   render?: (item: T) => ReactNode;
@@ -29,6 +30,8 @@ interface DataTableProps<T> {
   loadingText?: string;
   emptyText?: string;
   keyExtractor: (item: T) => string;
+  /** 行级属性（如选中态、整行点击），返回值会展开到 <tr> 上 */
+  rowProps?: (item: T) => React.ComponentProps<'tr'>;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   actions?: {
@@ -52,6 +55,7 @@ export function DataTable<T>({
   loadingText = '加载中...',
   emptyText = '暂无数据',
   keyExtractor,
+  rowProps,
   onEdit,
   onDelete,
   actions,
@@ -133,6 +137,7 @@ export function DataTable<T>({
                 const item = data[virtualItem.index];
                 return (
                   <TableRow
+                    {...rowProps?.(item)}
                     key={virtualItem.key}
                     data-index={virtualItem.index}
                     ref={virtualizer.measureElement}
@@ -216,7 +221,7 @@ export function DataTable<T>({
       </TableHeader>
       <TableBody>
         {data.map((item) => (
-          <TableRow key={keyExtractor(item)}>
+          <TableRow key={keyExtractor(item)} {...rowProps?.(item)}>
             {columns.map((col) => (
               <TableCell
                 key={col.key}

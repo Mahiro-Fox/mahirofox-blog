@@ -9,7 +9,7 @@ import {
   deleteUploadDirectory,
   deleteUploadFile,
   isUploadDirectory,
-  listUploadEntries,
+  listUploadEntryPage,
   renameUploadEntry,
   resolveUploadKey,
   uploadFileExists,
@@ -35,6 +35,14 @@ export interface FileListResponse {
   items: FileItem[];
   currentPath: string;
   breadcrumb: string[];
+  /** 下一页游标，undefined 表示已到末页（R2 原生游标） */
+  nextCursor?: string;
+}
+
+/** 文件列表分页参数 */
+export interface FileListPageOptions {
+  cursor?: string;
+  pageSize?: number;
 }
 
 /** 去掉首尾斜杠并阻止路径穿越 */
@@ -151,9 +159,10 @@ export async function adminUploadFiles(formData: FormData): Promise<
   });
 }
 
-// GET - 获取文件列表
+// GET - 获取文件列表（游标分页，单次只拉一页）
 export async function adminGetUploadFiles(
-  relativePath?: string
+  relativePath?: string,
+  options: FileListPageOptions = {}
 ): Promise<ActionResponse<FileListResponse>> {
   return withActionPermission('files:read', async (user) => {
     let finalRelativePath = relativePath;
@@ -167,21 +176,19 @@ export async function adminGetUploadFiles(
 
     try {
       const normalizedPath = normalizeRelativePath(finalRelativePath);
-      const entries = await listUploadEntries(toAbsoluteDir(normalizedPath));
+      const page = await listUploadEntryPage(toAbsoluteDir(normalizedPath), {
+        cursor: options.cursor,
+        pageSize: options.pageSize,
+      });
 
-      const items: FileItem[] = entries
-        .map((entry) => ({
-          name: entry.name,
-          path: toLogicalPath(normalizedPath, entry.name),
-          type: entry.type,
-          size: entry.size,
-          lastUpdated: entry.lastModified.toISOString(),
-          extension: entry.type === 'file' ? entry.extension : undefined,
-        }))
-        .sort((a, b) => {
-          if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
-          return a.name.localeCompare(b.name);
-        });
+      const items: FileItem[] = page.entries.map((entry) => ({
+        name: entry.name,
+        path: toLogicalPath(normalizedPath, entry.name),
+        type: entry.type,
+        size: entry.size,
+        lastUpdated: entry.lastModified.toISOString(),
+        extension: entry.type === 'file' ? entry.extension : undefined,
+      }));
 
       return {
         success: true,
@@ -189,6 +196,7 @@ export async function adminGetUploadFiles(
           items,
           currentPath: normalizedPath,
           breadcrumb: normalizedPath ? normalizedPath.split('/') : [],
+          nextCursor: page.nextCursor,
         },
       };
     } catch (error) {

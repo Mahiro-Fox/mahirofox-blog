@@ -194,6 +194,58 @@ export async function listR2DirectoryContents(
   return { files, directories };
 }
 
+export interface R2DirectoryPage {
+  /** 该层级的文件（不含目录占位符） */
+  files: R2ObjectInfo[];
+  /** 该层级的一级子目录，值为完整前缀（末尾带 /） */
+  directories: string[];
+  /** R2 返回的续传游标，原样回传即可取下一页；无更多数据时为 undefined */
+  nextCursor?: string;
+}
+
+/**
+ * 分页列出某前缀下一层的文件与子目录。
+ *
+ * 单次 ListObjectsV2 请求即返回一页，游标由 R2 下发，与 Cloudflare 控制台行为一致。
+ * MaxKeys 同时约束本页文件数与子目录数，避免大目录一次拉全量对象。
+ */
+export async function listR2DirectoryPage(
+  prefix: string,
+  options: { cursor?: string; maxKeys?: number } = {}
+): Promise<R2DirectoryPage> {
+  const config = requireConfig();
+  const client = getClient(config);
+  const base = prefix.endsWith('/') ? prefix : `${prefix}/`;
+
+  const result = await client.send(
+    new ListObjectsV2Command({
+      Bucket: config.bucket,
+      Prefix: base,
+      Delimiter: '/',
+      MaxKeys: options.maxKeys,
+      ContinuationToken: options.cursor,
+    })
+  );
+
+  const files = (result.Contents ?? [])
+    .filter((item) => item.Key && !item.Key.endsWith('/'))
+    .map((item) => ({
+      key: item.Key as string,
+      size: item.Size ?? 0,
+      lastModified: item.LastModified ?? new Date(0),
+    }));
+
+  const directories = (result.CommonPrefixes ?? [])
+    .map((item) => item.Prefix)
+    .filter((item): item is string => Boolean(item));
+
+  return {
+    files,
+    directories,
+    nextCursor: result.IsTruncated ? result.NextContinuationToken : undefined,
+  };
+}
+
 /** 读取对象内容 */
 export async function getR2ObjectBuffer(key: string): Promise<Buffer> {
   const config = requireConfig();

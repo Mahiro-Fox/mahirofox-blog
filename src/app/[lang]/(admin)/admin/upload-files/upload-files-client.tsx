@@ -1,5 +1,6 @@
 'use client';
 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -11,6 +12,7 @@ import {
   renameFile,
 } from '@/actions/admin/upload-files-actions';
 import { AdminPageLayout } from '@/components/admin/admin-page-layout';
+import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
 import { BreadcrumbNav } from './_components/breadcrumb-nav';
 import { BulkDeleteDialog } from './_components/bulk-delete-dialog';
@@ -31,6 +33,9 @@ import {
   validateUploadSelection,
 } from './_components/upload-utils';
 
+/** 每页条目数：一次 ListObjectsV2 请求拉满，减少 R2 列举操作次数 */
+const PAGE_SIZE = 50;
+
 export default function UploadFilesClient({
   initialData,
 }: UploadFilesClientProps) {
@@ -38,6 +43,12 @@ export default function UploadFilesClient({
   const [data, setData] = useState<FileListResponse>(initialData);
   const hasMountedRef = useRef(false);
   const [loading, setLoading] = useState(false);
+  // 分页：cursor 为 R2 原生游标；pageCursors 记录每页入口游标，便于回退
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageCursors, setPageCursors] = useState<Array<string | undefined>>([
+    undefined,
+  ]);
+  const currentCursor = pageCursors[pageIndex];
   const [selectedItem, setSelectedItem] = useState<FileItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,24 +62,46 @@ export default function UploadFilesClient({
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  // 获取文件列表
-  const fetchFiles = useCallback(async (path: string = '') => {
-    try {
-      setLoading(true);
-      const result = await adminGetUploadFiles(path);
-      if (result.success && result.data) {
-        setData(result.data);
-      } else {
+  // 获取文件列表（游标分页，返回结果便于删除后判断是否空页）
+  const fetchFiles = useCallback(
+    async (
+      path: string,
+      cursor: string | undefined
+    ): Promise<FileListResponse | null> => {
+      try {
+        setLoading(true);
+        const result = await adminGetUploadFiles(path, {
+          cursor,
+          pageSize: PAGE_SIZE,
+        });
+        if (result.success && result.data) {
+          setData(result.data);
+          return result.data;
+        }
         if (!result.success) {
           toast.error(result.error || '获取文件列表失败');
         }
+        return null;
+      } catch {
+        toast.error('获取文件列表失败');
+        return null;
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      toast.error('获取文件列表失败');
-    } finally {
-      setLoading(false);
+    },
+    []
+  );
+
+  /** 操作后刷新当前页；当前页被删空时自动退回上一页 */
+  const refreshCurrentPage = async () => {
+    const result = await fetchFiles(currentPath, currentCursor);
+    if (result && result.items.length === 0 && pageIndex > 0) {
+      const prevIndex = pageIndex - 1;
+      setPageIndex(prevIndex);
+      setSelectedPaths([]);
+      void fetchFiles(currentPath, pageCursors[prevIndex]);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (!hasMountedRef.current) {
@@ -76,7 +109,10 @@ export default function UploadFilesClient({
       return;
     }
 
-    fetchFiles(currentPath);
+    // 切换目录时回到第一页
+    setPageIndex(0);
+    setPageCursors([undefined]);
+    fetchFiles(currentPath, undefined);
   }, [currentPath, fetchFiles]);
 
   // 缓存当前路径到服务端
@@ -137,7 +173,7 @@ export default function UploadFilesClient({
         toast.success('文件夹创建成功');
         setIsNewFolderDialogOpen(false);
         setNewFolderName('');
-        await fetchFiles(currentPath);
+        await refreshCurrentPage();
       } else {
         toast.error(result.error || '创建失败');
       }
@@ -163,7 +199,7 @@ export default function UploadFilesClient({
 
     try {
       await uploadFiles(currentPath, selectedFiles);
-      fetchFiles(currentPath);
+      void refreshCurrentPage();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '上传失败');
     } finally {
@@ -185,7 +221,7 @@ export default function UploadFilesClient({
         );
         setIsDeleteDialogOpen(false);
         setSelectedItem(null);
-        fetchFiles(currentPath);
+        void refreshCurrentPage();
       } else {
         toast.error(result.error || '删除失败');
       }
@@ -206,7 +242,7 @@ export default function UploadFilesClient({
         toast.success('重命名成功');
         setIsRenameDialogOpen(false);
         setNewName('');
-        fetchFiles(currentPath);
+        void refreshCurrentPage();
       } else {
         toast.error(result.error || '重命名失败');
       }
@@ -239,6 +275,28 @@ export default function UploadFilesClient({
     );
   };
 
+  // 下一页：把当前页游标压栈，R2 返回的游标透传到下一次请求
+  const goNextPage = () => {
+    const next = data?.nextCursor;
+    if (!next) return;
+    setPageCursors((prev) => {
+      const nextCursors = prev.slice(0, pageIndex + 1);
+      nextCursors[pageIndex + 1] = next;
+      return nextCursors;
+    });
+    setPageIndex(pageIndex + 1);
+    setSelectedPaths([]);
+    void fetchFiles(currentPath, next);
+  };
+
+  const goPrevPage = () => {
+    if (pageIndex === 0) return;
+    const prevIndex = pageIndex - 1;
+    setPageIndex(prevIndex);
+    setSelectedPaths([]);
+    void fetchFiles(currentPath, pageCursors[prevIndex]);
+  };
+
   // 批量删除
   const handleBulkDelete = async () => {
     if (selectedPaths.length === 0) return;
@@ -259,7 +317,7 @@ export default function UploadFilesClient({
         }
         setIsBulkDeleteOpen(false);
         setSelectedPaths([]);
-        fetchFiles(currentPath);
+        void refreshCurrentPage();
       } else if (!result.success) {
         toast.error(result.error || '删除失败');
       }
@@ -300,7 +358,7 @@ export default function UploadFilesClient({
             onNavigate={navigateToBreadcrumb}
           />
         }
-        description={`文件列表 (${items.length})`}
+        description={`文件列表 (第 ${pageIndex + 1} 页 · ${items.length} 项)`}
         actions={actions}
         loading={loading}
       >
@@ -316,6 +374,31 @@ export default function UploadFilesClient({
             setIsDeleteDialogOpen(true);
           }}
         />
+        <div className="flex items-center justify-between py-3">
+          <span className="text-muted-foreground text-sm">
+            第 {pageIndex + 1} 页 · 本页 {items.length} 项
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageIndex === 0 || loading}
+              onClick={goPrevPage}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!data?.nextCursor || loading}
+              onClick={goNextPage}
+            >
+              下一页
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </AdminPageLayout>
 
       <Input

@@ -34,7 +34,7 @@ const columns: Column<MidiAdminFile>[] = [
   {
     key: 'name',
     header: '文件名',
-    width: 'max-w-xs',
+    width: 'max-w-20',
     render: (file) => (
       <Link
         href={`/midi?file=${encodeURIComponent(file.fileName)}`}

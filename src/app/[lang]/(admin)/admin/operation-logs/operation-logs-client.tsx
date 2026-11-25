@@ -1,8 +1,8 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 import { adminGetOperationLogs } from '@/actions/admin/operation-log-actions';
 import {
   AdminPageLayout,
@@ -65,9 +65,8 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'createdAt',
     header: '时间',
-    width: '170px',
     render: (log) => (
-      <span className="whitespace-nowrap text-sm">
+      <span className="text-sm whitespace-nowrap">
         {formatDateWithHMS(log.createdAt)}
       </span>
     ),
@@ -75,7 +74,7 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'operator',
     header: '操作人',
-    width: '150px',
+    width: 'max-w-20',
     render: (log) => (
       <div className="flex flex-col">
         <span className="text-sm font-medium">
@@ -90,7 +89,6 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'action',
     header: '动作',
-    width: '110px',
     render: (log) => (
       <Badge variant="secondary" className="text-xs">
         {ACTION_LABELS[log.action] || log.action}
@@ -100,7 +98,6 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'resource',
     header: '资源',
-    width: '110px',
     render: (log) => (
       <span className="text-sm">
         {RESOURCE_LABELS[log.resource] || log.resource || '-'}
@@ -110,7 +107,7 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'targetId',
     header: '目标 ID',
-    width: '140px',
+    width: 'max-w-20',
     render: (log) => (
       <span
         className="text-muted-foreground block truncate font-mono text-xs"
@@ -123,13 +120,12 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'summary',
     header: '摘要',
-    width: '140px',
     render: (log) => <span className="text-sm">{log.summary || '-'}</span>,
   },
   {
     key: 'detail',
     header: '详情',
-    width: '260px',
+    width: 'max-w-[200px]',
     render: (log) => (
       <span
         className="text-muted-foreground block truncate font-mono text-xs"
@@ -142,7 +138,6 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'ip',
     header: 'IP / UA',
-    width: '150px',
     render: (log) => (
       <div className="flex flex-col">
         <span className="text-sm">{log.ip || '-'}</span>
@@ -158,7 +153,6 @@ const columns: Column<OperationLog>[] = [
   {
     key: 'result',
     header: '结果',
-    width: '90px',
     render: (log) =>
       log.success ? (
         <Badge variant="secondary" className="text-xs">
@@ -273,7 +267,10 @@ export default function OperationLogsClient({
           }
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
-              void fetchLogs(1, { ...filters, keyword: event.currentTarget.value });
+              void fetchLogs(1, {
+                ...filters,
+                keyword: event.currentTarget.value,
+              });
             }
           }}
           placeholder="搜索操作人 / 目标 ID / 摘要"

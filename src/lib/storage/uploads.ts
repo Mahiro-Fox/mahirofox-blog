@@ -9,6 +9,7 @@ import {
   isR2Configured,
   listR2Directories,
   listR2DirectoryContents,
+  listR2DirectoryPage,
   listR2Objects,
   putR2Object,
   r2ObjectExists,
@@ -275,6 +276,89 @@ export async function listUploadEntries(
   }
 
   return entries;
+}
+
+export interface UploadDirPage {
+  entries: UploadDirEntry[];
+  /** 下一页游标，undefined 表示已到末页 */
+  nextCursor?: string;
+}
+
+/** 目录条目在 R2 中的字典序比较：目录末尾补 /，与对象 key 的排序保持一致 */
+function compareEntryKey(
+  a: { name: string; type: 'file' | 'directory' },
+  b: { name: string; type: 'file' | 'directory' }
+): number {
+  const left = a.type === 'directory' ? `${a.name}/` : a.name;
+  const right = b.type === 'directory' ? `${b.name}/` : b.name;
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
+/**
+ * 分页列出目录下的文件与一级子目录。
+ *
+ * - R2：游标直接透传给 ListObjectsV2（一个请求一页，很省操作数）；
+ * - 本地：无分页接口，读全量后按游标里的偏移量切片（仅开发环境走到）。
+ * 顺序与 R2 一致：文件与目录按对象 key 字典序混排。
+ */
+export async function listUploadEntryPage(
+  dir: string,
+  options: { cursor?: string; pageSize?: number } = {}
+): Promise<UploadDirPage> {
+  const pageSize = options.pageSize ?? 50;
+
+  if (!isR2Configured()) {
+    const offset = Math.max(0, Number(options.cursor ?? 0) || 0);
+    const all = (await listUploadEntries(dir)).sort(compareEntryKey);
+    const entries = all.slice(offset, offset + pageSize);
+    const nextOffset = offset + entries.length;
+    return {
+      entries,
+      nextCursor: nextOffset < all.length ? String(nextOffset) : undefined,
+    };
+  }
+
+  const prefix = dirToR2Prefix(dir);
+  const page = await listR2DirectoryPage(prefix, {
+    cursor: options.cursor,
+    maxKeys: pageSize,
+  });
+
+  const entries: UploadDirEntry[] = page.files
+    .map((file): UploadDirEntry | null => {
+      const name = file.key.slice(prefix.length);
+      return name
+        ? {
+            name,
+            key: file.key,
+            size: file.size,
+            lastModified: file.lastModified,
+            type: 'file',
+            extension: path.extname(name).replace(/^\./, '').toLowerCase(),
+          }
+        : null;
+    })
+    .filter((entry): entry is UploadDirEntry => entry !== null);
+
+  for (const directoryPrefix of page.directories) {
+    const name = directoryPrefix.slice(prefix.length).replace(/\/$/, '');
+    if (!name) continue;
+    entries.push({
+      name,
+      key: `${prefix}${name}`,
+      size: 0,
+      // delimiter 列表不返回子目录时间，页面里对目录不展示更新时间
+      lastModified: new Date(0),
+      type: 'directory',
+      extension: '',
+    });
+  }
+
+  // 两段独立有序，合并后保持 R2 的 key 字典序
+  entries.sort(compareEntryKey);
+
+  return { entries, nextCursor: page.nextCursor };
 }
 
 /** 文件是否存在 */
