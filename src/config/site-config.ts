@@ -15,6 +15,7 @@ import {
   Clapperboard,
   EyeOff,
   FileText,
+  FileWarning,
   Film,
   FolderOpen,
   History,
@@ -282,6 +283,13 @@ export const pageRoutesConfig: PageRouteConfig[] = [
     adminHref: '/admin/operation-logs',
     adminTitle: 'operation_logs_admin_title',
     adminDescription: 'operation_logs_admin_description',
+  },
+  {
+    name: 'error_logs',
+    icon: FileWarning,
+    adminHref: '/admin/error-logs',
+    adminTitle: 'error_logs_admin_title',
+    adminDescription: 'error_logs_admin_description',
   },
   {
     name: 'bug_report',

@@ -110,6 +110,16 @@ type Store interface {
 	CreateOperationLog(ctx context.Context, l *model.OperationLog) error
 	ListOperationLogs(ctx context.Context, q model.OperationLogQuery) (*model.OperationLogPage, error)
 
+	// error logs（后端错误记录）
+	CreateErrorLog(ctx context.Context, l *model.ErrorLog) error
+	FindRecentErrorLogByFingerprint(ctx context.Context, fingerprint string, since time.Time) (*model.ErrorLog, error)
+	IncrementErrorLogCount(ctx context.Context, id string, lastSeen time.Time) error
+	ListErrorLogs(ctx context.Context, q model.ErrorLogQuery) (*model.ErrorLogPage, error)
+	GetErrorLog(ctx context.Context, id string) (*model.ErrorLog, error)
+	DeleteErrorLog(ctx context.Context, id string) (int64, error)
+	DeleteErrorLogs(ctx context.Context, ids []string) (int64, error)
+	DeleteErrorLogsBefore(ctx context.Context, before time.Time) (int64, error)
+
 	// conversations（AI 对话存储：前端保留 AI 逻辑，本层仅负责落盘与读取）
 	UpsertConversation(ctx context.Context, c *model.Conversation) error
 	GetConversationByID(ctx context.Context, userID, id string) (*model.Conversation, error)

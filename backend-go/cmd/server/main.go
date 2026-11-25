@@ -37,12 +37,24 @@ func main() {
 	}
 	log.Println("数据库迁移完成")
 
+	store := repository.NewStore(gormDB)
+
 	// 会话清理 goroutine：每 10 分钟扫一次两个 session 表，不阻塞主进程
-	stopCleanup := startSessionCleaner(repository.NewStore(gormDB), 10*time.Minute)
+	stopCleanup := startSessionCleaner(store, 10*time.Minute)
 	defer stopCleanup()
 
+	// 错误上报 worker：路由注册前启动，保证早期错误也能入队
+	service.StartErrorReporter(store)
+	defer service.StopErrorReporter()
+
+	// 错误日志保留期清理：每小时执行一次
+	stopErrorCleanup := startErrorLogCleaner(store, time.Hour)
+	defer stopErrorCleanup()
+
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Logger())
+	// panic 恢复与 5xx 上报由 middleware.ErrorCapture 统一处理（在 RegisterRoutes 内注册）
 	// 容器外的 nginx 把真实客户端 IP 放在 X-Forwarded-For。只信任本机和私网代理。
 	if err := r.SetTrustedProxies([]string{
 		"127.0.0.1",
@@ -126,6 +138,45 @@ func startSessionCleaner(store repository.Store, t time.Duration) func() {
 	}
 }
 
+// startErrorLogCleaner 定时清理超过保留期的错误日志（默认 30 天）
+func startErrorLogCleaner(store repository.Store, t time.Duration) func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	ticker := time.NewTicker(t)
+	const cleanupTimeout = 30 * time.Second
+
+	once := func() {
+		rctx, rcancel := context.WithTimeout(ctx, cleanupTimeout)
+		defer rcancel()
+		deleted, err := service.CleanupExpiredErrorLogs(rctx, store, time.Now())
+		if err != nil {
+			log.Printf("清理过期错误日志失败: %v", err)
+			return
+		}
+		if deleted > 0 {
+			log.Printf("清理过期错误日志: %d 条", deleted)
+		}
+	}
+
+	go func() {
+		defer close(done)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				once()
+				return
+			case <-ticker.C:
+				once()
+			}
+		}
+	}()
+	return func() {
+		cancel()
+		<-done
+	}
+}
+
 // autoMigrate 自动建表 + 补充索引
 func autoMigrate(db *gorm.DB) error {
 	models := []any{
@@ -143,6 +194,7 @@ func autoMigrate(db *gorm.DB) error {
 		&model.AnalyticsLog{},
 		&model.Conversation{},
 		&model.OperationLog{},
+		&model.ErrorLog{},
 	}
 	if err := db.AutoMigrate(models...); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
@@ -155,6 +207,9 @@ func autoMigrate(db *gorm.DB) error {
 		"CREATE INDEX IF NOT EXISTS idx_guestbook_approved ON guestbook_entries (is_approved)",
 		"CREATE INDEX IF NOT EXISTS idx_bugs_created_at ON bug_reports (created_at DESC)",
 		"CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs (created_at DESC)",
+		"CREATE INDEX IF NOT EXISTS idx_error_logs_created_at ON error_logs (created_at DESC)",
+		"CREATE INDEX IF NOT EXISTS idx_error_logs_fingerprint ON error_logs (fingerprint)",
+		"CREATE INDEX IF NOT EXISTS idx_error_logs_last_seen_at ON error_logs (last_seen_at DESC)",
 	}
 	for _, sql := range indexes {
 		if err := db.Exec(sql).Error; err != nil {

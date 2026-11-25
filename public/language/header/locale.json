@@ -101,6 +101,9 @@
     "operation_logs_admin_title": "Operation Logs",
     "operation_logs_admin_description": "View and filter admin operation audit logs, including operator, action, resource, IP and time.",
 
+    "error_logs_admin_title": "Error Logs",
+    "error_logs_admin_description": "Inspect backend business errors and panics reported by the Go service, including request context and stack traces.",
+
     "bug_report_admin_title": "Feedback",
     "bug_report_admin_description": "View and handle website bugs reported by users.",
 
@@ -228,6 +231,9 @@
 
     "operation_logs_admin_title": "操作日志",
     "operation_logs_admin_description": "查看并筛选后台操作审计日志，包含操作人、动作、资源、IP 与时间。",
+
+    "error_logs_admin_title": "错误日志",
+    "error_logs_admin_description": "查看 Go 后端上报的业务错误与 panic 记录，包含请求上下文与堆栈信息。",
 
     "bug_report_admin_title": "问题反馈",
     "bug_report_admin_description": "查看和处理用户反馈的网站 BUG。",

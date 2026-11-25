@@ -65,6 +65,9 @@ export type Permission =
   | 'analytics:delete'
   // 操作日志权限
   | 'logs:read'
+  // 错误日志权限
+  | 'errors:read'
+  | 'errors:delete'
   // 电影管理权限
   | 'movies:read'
   | 'movies:create'
@@ -166,6 +169,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // 系统权限：可以刷新缓存
     'system:revalidate',
     'logs:read',
+    'errors:read',
+    'errors:delete',
   ],
 };
 
@@ -471,6 +476,16 @@ export const ALL_PERMISSIONS: {
         value: 'logs:read',
         label: '查看操作日志',
         description: '查看管理后台的操作审计日志',
+      },
+      {
+        value: 'errors:read',
+        label: '查看错误日志',
+        description: '查看 Go 后端上报的业务错误与 panic 记录',
+      },
+      {
+        value: 'errors:delete',
+        label: '删除错误日志',
+        description: '删除单条或批量删除后端错误日志',
       },
     ],
   },

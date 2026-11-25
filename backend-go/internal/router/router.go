@@ -23,6 +23,10 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	// 数据访问单一入口。handler 层只依赖 Store 接口，便于后续注入 mock 写单测。
 	store := repository.NewStore(db)
 
+	// 全局错误兜底：捕获 panic 与 5xx 响应并异步上报。
+	// 必须早于会话中间件注册，post 阶段才能读到操作人身份。
+	r.Use(middleware.ErrorCapture())
+
 	// 云音乐 cookie 持久化初始化（幂等）
 	service.InitCloudCookie(cfg.DataDir)
 
@@ -234,6 +238,15 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	operationLogsAdmin := api.Group("/admin/operation-logs", adminOnly()...)
 	{
 		operationLogsAdmin.GET("", middleware.RequirePermission(store, "logs:read"), handler.ListOperationLogsHandler(store))
+	}
+
+	// error-logs 路由（后端错误日志：只读 + 删除）
+	errorLogsAdmin := api.Group("/admin/error-logs", adminOnly()...)
+	{
+		errorLogsAdmin.GET("", middleware.RequirePermission(store, "errors:read"), handler.ListErrorLogsHandler(store))
+		errorLogsAdmin.GET("/:id", middleware.RequirePermission(store, "errors:read"), handler.GetErrorLogHandler(store))
+		errorLogsAdmin.DELETE("/batch", middleware.RequirePermission(store, "errors:delete"), handler.DeleteErrorLogsBatchHandler(store))
+		errorLogsAdmin.DELETE("/:id", middleware.RequirePermission(store, "errors:delete"), handler.DeleteErrorLogHandler(store))
 	}
 
 	// conversations 路由（AI 对话存储）
