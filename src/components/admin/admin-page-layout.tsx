@@ -51,9 +51,9 @@ export function AdminPageLayout({
           </div>
           {actions.length > 0 && (
             <div className="flex gap-2">
-              {actions.map((action, index) => (
+              {actions.map((action) => (
                 <Button
-                  key={index}
+                  key={action.label}
                   variant={action.variant || 'default'}
                   size="sm"
                   onClick={action.onClick}

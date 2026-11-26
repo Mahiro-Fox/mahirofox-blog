@@ -1,7 +1,7 @@
 'use client';
 
 import { useImagePreview } from '@/context/image-preview-provider';
-import { Copy, ImageIcon, Trash2 } from 'lucide-react';
+import { Eye, FilePenLine, Trash2 } from 'lucide-react';
 import { DataTable, type Column } from '@/components/admin/data-table';
 import { Button } from '@/components/shadcn-ui/button';
 import { SelectionCheckbox } from '@/components/shared/selection-check-box';
@@ -69,6 +69,7 @@ export function FileTable({
     {
       key: 'path',
       header: '路径',
+      width: 'max-w-xl',
       render: (item) => (
         <button
           type="button"
@@ -113,7 +114,7 @@ export function FileTable({
                 open([{ src: item.path, alt: item.name }]);
               }}
             >
-              <ImageIcon className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
             </Button>
           )}
           <Button
@@ -124,7 +125,7 @@ export function FileTable({
               onRename(item);
             }}
           >
-            <Copy className="h-4 w-4" />
+            <FilePenLine className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
