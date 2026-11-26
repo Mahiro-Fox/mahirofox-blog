@@ -36,58 +36,62 @@ export const mdxComponents = {
       {...props}
     />
   ),
-  h2: ({ className, ...props }: React.ComponentProps<'h2'>) => {
+  h2: ({ className, children, ...props }: React.ComponentProps<'h2'>) => {
     return (
       <h2
-        id={props.children
-          ?.toString()
-          .replace(/ /g, '-')
-          .replace(/'/g, '')
-          .replace(/\?/g, '')
-          .toLowerCase()}
         className={cn(
           'font-heading mt-12 scroll-m-28 text-2xl font-medium tracking-tight first:mt-0 lg:mt-20 [&+p]:!mt-4',
           className
         )}
         {...props}
-      />
+      >
+        {children}
+      </h2>
     );
   },
-  h3: ({ className, ...props }: React.ComponentProps<'h3'>) => (
+  h3: ({ className, children, ...props }: React.ComponentProps<'h3'>) => (
     <h3
       className={cn(
         'font-heading mt-8 scroll-m-28 text-xl font-semibold tracking-tight',
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </h3>
   ),
-  h4: ({ className, ...props }: React.ComponentProps<'h4'>) => (
+  h4: ({ className, children, ...props }: React.ComponentProps<'h4'>) => (
     <h4
       className={cn(
         'font-heading mt-8 scroll-m-28 text-lg font-medium tracking-tight',
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </h4>
   ),
-  h5: ({ className, ...props }: React.ComponentProps<'h5'>) => (
+  h5: ({ className, children, ...props }: React.ComponentProps<'h5'>) => (
     <h5
       className={cn(
         'mt-8 scroll-m-28 text-lg font-medium tracking-tight',
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </h5>
   ),
-  h6: ({ className, ...props }: React.ComponentProps<'h6'>) => (
+  h6: ({ className, children, ...props }: React.ComponentProps<'h6'>) => (
     <h6
       className={cn(
         'mt-8 scroll-m-28 text-base font-medium tracking-tight',
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </h6>
   ),
   a: ({ className, ...props }: React.ComponentProps<'a'>) => (
     <a

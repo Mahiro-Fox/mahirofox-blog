@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import React from 'react';
 import { getPublicBlog } from '@/actions/admin/blog-actions';
 import { Author } from '@/components/content/author';
+import { BlogToc } from '@/components/content/blog-toc';
 import { CustomMDX } from '@/components/content/custom-mdx';
 import {
   Breadcrumb,
@@ -15,6 +16,7 @@ import {
 } from '@/components/shadcn-ui/breadcrumb';
 import { BlurredHeroImage } from '@/components/shared/blurred-hero-image';
 import { LinkBadge } from '@/components/shared/link-badge';
+import { extractToc } from '@/utils/toc';
 import { formatDate, generateAbsoluteUrl } from '@/utils/utils';
 
 interface BlogPostPageProps {
@@ -100,6 +102,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     },
   ];
   const thumbnailUrl = post.thumbnail;
+  // 服务端从 MDX 源码解析标题，生成多层级目录（锚点 id 与正文标题一致）
+  const toc = extractToc(post.renderContent);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -142,9 +146,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           )}
         </div>
       </div>
-      <div className="container-wrapper py-8">
-        <div className="container flex flex-col gap-8">
-          <section className="flex-1">
+      <div className="container-wrapper flex flex-col py-8">
+        <div
+          className={
+            toc.length > 0
+              ? 'm-auto grid max-w-[96rem] gap-8 xl:grid-cols-[15rem_minmax(0,1fr)] xl:items-start'
+              : 'm-auto'
+          }
+        >
+          {toc.length > 0 && <BlogToc items={toc} />}
+          <section className="min-w-0">
             <article className="relative">
               <header className="mb-10 space-y-2 md:space-y-6">
                 {/* Date & Time */}
