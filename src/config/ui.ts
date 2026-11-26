@@ -32,4 +32,7 @@ export const AVAILABLE_ICONS = [
   { value: 'bluearchive', label: 'BlueArchive' },
   { value: 'nginx', label: 'Nginx' },
   { value: 'midi', label: 'MIDI' },
+  { value: 'docker', label: 'Docker' },
+  { value: 'ai', label: 'AI' },
+  { value: 'unity', label: 'Unity' },
 ];
