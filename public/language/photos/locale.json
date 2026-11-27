@@ -2,6 +2,7 @@
   "en": {
     "photos.title": "Welcome to mahirofox's photo wall",
     "photos.description": "Here are some photos of Mahirofox's daily life...",
+    "photos.passage_hint": "Want to see these photos flow through a 3D tunnel? Enter the photo passage",
     "photos.keywords": "mahirofox, VRC, VRChat, photos, daily life",
     "photos.no_images": "No images available",
     "photos.all_images_loaded": "All images loaded"
@@ -9,6 +10,7 @@
   "cn": {
     "photos.title": "欢迎来到 mahirofox 的照片墙喵~",
     "photos.description": "这里是一些 mahirofox 日常的一些照片...",
+    "photos.passage_hint": "想看看这些照片在 3D 隧道中流动的样子？进入照片长廊",
     "photos.keywords": "mahirofox, VRC, VRChat, 照片墙, 日常",
     "photos.no_images": "暂无照片",
     "photos.all_images_loaded": "已加载所有照片"

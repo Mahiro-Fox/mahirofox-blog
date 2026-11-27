@@ -1,4 +1,6 @@
 import { ReactNode } from 'react';
+import { ArrowRight } from 'lucide-react';
+import { Link } from '@/components/shared/link';
 import { getDictionary } from '@/i18n/dictionary';
 import { DictionaryProvider } from '@/i18n/dictionary-provider';
 
@@ -37,6 +39,13 @@ export default async function PhotosLayout({
             <p className="text-muted-foreground">
               {photoDictionary['photos.description']}
             </p>
+            <Link
+              href="/passage"
+              className="text-primary mt-1 inline-flex w-fit items-center gap-1 text-sm font-medium hover:underline"
+            >
+              {photoDictionary['photos.passage_hint']}
+              <ArrowRight className="size-3.5" />
+            </Link>
           </div>
           {children}
         </div>

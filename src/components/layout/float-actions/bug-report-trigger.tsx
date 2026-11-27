@@ -18,6 +18,7 @@ import { Textarea } from '@/components/shadcn-ui/textarea';
 import { Field, FieldLabel } from '@/components/shared/field';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
+import { cn } from '@/utils/utils';
 
 export function BugReportTrigger() {
   const t = useT();
@@ -65,16 +66,17 @@ export function BugReportTrigger() {
 
   return (
     <>
-      <Button
-        variant="outline"
-        size="icon"
-        className="h-8 w-8 cursor-pointer rounded-full bg-transparent! p-2 shadow-lg outline! transition-transform hover:scale-110"
+      <div
+        className={cn(
+          'text-foreground cursor-pointer rounded-full p-2 shadow-lg outline backdrop-blur-sm transition-opacity duration-300 hover:scale-105'
+        )}
         title={t('bug_report.button_title')}
+        aria-label="Report a bug"
         onClick={handleClick}
       >
         <Bug className="h-4 w-4" />
         <span className="sr-only">{t('bug_report.button_title')}</span>
-      </Button>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[425px]">

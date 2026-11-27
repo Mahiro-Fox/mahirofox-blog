@@ -32,6 +32,9 @@
     "photos_nav_label": "Photos",
     "photos_nav_description": "Waterfall layout image display",
 
+    "passage_nav_label": "Photo Passage",
+    "passage_nav_description": "Glide through a 3D tunnel of photos",
+
     "videos_nav_label": "Videos",
     "videos_nav_description": "VRChat gameplay recordings",
 
@@ -162,6 +165,9 @@
 
     "photos_nav_label": "照片",
     "photos_nav_description": "瀑布流图片展示",
+
+    "passage_nav_label": "照片长廊",
+    "passage_nav_description": "在 3D 照片隧道中穿行",
 
     "videos_nav_label": "录像",
     "videos_nav_description": "VRChat 游玩录像",

@@ -18,6 +18,7 @@ import {
   FileWarning,
   Film,
   FolderOpen,
+  GalleryHorizontalEnd,
   History,
   Image,
   ImageIcon,
@@ -112,6 +113,14 @@ export const pageRoutesConfig: PageRouteConfig[] = [
     navHref: '/photos',
     navLabel: 'photos_nav_label',
     navDescription: 'photos_nav_description',
+  },
+  {
+    name: 'passage',
+    icon: GalleryHorizontalEnd,
+    category: 'content',
+    navHref: '/passage',
+    navLabel: 'passage_nav_label',
+    navDescription: 'passage_nav_description',
   },
   {
     name: 'videos',
