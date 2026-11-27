@@ -181,7 +181,7 @@ function MoviesFormDialog({
       isSubmitting={isSubmitting}
       submitLabel={editMode === 'create' ? '添加' : '保存'}
     >
-      <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+      <div className="space-y-4">
         <div>
           <label htmlFor="movie-id" className="mb-2 block text-sm font-medium">
             ID *

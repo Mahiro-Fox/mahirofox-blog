@@ -228,7 +228,7 @@ function MomentFormFields({
               size="sm"
               variant={moodEmoji === option.emoji ? 'default' : 'outline'}
               onClick={() => onMoodEmojiClick(option.emoji)}
-              className="rounded-full"
+              className="rounded-full border"
             >
               {option.emoji} {option.label}
             </Button>

@@ -68,7 +68,7 @@ export function BugReportTrigger() {
       <Button
         variant="outline"
         size="icon"
-        className="h-8 w-8 cursor-pointer rounded-full p-2 shadow-lg outline transition-transform hover:scale-110"
+        className="h-8 w-8 cursor-pointer rounded-full bg-transparent! p-2 shadow-lg outline! transition-transform hover:scale-110"
         title={t('bug_report.button_title')}
         onClick={handleClick}
       >

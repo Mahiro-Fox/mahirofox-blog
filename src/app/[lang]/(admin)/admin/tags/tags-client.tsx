@@ -122,7 +122,7 @@ function TagsFormDialog({
       isSubmitting={isSubmitting}
       submitLabel={isEditing ? '保存' : '创建'}
     >
-      <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+      <div className="space-y-4">
         <Label htmlFor="tag-id">标签 ID</Label>
         <Input
           id="tag-id"

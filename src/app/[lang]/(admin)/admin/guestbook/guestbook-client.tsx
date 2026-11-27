@@ -180,7 +180,7 @@ function GuestbookFormDialog({
       isSubmitting={isSubmitting}
       submitLabel={'保存'}
     >
-      <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+      <div className="space-y-4">
         <div>
           <label
             htmlFor="guestbook-nickname"
@@ -287,7 +287,7 @@ function GuestbookReplyDialog({
       isSubmitting={isSubmitting}
       submitLabel="回复"
     >
-      <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+      <div className="space-y-4">
         <div className="bg-muted rounded p-3 text-sm">
           {replyTarget?.content}
         </div>
