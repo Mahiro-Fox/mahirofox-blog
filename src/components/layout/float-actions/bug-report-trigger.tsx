@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/shadcn-ui/dialog';
 import { Input } from '@/components/shadcn-ui/input';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { Field, FieldLabel } from '@/components/shared/field';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
@@ -67,7 +68,7 @@ export function BugReportTrigger() {
       <Button
         variant="outline"
         size="icon"
-        className="h-8 w-8 cursor-pointer rounded-full p-2 shadow-lg transition-transform hover:scale-110"
+        className="h-8 w-8 cursor-pointer rounded-full p-2 shadow-lg outline transition-transform hover:scale-110"
         title={t('bug_report.button_title')}
         onClick={handleClick}
       >
@@ -93,8 +94,8 @@ export function BugReportTrigger() {
                   {t('bug_report.content_label')}{' '}
                   <span className="text-destructive">*</span>
                 </FieldLabel>
-                <textarea
-                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[100px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                <Textarea
+                  className="min-h-[100px]"
                   placeholder={t('bug_report.content_placeholder')}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

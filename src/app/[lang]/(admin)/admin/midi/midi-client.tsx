@@ -69,8 +69,8 @@ const createSearchAction = (search: (query: string) => void) => {
     label: '',
     icon: (
       <>
-        <input
-          className="border-none bg-transparent outline-none"
+        <Input
+          className="h-7 w-32 border-none bg-transparent! px-0 shadow-none focus-visible:ring-0"
           type="text"
           onChange={(e) => search(e.target.value)}
           placeholder="搜索文件名"

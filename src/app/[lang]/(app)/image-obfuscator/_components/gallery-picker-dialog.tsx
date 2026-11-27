@@ -10,7 +10,6 @@ import Masonry from '@/components/content/masonry';
 import { Button } from '@/components/shadcn-ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -58,9 +57,7 @@ function GalleryPickerBody({
     useState<PhotoCollection | null>(null);
 
   if (!activeCollection) {
-    return (
-      <CreatorView onSelect={setActiveCollection} onOpenChange={onOpenChange} />
-    );
+    return <CreatorView onSelect={setActiveCollection} />;
   }
 
   return (
@@ -78,10 +75,8 @@ function GalleryPickerBody({
 /** 第一层：作者（图库分类）卡片 */
 function CreatorView({
   onSelect,
-  onOpenChange,
 }: {
   onSelect: (collection: PhotoCollection) => void;
-  onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
   const [collections, setCollections] = useState<PhotoCollection[]>([]);
@@ -110,13 +105,7 @@ function CreatorView({
   }, []);
 
   return (
-    <DialogContent className="relative flex max-h-[85vh] w-full flex-col gap-4 sm:max-w-5xl">
-      <DialogClose
-        className="cursor-pointer"
-        aria-label={t('image-obfuscator.gallery_close')}
-        onClick={() => onOpenChange(false)}
-      />
-
+    <DialogContent className="flex max-h-[85vh] w-full flex-col gap-4 sm:max-w-5xl">
       <DialogHeader className="pr-8">
         <DialogTitle>{t('image-obfuscator.gallery_title')}</DialogTitle>
         <DialogDescription>
@@ -222,13 +211,7 @@ function CollectionView({
   };
 
   return (
-    <DialogContent className="relative flex max-h-[85vh] w-full flex-col gap-4 sm:max-w-5xl">
-      <DialogClose
-        className="cursor-pointer"
-        aria-label={t('image-obfuscator.gallery_close')}
-        onClick={() => onOpenChange(false)}
-      />
-
+    <DialogContent className="flex max-h-[85vh] w-full flex-col gap-4 sm:max-w-5xl">
       <DialogHeader className="pr-8">
         <div className="flex items-center gap-2">
           <Button

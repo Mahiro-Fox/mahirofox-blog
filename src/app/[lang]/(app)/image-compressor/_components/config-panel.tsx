@@ -11,6 +11,8 @@ import {
 import { AnimatePresence, m } from 'motion/react';
 import React, { useState } from 'react';
 import { Button } from '@/components/shadcn-ui/button';
+import { Input } from '@/components/shadcn-ui/input';
+import { Slider } from '@/components/shadcn-ui/slider';
 import { useT } from '@/i18n/dictionary-provider';
 
 /**
@@ -202,19 +204,16 @@ function QualitySlider({
           {quality}%
         </span>
       </div>
-      <input
-        type="range"
+      <Slider
         id="quality"
-        min="1"
-        max="95"
-        value={quality}
-        onChange={(e) => !disabled && onChange(parseInt(e.target.value))}
+        min={1}
+        max={95}
+        step={1}
+        value={[quality]}
+        onValueChange={([value]) => !disabled && onChange(value)}
         disabled={disabled}
-        className={`h-2 w-full cursor-pointer appearance-none rounded-lg ${disabled ? 'cursor-not-allowed opacity-50' : ''} `}
-        style={{
-          background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${(quality / 95) * 100}%, var(--border) ${(quality / 95) * 100}%, var(--border) 100%)`,
-        }}
-      />
+        className="py-1"
+      />{' '}
       <div className="text-muted-foreground flex justify-between text-xs">
         <span>{t('image-compressor.min_size')}</span>
         <span>{t('image-compressor.best_quality')}</span>
@@ -379,7 +378,7 @@ function AdvancedOptions({
                     >
                       {t('image-compressor.width')}
                     </label>
-                    <input
+                    <Input
                       type="number"
                       id="resize-width"
                       min="1"
@@ -393,7 +392,6 @@ function AdvancedOptions({
                       }}
                       disabled={disabled}
                       placeholder={t('image-compressor.auto')}
-                      className={`bg-background text-foreground border-border w-full rounded-lg border px-3 py-2 text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)] focus:outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''} `}
                     />
                   </div>
                   <div className="space-y-2">
@@ -403,7 +401,7 @@ function AdvancedOptions({
                     >
                       {t('image-compressor.height')}
                     </label>
-                    <input
+                    <Input
                       type="number"
                       id="resize-height"
                       min="1"
@@ -417,7 +415,6 @@ function AdvancedOptions({
                       }}
                       disabled={disabled}
                       placeholder={t('image-compressor.auto')}
-                      className={`bg-background text-foreground border-border w-full rounded-lg border px-3 py-2 text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)] focus:outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''} `}
                     />
                   </div>
                 </div>

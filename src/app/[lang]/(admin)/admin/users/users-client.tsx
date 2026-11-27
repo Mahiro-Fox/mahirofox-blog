@@ -29,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/shadcn-ui/card';
+import { Checkbox } from '@/components/shadcn-ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,13 @@ import {
 } from '@/components/shadcn-ui/dialog';
 import { Input } from '@/components/shadcn-ui/input';
 import { Label } from '@/components/shadcn-ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/shadcn-ui/select';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { formatDate } from '@/utils/utils';
 
@@ -295,17 +303,20 @@ function CreateUserDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">角色</Label>
-            <select
-              id="role"
+            <Select
               value={newRole}
-              onChange={(e) =>
-                setNewRole(e.target.value as 'super_admin' | 'user')
+              onValueChange={(value) =>
+                setNewRole(value as 'super_admin' | 'user')
               }
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
             >
-              <option value="user">普通用户</option>
-              <option value="super_admin">超级管理员</option>
-            </select>
+              <SelectTrigger id="role" className="w-full">
+                <SelectValue placeholder="选择角色" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">普通用户</SelectItem>
+                <SelectItem value="super_admin">超级管理员</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button
@@ -481,11 +492,10 @@ function PermissionDialog({
                       key={perm.value}
                       className="hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-lg p-2"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedPermissions.includes(perm.value)}
-                        onChange={() => togglePermission(perm.value)}
-                        className="text-primary focus:ring-primary mt-1 h-4 w-4 rounded border-gray-300"
+                        onCheckedChange={() => togglePermission(perm.value)}
+                        className="mt-1"
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium">{perm.label}</div>

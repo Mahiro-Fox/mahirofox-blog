@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shadcn-ui/select';
+import { Slider } from '@/components/shadcn-ui/slider';
 import { Toggle } from '@/components/shadcn-ui/toggle';
 import { Spinner } from '@/components/shared/spinner';
 import { useT } from '@/i18n/dictionary-provider';
@@ -204,16 +205,15 @@ export default function ControlPanel({
             {strength.toFixed(2)}
           </span>
         </div>
-        <input
+        <Slider
           id="obfuscator-strength"
-          type="range"
           min={0}
           max={2}
           step={0.05}
-          value={strength}
+          value={[strength]}
           disabled={disabled}
-          onChange={(event) => onStrengthChange(Number(event.target.value))}
-          className="w-full accent-[var(--primary)] disabled:cursor-not-allowed"
+          onValueChange={([value]) => onStrengthChange(value)}
+          className="py-1"
         />
         <p className="text-muted-foreground text-xs">
           {strength === 0
@@ -276,18 +276,15 @@ export default function ControlPanel({
               {Math.round(quality * 100)}%
             </span>
           </div>
-          <input
+          <Slider
             id="obfuscator-quality"
-            type="range"
             min={50}
             max={100}
             step={1}
-            value={Math.round(quality * 100)}
+            value={[Math.round(quality * 100)]}
             disabled={disabled}
-            onChange={(event) =>
-              onQualityChange(Number(event.target.value) / 100)
-            }
-            className="w-full accent-[var(--primary)] disabled:cursor-not-allowed"
+            onValueChange={([value]) => onQualityChange(value / 100)}
+            className="py-1"
           />
         </div>
       ) : null}

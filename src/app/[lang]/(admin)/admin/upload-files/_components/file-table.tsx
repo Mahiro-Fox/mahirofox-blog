@@ -71,9 +71,11 @@ export function FileTable({
       header: '路径',
       width: 'max-w-xl',
       render: (item) => (
-        <button
+        <Button
           type="button"
-          className="bg-muted cursor-pointer rounded px-2 py-1 font-mono text-xs"
+          variant="secondary"
+          size="sm"
+          className="h-6 justify-start rounded px-2 font-mono text-xs"
           onClick={(event) => {
             event.stopPropagation();
             copyPath(item.path);
@@ -81,7 +83,7 @@ export function FileTable({
           title="点击复制"
         >
           {item.path}
-        </button>
+        </Button>
       ),
     },
     {

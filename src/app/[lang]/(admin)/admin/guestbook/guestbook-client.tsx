@@ -21,6 +21,7 @@ import { DeleteConfirmDialog } from '@/components/admin/delete-confirm-dialog';
 import { Badge } from '@/components/shadcn-ui/badge';
 import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { useCrud } from '@/hooks/use-crud';
 import { formatDate, isEmail } from '@/utils/utils';
 
@@ -199,11 +200,13 @@ function GuestbookFormDialog({
           <span className="mb-2 block text-sm font-medium">背景颜色</span>
           <div className="flex flex-wrap gap-2">
             {COLOR_OPTIONS.map((color) => (
-              <button
+              <Button
                 key={color.value}
                 type="button"
+                size="icon"
+                variant="outline"
                 onClick={() => setBgColor(color.value)}
-                className={`h-8 w-8 rounded-full border-2 transition-transform ${
+                className={`h-8 w-8 rounded-full border-2 ${
                   bgColor === color.value
                     ? 'border-primary scale-110'
                     : 'border-gray-300'
@@ -237,7 +240,7 @@ function GuestbookFormDialog({
           >
             留言内容
           </label>
-          <textarea
+          <Textarea
             id="guestbook-content"
             value={content}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -246,7 +249,6 @@ function GuestbookFormDialog({
             placeholder="留下你的足迹...（最多300字）"
             maxLength={300}
             rows={4}
-            className="focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           />
           <div className="text-muted-foreground mt-1 text-xs">
             {content.length}/300
@@ -296,7 +298,7 @@ function GuestbookReplyDialog({
           >
             回复内容
           </label>
-          <textarea
+          <Textarea
             id="guestbook-reply"
             value={replyContent}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -304,7 +306,6 @@ function GuestbookReplyDialog({
             }
             placeholder="写下你的回复..."
             rows={4}
-            className="focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           />
         </div>
       </div>

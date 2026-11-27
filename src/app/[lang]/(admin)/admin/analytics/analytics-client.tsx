@@ -92,9 +92,11 @@ const columns: Column<AnalyticsLog>[] = [
           ? '-'
           : JSON.stringify(log.properties);
       return (
-        <button
+        <Button
           type="button"
-          className="text-sm"
+          variant="ghost"
+          size="sm"
+          className="h-auto justify-start p-0 text-left text-sm font-normal"
           title={data}
           onClick={() => {
             navigator.clipboard.writeText(data);
@@ -102,7 +104,7 @@ const columns: Column<AnalyticsLog>[] = [
           }}
         >
           {data}
-        </button>
+        </Button>
       );
     },
   },

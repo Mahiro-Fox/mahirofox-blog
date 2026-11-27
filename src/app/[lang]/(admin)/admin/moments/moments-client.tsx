@@ -21,6 +21,7 @@ import { DeleteConfirmDialog } from '@/components/admin/delete-confirm-dialog';
 import { FileUploadTrigger } from '@/components/admin/file-upload-trigger';
 import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { useCrud } from '@/hooks/use-crud';
 import { formatDate } from '@/utils/utils';
@@ -159,7 +160,7 @@ function MomentFormFields({
   onGetLocation: () => void;
 }) {
   return (
-    <div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+    <div className="space-y-4">
       <div>
         <label
           htmlFor="moment-content"
@@ -167,7 +168,7 @@ function MomentFormFields({
         >
           内容
         </label>
-        <textarea
+        <Textarea
           id="moment-content"
           value={content}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -176,7 +177,6 @@ function MomentFormFields({
           placeholder="说点什么吧...（最多200字）"
           maxLength={200}
           rows={3}
-          className="focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
         />
         <div className="text-muted-foreground mt-1 text-xs">
           {content.length}/200
@@ -218,22 +218,20 @@ function MomentFormFields({
         </div>
       </div>
 
-      <div>
+      <div className="overflow-auto">
         <span className="mb-2 block text-sm font-medium">心情</span>
         <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto">
           {MOOD_OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.emoji}
               type="button"
+              size="sm"
+              variant={moodEmoji === option.emoji ? 'default' : 'outline'}
               onClick={() => onMoodEmojiClick(option.emoji)}
-              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                moodEmoji === option.emoji
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background hover:bg-accent'
-              }`}
+              className="rounded-full"
             >
               {option.emoji} {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

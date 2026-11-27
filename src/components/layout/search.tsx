@@ -7,7 +7,6 @@ import {
   Search as SearchIcon,
   X,
 } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/shadcn-ui/button';
 import {
@@ -33,13 +32,8 @@ import { trackEvent } from '@/utils/tracker';
 export function Search() {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { keyword, setKeyword, results, isLoading, clearSearch } =
     useSearch(10);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // 键盘快捷键 Cmd/Ctrl + K 打开搜索
   useEffect(() => {
@@ -83,69 +77,65 @@ export function Search() {
       <SearchIcon onClick={handleOpen} className="mr-2 h-4 w-4 md:hidden" />
 
       {/* 搜索弹窗 — Portal 到 body，避免被导航栏的包含块影响 */}
-      {mounted &&
-        createPortal(
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-2xl gap-0 p-0">
-              <DialogHeader className="sr-only">
-                <DialogTitle>{t('search_title')}</DialogTitle>
-              </DialogHeader>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl gap-0 p-0" showCloseButton={false}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>{t('search_title')}</DialogTitle>
+          </DialogHeader>
 
-              {/* 搜索输入框 */}
-              <div className="flex items-center border-b px-3">
-                <SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                <Input
-                  className="placeholder:text-muted-foreground flex h-14 w-full rounded-md border-0 bg-transparent py-4 text-sm outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder={t('search_placeholder')}
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  autoFocus
-                />
-                {keyword && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={clearSearch}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+          {/* 搜索输入框 */}
+          <div className="flex items-center border-b px-3">
+            <SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <Input
+              className="placeholder:text-muted-foreground flex h-14 w-full rounded-md border-0 bg-transparent! py-4 text-sm outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder={t('search_placeholder')}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              autoFocus
+            />
+            {keyword && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={clearSearch}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
 
-              {/* 搜索结果 */}
-              <div className="max-h-[400px] overflow-y-auto py-2">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                  </div>
-                ) : results.length > 0 ? (
-                  <div className="px-2">
-                    <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
-                      {t('search_results', { count: results.length })}
-                    </div>
-                    {results.map((result) => (
-                      <SearchResultItem
-                        key={result.slug}
-                        result={result}
-                        onClick={handleClose}
-                      />
-                    ))}
-                  </div>
-                ) : keyword ? (
-                  <div className="text-muted-foreground py-8 text-center text-sm">
-                    {t('search_no_results')}
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground py-8 text-center text-sm">
-                    {t('search_no_results_placeholder')}
-                  </div>
-                )}
+          {/* 搜索结果 */}
+          <div className="max-h-[400px] overflow-y-auto py-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
               </div>
-            </DialogContent>
-          </Dialog>,
-          document.body
-        )}
+            ) : results.length > 0 ? (
+              <div className="px-2">
+                <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
+                  {t('search_results', { count: results.length })}
+                </div>
+                {results.map((result) => (
+                  <SearchResultItem
+                    key={result.slug}
+                    result={result}
+                    onClick={handleClose}
+                  />
+                ))}
+              </div>
+            ) : keyword ? (
+              <div className="text-muted-foreground py-8 text-center text-sm">
+                {t('search_no_results')}
+              </div>
+            ) : (
+              <div className="text-muted-foreground py-8 text-center text-sm">
+                {t('search_no_results_placeholder')}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

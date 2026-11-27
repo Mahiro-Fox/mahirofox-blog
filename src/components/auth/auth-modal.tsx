@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/shadcn-ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -514,8 +513,7 @@ export function AuthModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background/90 relative flex overflow-hidden rounded-2xl border-0 p-0 shadow-[0_24px_70px_-24px_var(--auth-glow)] sm:max-w-xl">
-        <DialogClose onClick={() => onOpenChange(false)} />
+      <DialogContent className="bg-background/90 flex overflow-hidden rounded-2xl border-0 p-0 shadow-[0_24px_70px_-24px_var(--auth-glow)] sm:max-w-xl">
         {/* 二次元霓虹辉光 */}
         <div
           className="pointer-events-none absolute -top-20 -right-12 h-44 w-44 rounded-full bg-(--auth-grad-from) opacity-30 blur-3xl"

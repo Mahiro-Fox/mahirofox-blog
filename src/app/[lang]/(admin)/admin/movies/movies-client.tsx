@@ -18,6 +18,7 @@ import { CrudFormDialog } from '@/components/admin/crud-form-dialog';
 import { DeleteConfirmDialog } from '@/components/admin/delete-confirm-dialog';
 import { Button } from '@/components/shadcn-ui/button';
 import { Input } from '@/components/shadcn-ui/input';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { Link } from '@/components/shared/link';
 import { useCrud } from '@/hooks/use-crud';
 import { formatDate } from '@/utils/utils';
@@ -271,13 +272,12 @@ function MoviesFormDialog({
           >
             简介
           </label>
-          <textarea
+          <Textarea
             id="movie-summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder="输入影视简介"
             rows={3}
-            className="focus:ring-primary w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
           />
         </div>
 

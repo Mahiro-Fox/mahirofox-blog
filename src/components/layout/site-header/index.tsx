@@ -48,12 +48,14 @@ const PRIMARY_LINKS = [
   { href: '/page/gallery/1', labelKey: 'gallery_nav_label' },
   { href: '/page/blog/1', labelKey: 'journal_nav_label' },
   { href: '/#tool', labelKey: 'tool_nav_label' },
+  { href: '/photos', labelKey: 'photos_nav_label' },
   { href: '/about', labelKey: 'about_nav_label' },
 ] as const;
 
 const PRIMARY_HREFS = new Set<string>([
   '/page/gallery/1',
   '/page/blog/1',
+  '/photos',
   '/about',
 ]);
 
@@ -232,7 +234,7 @@ export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
           <div className="flex shrink-0 items-center gap-1">
             <Search />
             <ThemeSwitcher />
-            <div className="hidden lg:flex">
+            <div className="flex">
               <LanguageSwitcher />
             </div>
 
@@ -373,7 +375,6 @@ export function SiteHeader({ initialUserAuth = null }: SiteHeaderProps) {
                 </nav>
 
                 <div className="border-border/60 mt-auto flex flex-col gap-3 border-t p-4">
-                  <LanguageSwitcher />
                   {currentUser ? (
                     <div className="flex items-center gap-2">
                       <Button asChild variant="outline" className="flex-1">

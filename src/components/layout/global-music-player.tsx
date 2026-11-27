@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useRef, useState } from 'react';
+import { Slider } from '@/components/shadcn-ui/slider';
 import { useClickOutside } from '@/hooks/use-click-outside';
 import { useT } from '@/i18n/dictionary-provider';
 import { trackEvent } from '@/utils/tracker';
@@ -207,15 +208,14 @@ function PlayerView({
             <VolumeX className="h-4 w-4" />
           )}
         </button>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={volume}
-          onChange={(e) => onSetVolume(parseFloat(e.target.value))}
+        <Slider
+          min={0}
+          max={1}
+          step={0.1}
+          value={[volume]}
+          onValueChange={([value]) => onSetVolume(value)}
           aria-label="音量"
-          className="bg-muted accent-primary h-1 cursor-pointer appearance-none rounded-full"
+          className="w-24"
         />
       </div>
     </div>

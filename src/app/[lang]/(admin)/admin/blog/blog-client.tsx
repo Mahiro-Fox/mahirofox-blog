@@ -25,6 +25,7 @@ import { FileUploadTrigger } from '@/components/admin/file-upload-trigger';
 import { Badge } from '@/components/shadcn-ui/badge';
 import { Input } from '@/components/shadcn-ui/input';
 import { Label } from '@/components/shadcn-ui/label';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { Link } from '@/components/shared/link';
 import { OptimizedImage } from '@/components/shared/optimized-image';
 import { TagPicker } from '@/components/shared/tag-picker';
@@ -283,12 +284,11 @@ function BlogFormDialog({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="description">描述</Label>
-          <textarea
+          <Textarea
             id="description"
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
             placeholder="请输入描述"
-            className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -325,12 +325,12 @@ function BlogFormDialog({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="body">正文内容</Label>
-          <textarea
+          <Textarea
             id="body"
             value={editBody}
             onChange={(e) => setEditBody(e.target.value)}
             placeholder="请输入正文内容（Markdown格式）"
-            className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-[300px] w-full rounded-md border px-3 py-2 font-mono text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[300px] font-mono"
           />
         </div>
       </div>

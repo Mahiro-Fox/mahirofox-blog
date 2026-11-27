@@ -2,7 +2,7 @@
 
 import { COLOR_OPTIONS, TURNSTILE_SITE_KEY } from '@/config';
 // 莫兰迪色系颜色选项
-import { CheckIcon, Send, Sticker, X, XIcon } from 'lucide-react';
+import { CheckIcon, Send, Sticker, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCallback, useState } from 'react';
 import { submitGuestbook } from '@/actions/admin/guestbook-actions';
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/shadcn-ui/dialog';
 import { Input } from '@/components/shadcn-ui/input';
+import { Textarea } from '@/components/shadcn-ui/textarea';
 import { Toggle } from '@/components/shadcn-ui/toggle';
 import { TurnstileWidget } from '@/components/turnstile/turnstile-widget';
 import { useT } from '@/i18n/dictionary-provider';
@@ -111,7 +112,7 @@ export function GuestbookWallDialog() {
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="relative m-auto sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('guestbook.dialog.title')}</DialogTitle>
             <DialogDescription>
@@ -210,7 +211,7 @@ export function GuestbookWallDialog() {
               >
                 {t('guestbook.form.label.content')}
               </label>
-              <textarea
+              <Textarea
                 id="guestbook-content"
                 value={content}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -219,7 +220,7 @@ export function GuestbookWallDialog() {
                 placeholder={t('guestbook.form.placeholder.content')}
                 maxLength={300}
                 rows={4}
-                className="focus:ring-primary w-full resize-none rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+                className="resize-none"
               />
               <div className="text-muted-foreground mt-1 text-right text-xs">
                 {t('guestbook.form.char_count').replace(
@@ -247,10 +248,6 @@ export function GuestbookWallDialog() {
               <Send className="ml-2 h-4 w-4" />
             </Button>
           </form>
-          <X
-            className="absolute top-4 right-4 cursor-pointer"
-            onClick={() => setIsDialogOpen(false)}
-          />
         </DialogContent>
       </Dialog>
     </div>
